@@ -78,8 +78,8 @@ node_t *search(node_t *arg, node_t *r)
 
     a    = arg->p2;
     list = base = alloc();
-    last = NULL;
-    next = NULL;
+    last        = NULL;
+    next        = NULL;
     goto badv1;
 badvanc:
     a = a->p1;
@@ -129,7 +129,7 @@ badv1:
     else {
         e       = eval(e, 1);
         etc->p2 = (node_t *)(long)(intptr_t)strbin(e);
-        delete(e);
+        delete_string(e);
     }
     goto badvanc;
 
@@ -255,7 +255,7 @@ f1:
     back = list->p2;
     var  = back->p2;
     if (list->typ < 2) {
-        delete(var);
+        delete_string(var);
         goto fadv;
     }
     str = var->p1;

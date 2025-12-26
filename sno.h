@@ -1,12 +1,12 @@
 #ifndef SNO_H
 #define SNO_H
 
+#include <fcntl.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
-#include <stdint.h>
-#include <fcntl.h>
+#include <unistd.h>
 
 /* Node structure for Snobol III interpreter */
 typedef struct node {
@@ -61,7 +61,7 @@ node_t *mult(node_t *string1, node_t *string2);
 node_t *divide(node_t *string1, node_t *string2);
 node_t *cat(node_t *string1, node_t *string2);
 node_t *dcat(node_t *a, node_t *b);
-void delete(node_t *string);
+void delete_string(node_t *string);
 void sysput(node_t *string);
 void dump(void);
 void dump1(node_t *base);
@@ -84,7 +84,7 @@ int ubextend(node_t *str, node_t *last);
 node_t *search(node_t *arg, node_t *r);
 
 /* Function prototypes from sno4.c */
-node_t *and(node_t *ptr);
+node_t *eval_operand(node_t *ptr);
 node_t *eval(node_t *e, int t);
 node_t *doop(int op, node_t *arg1, node_t *arg2);
 node_t *execute(node_t *e);

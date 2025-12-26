@@ -3,7 +3,7 @@
 /*
  * sno4
  */
-node_t *and(node_t *ptr)
+node_t *eval_operand(node_t *ptr)
 {
     node_t *a, *p;
 
@@ -54,7 +54,7 @@ l1:
     default:
     case 0:
         if (t == 1) {
-            a1 = and(stack);
+            a1 = eval_operand(stack);
             goto e1;
         }
         if (stack->typ == 1)
@@ -66,9 +66,9 @@ l1:
             writes("phase error");
         return (a1);
     case 12:
-        a1        = and(stack);
+        a1        = eval_operand(stack);
         stack->p1 = look(a1);
-        delete(a1);
+        delete_string(a1);
         stack->typ = 0;
         goto advanc;
     case 13:
@@ -77,12 +77,12 @@ l1:
         a1 = stack->p1;
         if (a1->typ != 5)
             writes("illegal function");
-        a1     = a1->p2;
+        a1 = a1->p2;
         {
             node_t *op_ptr = a1->p1;
             a3base = a3 = alloc();
             a3->p2      = op_ptr->p2;
-            op_ptr->p2      = NULL;
+            op_ptr->p2  = NULL;
             a1          = a1->p2;
             a2          = list->p2;
         f1:
@@ -95,7 +95,7 @@ l1:
         f2:
             a3->p1 = a4 = alloc();
             a3          = a4;
-            a3->p2      = and(a1);
+            a3->p2      = eval_operand(a1);
             assign(a1->p1, eval(a2->p2, 1)); /* recursive */
             a1 = a1->p2;
             a2 = a2->p1;
@@ -104,12 +104,12 @@ l1:
             op_ptr = execute(op_ptr); /* recursive */
             if (op_ptr)
                 goto f3;
-            a1         = stack->p1->p2;
+            a1 = stack->p1->p2;
             {
                 node_t *op_ptr2 = a1->p1;
-                a3         = a3base;
-                stack->p1  = op_ptr2->p2;
-                stack->typ = 1;
+                a3              = a3base;
+                stack->p1       = op_ptr2->p2;
+                stack->typ      = 1;
                 op_ptr2->p2     = a3->p2;
             f4:
                 a4 = a3->p1;
@@ -127,12 +127,12 @@ l1:
     case 9:
     case 8:
     case 7:
-        a1    = and(stack);
+        a1    = eval_operand(stack);
         stack = pop(stack);
-        a2    = and(stack);
+        a2    = eval_operand(stack);
         a3    = doop(op, a2, a1);
-        delete(a1);
-        delete(a2);
+        delete_string(a1);
+        delete_string(a2);
         stack->p1  = a3;
         stack->typ = 1;
         goto advanc;
@@ -186,14 +186,14 @@ node_t *execute(node_t *e)
     switch (e->typ) {
     case 0: /*  r g */
         a = r->p1;
-        delete(eval(r->p2, 1));
+        delete_string(eval(r->p2, 1));
         goto xsuc;
     case 1: /*  r m g */
         m = r->p1;
         a = m->p1;
         b = eval(r->p2, 1);
         c = search(m, b);
-        delete(b);
+        delete_string(b);
         if (c == NULL)
             goto xfail;
         free_node(c);
@@ -216,7 +216,7 @@ node_t *execute(node_t *e)
         if (d->p1 == NULL) {
             free_node(d);
             assign(b, cat(c, b->p2));
-            delete(c);
+            delete_string(c);
             goto xsuc;
         }
         if (d->p2 == b->p2->p2) {
@@ -229,7 +229,7 @@ node_t *execute(node_t *e)
         assign(b, cat(c, r));
         free_node(d);
         free_node(r);
-        delete(c);
+        delete_string(c);
         goto xsuc;
     }
 xsuc:
@@ -263,7 +263,7 @@ void assign(node_t *adr, node_t *val)
     addr  = adr;
     value = val;
     if (rfail == 1) {
-        delete(value);
+        delete_string(value);
         return;
     }
     switch (addr->typ) {
@@ -274,7 +274,7 @@ void assign(node_t *adr, node_t *val)
         addr->typ = 1;
         /* fall through */
     case 1:
-        delete(addr->p2);
+        delete_string(addr->p2);
         addr->p2 = value;
         return;
     case 4:
@@ -282,7 +282,7 @@ void assign(node_t *adr, node_t *val)
         return;
     case 5:
         a = addr->p2->p1;
-        delete(a->p2);
+        delete_string(a->p2);
         a->p2 = value;
         return;
     }

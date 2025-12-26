@@ -118,7 +118,7 @@ node_t *compon(void)
     b->p2 = a;
     next  = 1;
     a     = look(b);
-    delete(b);
+    delete_string(b);
     b      = alloc();
     b->typ = 14;
     b->p1  = a;
@@ -172,7 +172,7 @@ node_t *expr(node_t *start, int eof, node_t *e)
     space_flag = 0;
 l1:
     if (space_ptr) {
-        comp     = space_ptr;
+        comp      = space_ptr;
         space_ptr = NULL;
     } else
         comp = compon();
@@ -295,9 +295,9 @@ node_t *match(node_t *start, node_t *m)
     node_t *a;
     int b, bal;
 
-    term = NULL;
-    bal  = 0;
-    list = alloc();
+    term  = NULL;
+    bal   = 0;
+    list  = alloc();
     m->p2 = list;
     comp  = start;
     if (!comp)
@@ -384,12 +384,12 @@ node_t *compile(void)
     node_t *m, *as;
     int t;
 
-    m = NULL;
-    l = NULL;
-    as = NULL;
-    xs = NULL;
-    xf = NULL;
-    t  = 0;
+    m    = NULL;
+    l    = NULL;
+    as   = NULL;
+    xs   = NULL;
+    xf   = NULL;
+    t    = 0;
     comp = compon();
     a    = comp->typ;
     if (a == 14) {
@@ -536,10 +536,10 @@ def:
     l->typ = 5; /*type function;*/
     {
         node_t *a_ptr = r;
-        l->p2  = a_ptr;
-        r      = nscomp();
-        l      = r;
-        a_ptr->p1  = l;
+        l->p2         = a_ptr;
+        r             = nscomp();
+        l             = r;
+        a_ptr->p1     = l;
         if (r->typ == 0)
             goto d4;
         if (r->typ != 16)
@@ -549,10 +549,10 @@ def:
         r = nscomp();
         if (r->typ != 14)
             goto derr;
-        a_ptr->p2  = r;
-        r->typ = 0;
-        a_ptr      = r;
-        r      = nscomp();
+        a_ptr->p2 = r;
+        r->typ    = 0;
+        a_ptr     = r;
+        r         = nscomp();
         if (r->typ == 4) {
             free_node(r);
             goto d2;
@@ -565,7 +565,7 @@ def:
         free_node(r);
 
     d4:
-        r     = compile();
+        r         = compile();
         a_ptr->p2 = NULL;
     }
     l->p1 = r;

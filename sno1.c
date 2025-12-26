@@ -3,28 +3,28 @@
  */
 #include "sno.h"
 
-int freesize = 0;
-node_t *freespace = NULL;
+int freesize              = 0;
+node_t *freespace         = NULL;
 node_t *freespace_current = NULL;
-node_t *freespace_end = NULL;
+node_t *freespace_end     = NULL;
 
-int fin = 0;
+int fin  = 0;
 int fout = 1;
 
 /* Global variables */
-int cfail = 0;
-int rfail = 0;
-node_t *freelist = NULL;
-node_t *namelist = NULL;
-int lc = 0;
-node_t *schar = NULL;
-node_t *lookf = NULL;
-node_t *looks = NULL;
-node_t *lookend = NULL;
+int cfail         = 0;
+int rfail         = 0;
+node_t *freelist  = NULL;
+node_t *namelist  = NULL;
+int lc            = 0;
+node_t *schar     = NULL;
+node_t *lookf     = NULL;
+node_t *looks     = NULL;
+node_t *lookend   = NULL;
 node_t *lookstart = NULL;
-node_t *lookdef = NULL;
-node_t *lookret = NULL;
-node_t *lookfret = NULL;
+node_t *lookdef   = NULL;
+node_t *lookret   = NULL;
+node_t *lookfret  = NULL;
 
 void mes(const char *s)
 {
@@ -37,7 +37,7 @@ node_t *init(const char *s, int t)
 
     a = cstr_to_node(s);
     b = look(a);
-    delete(a);
+    delete_string(a);
     b->typ = t;
     return (b);
 }
@@ -105,7 +105,7 @@ node_t *syspit(void)
     }
     b->p2 = c;
     if (rfail) {
-        delete(b);
+        delete_string(b);
         b = NULL;
     }
     return (b);
@@ -189,8 +189,8 @@ node_t *alloc(void)
                     exit(1);
                 }
                 freespace_current = freespace;
-                freespace_end = freespace + 200;
-                freesize = 200;
+                freespace_end     = freespace + 200;
+                freesize          = 200;
             } else {
                 /* Allocate new block and append */
                 node_t *new_block = (node_t *)malloc(alloc_size);
@@ -200,8 +200,8 @@ node_t *alloc(void)
                     exit(1);
                 }
                 freespace_current = new_block;
-                freespace_end = new_block + 200;
-                freesize = 200;
+                freespace_end     = new_block + 200;
+                freesize          = 200;
             }
         }
         f = freespace_current++;
@@ -416,12 +416,12 @@ node_t *dcat(node_t *a, node_t *b)
     node_t *c;
 
     c = cat(a, b);
-    delete(a);
-    delete(b);
+    delete_string(a);
+    delete_string(b);
     return (c);
 }
 
-void delete(node_t *string)
+void delete_string(node_t *string)
 {
     node_t *a, *b, *c;
 
@@ -440,7 +440,7 @@ void delete(node_t *string)
 void sysput(node_t *string)
 {
     syspot(string);
-    delete(string);
+    delete_string(string);
 }
 
 void dump(void)
@@ -459,11 +459,11 @@ void dump1(node_t *base)
         d = cstr_to_node("  ");
         e = dcat(c, d);
         sysput(cat(e, b->p1));
-        delete(e);
+        delete_string(e);
         if (b->typ == 1) {
             c = cstr_to_node("   ");
             sysput(cat(c, b->p2));
-            delete(c);
+            delete_string(c);
         }
         base = base->p2;
     }

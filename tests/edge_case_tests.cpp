@@ -28,7 +28,6 @@ TEST_F(EdgeCaseTest, EmptyProgram)
     std::string program = R"(
 start
 end    syspot = "end"
-end
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -40,7 +39,7 @@ TEST_F(EdgeCaseTest, UninitializedVariable)
 {
     std::string program = R"(
 start    syspot = x
-end
+end return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -56,7 +55,7 @@ start    x = "a"
     y = "b"
     z = x y x y x y x y x y x y x y x y
     syspot = z
-end
+end return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -73,7 +72,7 @@ start    a = "1"
     d = "4"
     result = a + b + c + d
     syspot = result
-end
+end return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -88,7 +87,7 @@ define id(x)
     return x
 start    result = id(id(id(id("5"))))
     syspot = result
-end
+end return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -105,7 +104,6 @@ found    syspot = "found"
     goto end
 notfound    syspot = "not found"
 end    syspot = "done"
-end
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -122,7 +120,6 @@ found    syspot = "found"
     goto end
 notfound    syspot = "not found"
 end    syspot = "done"
-end
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -137,7 +134,7 @@ define add(x, y)
     return x + y
 start    result = add("5")
     syspot = result
-end
+end return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -152,7 +149,7 @@ define add(x, y)
     return x + y
 start    result = add("5", "10", "15")
     syspot = result
-end
+end return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -169,7 +166,7 @@ start    x = "0"
     product = x * y
     syspot = sum
     syspot = product
-end
+end return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -186,7 +183,7 @@ start    x = "-10"
     diff = x - y
     syspot = sum
     syspot = diff
-end
+end return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -201,7 +198,7 @@ start    x = "1000"
     y = "2000"
     sum = x + y
     syspot = sum
-end
+end return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -214,7 +211,7 @@ TEST_F(EdgeCaseTest, StringWithQuotes)
     std::string program = R"(
 start    x = "hello 'world'"
     syspot = x
-end
+end return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -227,7 +224,7 @@ TEST_F(EdgeCaseTest, StringWithDoubleQuotes)
     std::string program = R"(
 start    x = 'hello "world"'
     syspot = x
-end
+end return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -242,7 +239,7 @@ start    x = "1"
     x = "2"
     x = "3"
     syspot = x
-end
+end return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -256,7 +253,7 @@ TEST_F(EdgeCaseTest, SelfReferencingAssignment)
 start    x = "5"
     x = x + "1"
     syspot = x
-end
+end return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -273,7 +270,6 @@ found    syspot = str
     goto end
 notfound    syspot = "not found"
 end    syspot = "done"
-end
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -286,7 +282,6 @@ TEST_F(EdgeCaseTest, GotoToUndefinedLabel)
     std::string program = R"(
 start    goto undefined
 end    syspot = "end"
-end
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -305,7 +300,6 @@ found    syspot = "found"
     goto end
 notfound    syspot = "not found"
 end    syspot = "done"
-end
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -324,7 +318,7 @@ recurse    n1 = n - "1"
     return n * factn1
 start    result = factorial("0")
     syspot = result
-end
+end return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -341,7 +335,6 @@ found    syspot = "found"
     goto end
 notfound    syspot = "not found"
 end    syspot = "done"
-end
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -358,7 +351,7 @@ start    a = "2"
     d = "5"
     result = a + b * c - d
     syspot = result
-end
+end return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -373,7 +366,7 @@ start    x = ""
     y = "test"
     concat = x y
     syspot = concat
-end
+end return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -387,7 +380,7 @@ TEST_F(EdgeCaseTest, PatternImmediateInExpression)
 start    x = "test"
     y = $x
     syspot = y
-end
+end return
 )";
 
     SnobolTestResult result = run_snobol_program(program);

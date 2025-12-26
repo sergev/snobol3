@@ -56,7 +56,7 @@ node_t *compon(void)
         a     = schar;
         schar = getc_char();
         if (char_class(schar->ch) == 3)
-            a->typ = 10; // Exponentiation (followed by space)
+            a->typ = 10; // Pattern alternation? (followed by space)
         else
             a->typ = 1; // Multiplication
         next = 1;

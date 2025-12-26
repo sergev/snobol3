@@ -30,7 +30,7 @@ define getvalue()
     return "42"
 start    x = getvalue()
     syspot = x
-end
+end return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -45,7 +45,7 @@ define double(x)
     return x + x
 start    result = double("5")
     syspot = result
-end
+end return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -60,7 +60,7 @@ define add(a, b)
     return a + b
 start    result = add("10", "20")
     syspot = result
-end
+end return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -75,7 +75,7 @@ define sum(a, b, c)
     return a + b + c
 start    result = sum("1", "2", "3")
     syspot = result
-end
+end return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -94,7 +94,7 @@ define hello()
     return "hello"
 start    x = hello()
     syspot = x
-end
+end return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -109,7 +109,7 @@ define multiply(x, y)
     return x * y
 start    result = multiply("6", "7")
     syspot = result
-end
+end return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -126,7 +126,7 @@ define multiply(x, y)
     return x * y
 start    result = multiply(add("2", "3"), "4")
     syspot = result
-end
+end return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -141,7 +141,7 @@ define getfive()
     return "5"
 start    result = getfive() + "10"
     syspot = result
-end
+end return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -158,7 +158,7 @@ start    a = "10"
     b = "20"
     result = add(a, b)
     syspot = result
-end
+end return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -177,7 +177,7 @@ define getstring()
     return "test"
 start    x = getstring()
     syspot = x
-end
+end return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -192,7 +192,7 @@ define calculate()
     return "10" + "20"
 start    result = calculate()
     syspot = result
-end
+end return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -207,7 +207,7 @@ define getten()
     return "10"
 start    result = getten() + getten()
     syspot = result
-end
+end return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -228,7 +228,7 @@ define testparam(x)
 start    a = "original"
     result = testparam("bound")
     syspot = a
-end
+end return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -245,7 +245,7 @@ define test(x)
 start    x = "original"
     result = test("param")
     syspot = x
-end
+end return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -265,7 +265,7 @@ recurse    n1 = n - "1"
     return n * factn1
 start    result = factorial("5")
     syspot = result
-end
+end return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -286,7 +286,6 @@ found    syspot = "function succeeded"
     goto end
 notfound    syspot = "function failed"
 end    syspot = "done"
-end
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -305,7 +304,7 @@ start    a = add("2", "3")
     b = multiply("4", "5")
     result = a + b
     syspot = result
-end
+end return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -322,7 +321,7 @@ found    return "found"
 notfound    return "not found"
 start    result = checkpattern("test string")
     syspot = result
-end
+end return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -339,7 +338,7 @@ define addtwo(x)
     return addone(addone(x))
 start    result = addtwo("5")
     syspot = result
-end
+end return
 )";
 
     SnobolTestResult result = run_snobol_program(program);

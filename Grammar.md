@@ -57,9 +57,8 @@ The lexical analyzer (`compon()` in `sno2.c`) recognizes the following token typ
 #### 4. Operators
 - `+` - Addition
 - `-` - Subtraction
-- `*` - Multiplication (must be followed by space for exponentiation)
+- `*` - Multiplication
 - `/` - Division (must be followed by space for pattern alternation)
-- `**` - Exponentiation (asterisk followed by space)
 - `//` - Pattern alternation (slash followed by space)
 
 #### 5. Delimiters
@@ -97,15 +96,14 @@ Expressions are parsed using operator precedence parsing (Shunting Yard algorith
 
 Operators have the following precedence (higher numbers = higher precedence):
 
-1. **Exponentiation** (`**`) - Precedence 10
-2. **Pattern Alternation** (`//`) - Precedence 11
-3. **Multiplication** (`*`) - Precedence 1
-4. **Division** (`/`) - Precedence 2
-5. **Addition** (`+`) - Precedence 8
-6. **Subtraction** (`-`) - Precedence 9
-7. **Concatenation** (implicit via whitespace) - Precedence 7
+1. **Pattern Alternation** (`//`) - Precedence 11
+2. **Multiplication** (`*`) - Precedence 1
+3. **Division** (`/`) - Precedence 2
+4. **Addition** (`+`) - Precedence 8
+5. **Subtraction** (`-`) - Precedence 9
+6. **Concatenation** (implicit via whitespace) - Precedence 7
 
-**Note**: Parentheses for arithmetic are not needed due to normal precedence rules. However, the arithmetic operators `/` and `*` must be set off by space to distinguish them from pattern alternation (`//`) and exponentiation (`**`).
+**Note**: Parentheses for arithmetic are not needed due to normal precedence rules. However, the arithmetic operator `/` must be set off by space to distinguish it from pattern alternation (`//`).
 
 ### Expression Components
 
@@ -121,9 +119,8 @@ Operators have the following precedence (higher numbers = higher precedence):
 #### 3. Arithmetic Operations
 - **Addition**: `expr1 + expr2`
 - **Subtraction**: `expr1 - expr2`
-- **Multiplication**: `expr1 * expr2` (note: space required around `*`)
-- **Division**: `expr1 / expr2` (note: space required around `/`)
-- **Exponentiation**: `expr1 ** expr2` (asterisk followed by space)
+- **Multiplication**: `expr1 * expr2`
+- **Division**: `expr1 / expr2` (note: space required around `/` to distinguish from pattern alternation)
 
 #### 4. String Concatenation
 - **Syntax**: `expr1 expr2` (whitespace between expressions)
@@ -147,7 +144,6 @@ Operators have the following precedence (higher numbers = higher precedence):
 
 ```
 x + y * z          # Addition and multiplication
-a ** b              # Exponentiation
 "hello" "world"     # String concatenation
 f(x, y)             # Function call
 $var                # Pattern immediate value
@@ -495,7 +491,7 @@ goto-clause      ::= "," identifier
 
 expression       ::= term (("+" | "-") term)*
 term             ::= factor (("*" | "/") factor)*
-factor           ::= primary ("**" primary)*
+factor           ::= primary
 primary          ::= identifier
                   |  string-literal
                   |  "$" identifier

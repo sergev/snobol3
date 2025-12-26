@@ -32,7 +32,6 @@ found    syspot = "found"
     goto end
 notfound    syspot = "not found"
 end    syspot = "done"
-end
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -49,7 +48,6 @@ found    syspot = "found"
     goto end
 notfound    syspot = "not found"
 end    syspot = "done"
-end
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -67,7 +65,6 @@ found    syspot = "found"
     goto end
 notfound    syspot = "not found"
 end    syspot = "done"
-end
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -85,7 +82,6 @@ found    syspot = "found"
     goto end
 notfound    syspot = "not found"
 end    syspot = "done"
-end
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -102,7 +98,6 @@ found    syspot = "found"
     goto end
 notfound    syspot = "not found"
 end    syspot = "done"
-end
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -116,7 +111,7 @@ TEST_F(PatternTest, PatternReplacement)
 start    str = "hello world"
     str "world" = "universe"
     syspot = str
-end
+end return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -133,7 +128,6 @@ found    syspot = str
     goto end
 notfound    syspot = "pattern not found"
 end    syspot = "done"
-end
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -154,7 +148,6 @@ found    syspot = "found"
     goto end
 notfound    syspot = "not found"
 end    syspot = "done"
-end
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -171,7 +164,6 @@ found    syspot = "found"
     goto end
 notfound    syspot = "not found"
 end    syspot = "done"
-end
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -188,7 +180,6 @@ found    syspot = "found"
     goto end
 notfound    syspot = "not found"
 end    syspot = "done"
-end
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -207,7 +198,6 @@ found    syspot = "found"
     goto end
 notfound    syspot = "not found"
 end    syspot = "done"
-end
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -228,7 +218,6 @@ found    syspot = "found"
     goto end
 notfound    syspot = "not found"
 end    syspot = "done"
-end
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -245,7 +234,6 @@ found    syspot = "found"
     goto end
 notfound    syspot = "not found"
 end    syspot = "done"
-end
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -265,7 +253,6 @@ start    str = "hello"
 success    syspot = "success"
     goto end
 end    syspot = "done"
-end
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -282,7 +269,6 @@ success    syspot = "success"
     goto end
 failure    syspot = "failure"
 end    syspot = "done"
-end
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -297,7 +283,6 @@ start    str = "hello"
     str "hello", s(success)
 success    syspot = "success"
 end    syspot = "done"
-end
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -314,7 +299,6 @@ start    str = "hello"
     goto end
 failure    syspot = "failure"
 end    syspot = "done"
-end
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -330,7 +314,7 @@ start    str = "hello hello"
 cont    syspot = str
     goto start
 done    syspot = str
-end
+end return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -347,7 +331,6 @@ found    syspot = "found"
     goto end
 notfound    syspot = "not found"
 end    syspot = "done"
-end
 )";
 
     SnobolTestResult result = run_snobol_program(program);

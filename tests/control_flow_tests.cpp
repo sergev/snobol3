@@ -30,7 +30,6 @@ start    syspot = "start"
     goto target
 target    syspot = "target"
 end    syspot = "end"
-end
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -43,7 +42,7 @@ TEST_F(ControlFlowTest, GotoAfterAssignment)
     std::string program = R"(
 start    x = "10", next
 next    syspot = x
-end
+end return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -58,7 +57,7 @@ start    x = "5"
     y = "10"
     x + y, next
 next    syspot = "done"
-end
+end return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -75,7 +74,6 @@ two    syspot = "2"
     goto three
 three    syspot = "3"
 end    syspot = "end"
-end
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -96,7 +94,6 @@ success    syspot = "success"
     goto end
 failure    syspot = "failure"
 end    syspot = "done"
-end
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -113,7 +110,6 @@ success    syspot = "success"
     goto end
 failure    syspot = "failure"
 end    syspot = "done"
-end
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -130,7 +126,6 @@ start    str = "hello"
     goto end
 success    syspot = "success"
 end    syspot = "done"
-end
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -147,7 +142,6 @@ start    str = "hello"
     goto end
 success    syspot = "success"
 end    syspot = "done"
-end
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -164,7 +158,6 @@ start    str = "hello"
     goto end
 failure    syspot = "failure"
 end    syspot = "done"
-end
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -181,7 +174,6 @@ start    str = "hello"
     goto end
 failure    syspot = "failure"
 end    syspot = "done"
-end
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -198,7 +190,6 @@ found    syspot = "found"
     goto end
 notfound    syspot = "not found"
 end    syspot = "done"
-end
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -211,7 +202,7 @@ TEST_F(ControlFlowTest, AssignmentWithGoto)
     std::string program = R"(
 start    x = "10", next
 next    syspot = x
-end
+end return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -231,7 +222,6 @@ loop    count = count + "1"
     count = "5", (done, loop)
 done    syspot = count
 end    syspot = "end"
-end
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -248,7 +238,6 @@ zero    syspot = "zero"
     goto end
 nonzero    syspot = "nonzero"
 end    syspot = "done"
-end
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -265,7 +254,6 @@ zero    syspot = "zero"
     goto end
 nonzero    syspot = "nonzero"
 end    syspot = "done"
-end
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -284,7 +272,6 @@ exit    syspot = "exit"
     goto end
 continue    syspot = "continue"
 end    syspot = "end"
-end
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -302,7 +289,6 @@ second    syspot = "both matched"
     goto end
 fail    syspot = "failed"
 end    syspot = "done"
-end
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -322,7 +308,6 @@ neg    syspot = "negative"
     goto end
 pos    syspot = "positive"
 end    syspot = "done"
-end
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -341,7 +326,6 @@ done    syspot = count
 more    syspot = "more"
     goto end
 end    syspot = "finished"
-end
 )";
 
     SnobolTestResult result = run_snobol_program(program);

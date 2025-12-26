@@ -1,5 +1,10 @@
 #include "sno.h"
 
+//
+// Parse the next component (token) from the input stream.
+// Returns a node representing the token with appropriate type code.
+// Handles operators, literals, identifiers, and special characters.
+//
 node_t *compon(void)
 {
     node_t *a, *b;
@@ -15,15 +20,15 @@ node_t *compon(void)
         return (a);
     }
     switch (class(schar->ch)) {
-    case 1:
+    case 1: // Right parenthesis
         schar->typ = 5;
         return (schar);
 
-    case 2:
+    case 2: // Left parenthesis
         schar->typ = 16;
         return (schar);
 
-    case 3:
+    case 3: // Whitespace
         a = schar;
         for (;;) {
             schar = getc_char();
@@ -39,45 +44,46 @@ node_t *compon(void)
         a->typ = 7;
         return (a);
 
-    case 4:
+    case 4: // Plus operator
         schar->typ = 8;
         return (schar);
 
-    case 5:
+    case 5: // Minus operator
         schar->typ = 9;
         return (schar);
 
-    case 6:
+    case 6: // Asterisk - could be multiplication or exponentiation
         a     = schar;
         schar = getc_char();
         if (class(schar->ch) == 3)
-            a->typ = 10;
+            a->typ = 10; // Exponentiation (followed by space)
         else
-            a->typ = 1;
+            a->typ = 1; // Multiplication
         next = 1;
         return (a);
 
-    case 7:
+    case 7: // Division - could be division or pattern alternation
         a     = schar;
         schar = getc_char();
         if (class(schar->ch) == 3)
-            a->typ = 11;
+            a->typ = 11; // Pattern alternation (followed by space)
         else
-            a->typ = 2;
+            a->typ = 2; // Division
         next = 1;
         return (a);
 
-    case 8:
+    case 8: // Dollar sign (pattern immediate value)
         schar->typ = 12;
         return (schar);
 
-    case 9:
+    case 9: // String literal delimiter
         c = schar->ch;
         a = getc_char();
         if (a == NULL)
             goto lerr;
         b = schar;
         if (a->ch == c) {
+            // Empty string
             free_node(schar);
             a->typ = 15;
             a->p1  = NULL;
@@ -99,14 +105,15 @@ node_t *compon(void)
         schar->p1  = b;
         return (schar);
 
-    case 10:
+    case 10: // Equals sign
         schar->typ = 3;
         return (schar);
 
-    case 11:
+    case 11: // Comma
         schar->typ = 4;
         return (schar);
     }
+    // Identifier or keyword - collect characters until delimiter
     b     = alloc();
     b->p1 = a = schar;
     schar     = getc_char();
@@ -120,11 +127,14 @@ node_t *compon(void)
     a     = look(b);
     delete_string(b);
     b      = alloc();
-    b->typ = 14;
+    b->typ = 14; // Variable reference
     b->p1  = a;
     return (b);
 }
 
+//
+// Get the next non-space component (skip whitespace tokens).
+//
 node_t *nscomp(void)
 {
     node_t *c;
@@ -134,6 +144,10 @@ node_t *nscomp(void)
     return (c);
 }
 
+//
+// Push an element onto a stack (implemented as a linked list).
+// Returns the new top of stack.
+//
 node_t *push(node_t *stack)
 {
     node_t *a;
@@ -142,6 +156,10 @@ node_t *push(node_t *stack)
     return (a);
 }
 
+//
+// Pop an element from a stack.
+// Returns the new top of stack after removing the top element.
+//
 node_t *pop(node_t *stack)
 {
     node_t *a, *s;
@@ -154,6 +172,11 @@ node_t *pop(node_t *stack)
     return (a);
 }
 
+//
+// Parse an expression using operator precedence parsing (Shunting Yard algorithm).
+// Handles infix operators, function calls, and parentheses.
+// Returns the compiled expression tree.
+//
 node_t *expr(node_t *start, int eof, node_t *e)
 {
     node_t *stack, *list, *comp;
@@ -163,13 +186,14 @@ node_t *expr(node_t *start, int eof, node_t *e)
     node_t *a, *b, *c;
     int d;
 
-    list       = alloc();
+    // Initialize expression parser
+    list       = alloc(); // Output list (postfix expression)
     e->p2      = list;
-    stack      = push(NULL);
-    stack->typ = eof;
-    operand    = 0;
-    space_ptr  = start;
-    space_flag = 0;
+    stack      = push(NULL); // Operator stack
+    stack->typ = eof;        // End-of-expression marker (lowest precedence)
+    operand    = 0;          // Flag: expecting operand (1) or operator (0)
+    space_ptr  = start;      // Deferred component (for concatenation)
+    space_flag = 0;          // Flag: space seen (implies concatenation)
 l1:
     if (space_ptr) {
         comp      = space_ptr;
@@ -180,42 +204,42 @@ l1:
 l3:
     op = comp->typ;
     switch (op) {
-    case 7:
+    case 7:             // Whitespace - used for concatenation
         space_flag = 1; /* Mark that we had a space */
         free_node(comp);
         comp = compon();
         goto l3;
 
-    case 10:
+    case 10: // Exponentiation operator
         if (space_flag == 0) {
-            comp->typ = 1;
+            comp->typ = 1; // Treat as multiplication if no space
             goto l3;
         }
 
-    case 11:
+    case 11: // Pattern alternation
         if (space_flag == 0) {
-            comp->typ = 2;
+            comp->typ = 2; // Treat as division if no space
             goto l3;
         }
 
-    case 8:
-    case 9:
+    case 8: // Addition
+    case 9: // Subtraction
         if (operand == 0)
             writes("no operand preceding operator");
         operand = 0;
         goto l5;
 
-    case 14:
-    case 15:
+    case 14: // Variable
+    case 15: // String literal
         if (operand == 0) {
             operand = 1;
             goto l5;
         }
         if (space_flag == 0)
             goto l7;
-        goto l4;
+        goto l4; // Space means concatenation
 
-    case 12:
+    case 12: // Pattern immediate value ($)
         if (operand == 0)
             goto l5;
         if (space_flag)
@@ -223,32 +247,33 @@ l3:
     l7:
         writes("illegal juxtaposition of operands");
 
-    case 16:
+    case 16: // Left parenthesis - function call or grouping
         if (operand == 0)
             goto l5;
         if (space_flag)
             goto l4;
         b  = compon();
-        op = comp->typ = 13;
+        op = comp->typ = 13; // Function call
         if (b->typ == 5) {
+            // Empty argument list
             comp->p1 = NULL;
             goto l10;
         }
         comp->p1 = a = alloc();
-        b            = expr(b, 6, a);
-        while ((d = b->typ) == 4) {
+        b            = expr(b, 6, a); // Parse first argument
+        while ((d = b->typ) == 4) {   // Comma - more arguments
             a->p1 = b;
             a     = b;
             b     = expr(NULL, 6, a);
         }
-        if (d != 5)
+        if (d != 5) // Should end with right parenthesis
             writes("error in function");
         a->p1 = NULL;
     l10:
         free_node(b);
         goto l6;
 
-    l4:
+    l4: // Implicit concatenation (space between operands)
         space_ptr  = comp;
         op         = 7;
         operand    = 0;
@@ -260,27 +285,30 @@ l3:
 l5:
     space_flag = 0;
 l6:
+    // Operator precedence handling
     op1 = stack->typ;
     if (op > op1) {
+        // Push operator onto stack
         stack = push(stack);
         if (op == 16)
-            op = 6;
+            op = 6; // Treat left paren as low precedence
         stack->typ = op;
         stack->p1  = comp;
         goto l1;
     }
+    // Pop and process operators
     c     = stack->p1;
     stack = pop(stack);
     if (stack == NULL) {
         list->typ = 0;
         return (comp);
     }
-    if (op1 == 6) {
-        if (op != 5)
+    if (op1 == 6) {  // Left parenthesis marker
+        if (op != 5) // Should match right parenthesis
             writes("too many ('s");
         goto l1;
     }
-    if (op1 == 7)
+    if (op1 == 7) // Concatenation operator
         c = alloc();
     list->typ = op1;
     list->p2  = c->p1;
@@ -289,6 +317,11 @@ l6:
     goto l6;
 }
 
+//
+// Parse a pattern (match statement pattern).
+// Handles pattern components, alternation, and grouping.
+// Returns the compiled pattern structure.
+//
 node_t *match(node_t *start, node_t *m)
 {
     node_t *list, *comp, *term;
@@ -309,25 +342,26 @@ l3:
     list         = a;
 l2:
     switch (comp->typ) {
-    case 7:
+    case 7: // Whitespace - skip
         free_node(comp);
         comp = compon();
         goto l2;
 
-    case 12:
-    case 14:
-    case 15:
-    case 16:
+    case 12: // Pattern immediate ($)
+    case 14: // Variable
+    case 15: // String literal
+    case 16: // Left parenthesis
         term      = NULL;
-        comp      = expr(comp, 6, list);
-        list->typ = 1;
+        comp      = expr(comp, 6, list); // Parse as expression
+        list->typ = 1;                   // Pattern component
         goto l3;
 
-    case 1:
+    case 1: // Multiplication operator - pattern alternation
         free_node(comp);
         comp = compon();
         bal  = 0;
         if (comp->typ == 16) {
+            // Balanced pattern (parenthesized)
             bal = 1;
             free_node(comp);
             comp = compon();
@@ -335,39 +369,39 @@ l2:
         a = alloc();
         b = comp->typ;
         if (b == 2 || b == 5 || b == 10 || b == 1)
-            a->p1 = NULL;
+            a->p1 = NULL; // No left side
         else {
-            comp  = expr(comp, 11, a);
+            comp  = expr(comp, 11, a); // Parse left side
             a->p1 = a->p2;
         }
         if (comp->typ != 2) {
-            a->p2 = NULL;
+            a->p2 = NULL; // No right side
         } else {
             free_node(comp);
-            comp = expr(NULL, 6, a);
+            comp = expr(NULL, 6, a); // Parse right side
         }
         if (bal) {
-            if (comp->typ != 5)
+            if (comp->typ != 5) // Should end with right paren
                 goto merr;
             free_node(comp);
             comp = compon();
         }
         b = comp->typ;
-        if (b != 1 && b != 10)
+        if (b != 1 && b != 10) // Should be alternation or equals
             goto merr;
         list->p2  = a;
-        list->typ = 2;
+        list->typ = 2; // Alternation pattern
         a->typ    = bal;
         free_node(comp);
         comp = compon();
         if (bal)
             term = NULL;
         else
-            term = list;
+            term = list; // Mark for potential concatenation
         goto l3;
     }
     if (term)
-        term->typ = 3;
+        term->typ = 3; // Mark term as concatenated
     list->typ = 0;
     return (comp);
 
@@ -376,6 +410,11 @@ merr:
     return NULL;
 }
 
+//
+// Compile a single Snobol statement.
+// Handles labels, assignments, pattern matching, goto statements, and function definitions.
+// Returns a compiled statement node.
+//
 node_t *compile(void)
 {
     node_t *b, *comp;
@@ -384,14 +423,15 @@ node_t *compile(void)
     node_t *m, *as;
     int t;
 
-    m    = NULL;
-    l    = NULL;
-    as   = NULL;
-    xs   = NULL;
-    xf   = NULL;
-    t    = 0;
+    m    = NULL; // Match pattern
+    l    = NULL; // Label
+    as   = NULL; // Assignment target
+    xs   = NULL; // Success goto
+    xf   = NULL; // Failure goto
+    t    = 0;    // Statement type
     comp = compon();
     a    = comp->typ;
+    // Check for optional label
     if (a == 14) {
         l = comp->p1;
         free_node(comp);
@@ -401,16 +441,19 @@ node_t *compile(void)
     if (a != 7)
         writes("no space beginning statement");
     free_node(comp);
+    // Check for function definition
     if (l == lookdef)
         goto def;
+    // Parse expression (subject of statement)
     comp = expr(NULL, 11, r = alloc());
     a    = comp->typ;
-    if (a == 0)
+    if (a == 0) // End of statement
         goto asmble;
-    if (a == 2)
+    if (a == 2) // Comma - goto statement
         goto xfer;
-    if (a == 3)
+    if (a == 3) // Equals - assignment
         goto assig;
+    // Pattern matching statement
     m    = alloc();
     comp = match(comp, m);
     a    = comp->typ;
@@ -424,6 +467,7 @@ node_t *compile(void)
     return NULL;
 
 assig:
+    // Parse assignment value
     free_node(comp);
     comp = expr(NULL, 6, as = alloc());
     a    = comp->typ;
@@ -435,23 +479,24 @@ assig:
     return NULL;
 
 xfer:
+    // Parse goto target(s)
     free_node(comp);
     comp = compon();
     a    = comp->typ;
-    if (a == 16)
+    if (a == 16) // Left paren - both success and failure targets
         goto xboth;
-    if (a == 0) {
+    if (a == 0) { // End of statement - no goto
         if (xs != NULL || xf != NULL)
             goto asmble;
         goto xerr;
     }
-    if (a != 14)
+    if (a != 14) // Should be a label
         goto xerr;
     b = comp->p1;
     free_node(comp);
-    if (b == looks)
+    if (b == looks) // "s" - success goto
         goto xsuc;
-    if (b == lookf)
+    if (b == lookf) // "f" - failure goto
         goto xfail;
 
 xerr:
@@ -459,19 +504,21 @@ xerr:
     return NULL;
 
 xboth:
+    // Parse both success and failure goto targets: (success, failure)
     free_node(comp);
     xs   = alloc();
     xf   = alloc();
-    comp = expr(NULL, 6, xs);
-    if (comp->typ != 5)
+    comp = expr(NULL, 6, xs); // Parse success target
+    if (comp->typ != 5)       // Should end with right paren
         goto xerr;
-    xf->p2 = xs->p2;
+    xf->p2 = xs->p2; // Share expression list
     comp   = compon();
     if (comp->typ != 0)
         goto xerr;
     goto asmble;
 
 xsuc:
+    // Parse success goto: s(label)
     if (xs)
         goto xerr;
     comp = compon();
@@ -483,6 +530,7 @@ xsuc:
     goto xfer;
 
 xfail:
+    // Parse failure goto: f(label)
     if (xf)
         goto xerr;
     comp = compon();
@@ -494,41 +542,44 @@ xfail:
     goto xfer;
 
 asmble:
+    // Assemble the compiled statement
     if (l) {
         if (l->typ)
             writes("name doubly defined");
         l->p2  = comp;
         l->typ = 2; /* type label;*/
     }
-    comp->p2 = r;
+    comp->p2 = r; // Link to expression
     if (m) {
-        t++;
+        t++; // Type 1: pattern matching statement
         r->p1 = m;
         r     = m;
     }
     if (as) {
-        t     = 2;
+        t     = 2; // Type 2: assignment statement
         r->p1 = as;
         r     = as;
     }
+    // Build goto structure: g->p1 = success goto, g->p2 = failure goto
     (g = alloc())->p1 = NULL;
     if (xs) {
-        g->p1 = xs->p2;
+        g->p1 = xs->p2; // Success goto target (expression list)
         free_node(xs);
     }
     g->p2 = NULL;
     if (xf) {
-        g->p2 = xf->p2;
+        g->p2 = xf->p2; // Failure goto target (expression list)
         free_node(xf);
     }
-    r->p1     = g;
-    comp->typ = t;
-    comp->ch  = lc;
+    r->p1     = g;  // Link goto structure to statement
+    comp->typ = t;  // Statement type: 0=simple, 1=match, 2=assign
+    comp->ch  = lc; // Store line number
     return (comp);
 
 def:
+    // Parse function definition: define name(params) body
     r = nscomp();
-    if (r->typ != 14)
+    if (r->typ != 14) // Should be function name
         goto derr;
     l = r->p1;
     if (l->typ)
@@ -540,35 +591,37 @@ def:
         r             = nscomp();
         l             = r;
         a_ptr->p1     = l;
-        if (r->typ == 0)
+        if (r->typ == 0) // No parameters
             goto d4;
-        if (r->typ != 16)
+        if (r->typ != 16) // Should start with left paren
             goto derr;
 
     d2:
+        // Parse parameter list
         r = nscomp();
-        if (r->typ != 14)
+        if (r->typ != 14) // Should be parameter name
             goto derr;
         a_ptr->p2 = r;
         r->typ    = 0;
         a_ptr     = r;
         r         = nscomp();
-        if (r->typ == 4) {
+        if (r->typ == 4) { // Comma - more parameters
             free_node(r);
             goto d2;
         }
-        if (r->typ != 5)
+        if (r->typ != 5) // Should end with right paren
             goto derr;
         free_node(r);
-        if ((r = compon())->typ != 0)
+        if ((r = compon())->typ != 0) // Should be end of statement
             goto derr;
         free_node(r);
 
     d4:
+        // Compile function body
         r         = compile();
         a_ptr->p2 = NULL;
     }
-    l->p1 = r;
+    l->p1 = r; // Link function body
     l->p2 = NULL;
     return (r);
 

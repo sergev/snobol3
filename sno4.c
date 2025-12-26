@@ -3,6 +3,11 @@
 /*
  * sno4
  */
+//
+// Evaluate an operand from the evaluation stack.
+// Handles variable references, function calls, and special values.
+// Returns the value as a string node.
+//
 node_t *eval_operand(node_t *ptr)
 {
     node_t *a, *p;
@@ -10,30 +15,36 @@ node_t *eval_operand(node_t *ptr)
     p = ptr;
     a = p->p1;
     if (p->typ == 0) {
+        // Variable reference - get its value
         switch (a->typ) {
-        case 0:
-            a->typ = 1;
+        case 0:         // Uninitialized variable
+            a->typ = 1; // Initialize to empty string
             /* fall through */
-        case 1:
+        case 1: // String variable
             goto l1;
-        case 3:
+        case 3: // System function syspit (input)
             flush();
             return (syspit());
-        case 5:
+        case 5: // Function - get function body
             a = a->p2->p1;
             goto l1;
-        case 6:
+        case 6: // Special value - free space count
             return (binstr(nfree()));
         default:
             writes("attempt to take an illegal value");
             goto l1;
         }
     l1:
-        a = copy(a->p2);
+        a = copy(a->p2); // Copy variable's value
     }
     return (a);
 }
 
+//
+// Evaluate an expression tree using postfix evaluation.
+// Processes operators and operands from the compiled expression.
+// Returns the result as a string node.
+//
 node_t *eval(node_t *e, int t)
 {
     node_t *list, *a3, *a4, *a3base;
@@ -41,10 +52,11 @@ node_t *eval(node_t *e, int t)
     int op;
     node_t *a2;
 
+    // Postfix expression evaluation using a stack
     if (rfail == 1)
         return (NULL);
-    stack = NULL;
-    list  = e;
+    stack = NULL; // Evaluation stack: holds operands and operators
+    list  = e;    // Current position in expression list
     goto l1;
 advanc:
     list = list->p1;
@@ -52,11 +64,13 @@ l1:
     op = list->typ;
     switch (op) {
     default:
-    case 0:
+    case 0: // End of expression
         if (t == 1) {
+            // Return value mode
             a1 = eval_operand(stack);
             goto e1;
         }
+        // Assignment mode - get variable reference
         if (stack->typ == 1)
             writes("attempt to store in a value");
         a1 = stack->p1;
@@ -65,13 +79,13 @@ l1:
         if (stack)
             writes("phase error");
         return (a1);
-    case 12:
+    case 12: // Pattern immediate value ($)
         a1        = eval_operand(stack);
-        stack->p1 = look(a1);
+        stack->p1 = look(a1); // Look up variable
         delete_string(a1);
-        stack->typ = 0;
+        stack->typ = 0; // Mark as variable reference
         goto advanc;
-    case 13:
+    case 13: // Function call
         if (stack->typ)
             writes("illegal function");
         a1 = stack->p1;
@@ -79,13 +93,14 @@ l1:
             writes("illegal function");
         a1 = a1->p2;
         {
-            node_t *op_ptr = a1->p1;
+            node_t *op_ptr = a1->p1; // Function body
             a3base = a3 = alloc();
-            a3->p2      = op_ptr->p2;
+            a3->p2      = op_ptr->p2; // Save return address
             op_ptr->p2  = NULL;
-            a1          = a1->p2;
-            a2          = list->p2;
+            a1          = a1->p2;   // Parameter list
+            a2          = list->p2; // Argument list
         f1:
+            // Match parameters to arguments
             if (a1 != NULL && a2 != NULL)
                 goto f2;
             if (a1 != a2)
@@ -93,25 +108,29 @@ l1:
             op_ptr = op_ptr->p1;
             goto f3;
         f2:
+            // Bind parameter to argument value
             a3->p1 = a4 = alloc();
             a3          = a4;
-            a3->p2      = eval_operand(a1);
+            a3->p2      = eval_operand(a1);  // Save old parameter value
             assign(a1->p1, eval(a2->p2, 1)); /* recursive */
             a1 = a1->p2;
             a2 = a2->p1;
             goto f1;
         f3:
+            // Execute function body
             op_ptr = execute(op_ptr); /* recursive */
             if (op_ptr)
                 goto f3;
+            // Restore parameter values
             a1 = stack->p1->p2;
             {
                 node_t *op_ptr2 = a1->p1;
                 a3              = a3base;
-                stack->p1       = op_ptr2->p2;
+                stack->p1       = op_ptr2->p2; // Get return value
                 stack->typ      = 1;
-                op_ptr2->p2     = a3->p2;
+                op_ptr2->p2     = a3->p2; // Restore return address
             f4:
+                // Restore each parameter
                 a4 = a3->p1;
                 free_node(a3);
                 a3 = a4;
@@ -122,11 +141,12 @@ l1:
                 goto f4;
             }
         }
-    case 11:
-    case 10:
-    case 9:
-    case 8:
-    case 7:
+    case 11: // Division
+    case 10: // Multiplication
+    case 9:  // Subtraction
+    case 8:  // Addition
+    case 7:  // Concatenation
+        // Binary operator - evaluate both operands
         a1    = eval_operand(stack);
         stack = pop(stack);
         a2    = eval_operand(stack);
@@ -136,22 +156,22 @@ l1:
         stack->p1  = a3;
         stack->typ = 1;
         goto advanc;
-    case 15:
+    case 15: // String literal
         a1 = copy(list->p2);
         {
             int a2_int = 1;
             stack      = push(stack);
             stack->p1  = a1;
-            stack->typ = a2_int;
+            stack->typ = a2_int; // Mark as value
             goto advanc;
         }
-    case 14:
+    case 14: // Variable reference
         a1 = list->p2;
         {
             int a2_int = 0;
             stack      = push(stack);
             stack->p1  = a1;
-            stack->typ = a2_int;
+            stack->typ = a2_int; // Mark as variable reference
             goto advanc;
         }
         goto advanc;
@@ -159,71 +179,83 @@ l1:
     return NULL;
 }
 
+//
+// Execute a binary operator on two string operands.
+// Converts strings to numbers for arithmetic operations.
+//
 node_t *doop(int op, node_t *arg1, node_t *arg2)
 {
     switch (op) {
-    case 11:
+    case 11: // Division
         return (divide(arg1, arg2));
-    case 10:
+    case 10: // Multiplication
         return (mult(arg1, arg2));
-    case 8:
+    case 8: // Addition
         return (add(arg1, arg2));
-    case 9:
+    case 9: // Subtraction
         return (sub(arg1, arg2));
-    case 7:
+    case 7: // Concatenation
         return (cat(arg1, arg2));
     }
     return (NULL);
 }
 
+//
+// Execute a compiled statement.
+// Handles simple statements, pattern matching, assignments, and goto operations.
+// Returns the next statement to execute, or NULL to stop.
+//
 node_t *execute(node_t *e)
 {
     node_t *r, *b, *c;
     node_t *m, *ca, *d, *a;
 
-    r  = e->p2;
-    lc = e->ch;
+    r  = e->p2; // Statement data
+    lc = e->ch; // Line number
     switch (e->typ) {
-    case 0: /*  r g */
+    case 0: /*  r g - Simple statement: evaluate expression and goto */
         a = r->p1;
         delete_string(eval(r->p2, 1));
         goto xsuc;
-    case 1: /*  r m g */
-        m = r->p1;
-        a = m->p1;
-        b = eval(r->p2, 1);
-        c = search(m, b);
+    case 1:                 /*  r m g - Pattern matching: match pattern against subject */
+        m = r->p1;          // Match pattern
+        a = m->p1;          // Goto structure
+        b = eval(r->p2, 1); // Evaluate subject
+        c = search(m, b);   // Search for pattern
         delete_string(b);
         if (c == NULL)
             goto xfail;
         free_node(c);
         goto xsuc;
-    case 2: /*  r a g */
-        ca = r->p1;
-        a  = ca->p1;
-        b  = eval(r->p2, 0);
-        assign(b, eval(ca->p2, 1));
+    case 2:                         /*  r a g - Assignment: assign value to variable */
+        ca = r->p1;                 // Assignment structure
+        a  = ca->p1;                // Goto structure
+        b  = eval(r->p2, 0);        // Get variable reference
+        assign(b, eval(ca->p2, 1)); // Assign value
         goto xsuc;
-    case 3: /*  r m a g */
-        m  = r->p1;
-        ca = m->p1;
-        a  = ca->p1;
-        b  = eval(r->p2, 0);
-        d  = search(m, b->p2);
+    case 3:                    /*  r m a g - Pattern matching with assignment */
+        m  = r->p1;            // Match pattern
+        ca = m->p1;            // Assignment structure
+        a  = ca->p1;           // Goto structure
+        b  = eval(r->p2, 0);   // Get variable reference
+        d  = search(m, b->p2); // Search pattern in variable's value
         if (d == NULL)
             goto xfail;
-        c = eval(ca->p2, 1);
+        c = eval(ca->p2, 1); // Evaluate replacement value
         if (d->p1 == NULL) {
+            // Match at end - append
             free_node(d);
             assign(b, cat(c, b->p2));
             delete_string(c);
             goto xsuc;
         }
         if (d->p2 == b->p2->p2) {
+            // Match entire string - replace
             assign(b, c);
             free_node(d);
             goto xsuc;
         }
+        // Match in middle - replace matched portion
         (r = alloc())->p1 = d->p2->p1;
         r->p2             = b->p2->p2;
         assign(b, cat(c, r));
@@ -233,29 +265,37 @@ node_t *execute(node_t *e)
         goto xsuc;
     }
 xsuc:
+    // Success path - check for goto
     if (rfail)
         goto xfail;
-    b = a->p1;
+    b = a->p1; // Success goto
     goto xboth;
 xfail:
+    // Failure path - check for goto
     rfail = 0;
-    b     = a->p2;
+    b     = a->p2; // Failure goto
 xboth:
     if (b == NULL) {
+        // No goto - continue to next statement
         return (e->p1);
     }
+    // Evaluate goto target
     b = eval(b, 0);
-    if (b == lookret)
+    if (b == lookret) // Return statement
         return (NULL);
-    if (b == lookfret) {
+    if (b == lookfret) { // Failure return
         rfail = 1;
         return (NULL);
     }
-    if (b->typ != 2)
+    if (b->typ != 2) // Should be a label
         writes("attempt to transfer to non-label");
-    return (b->p2);
+    return (b->p2); // Return label's statement
 }
 
+//
+// Assign a value to a variable or output location.
+// Handles variable assignment, output, and function parameter assignment.
+//
 void assign(node_t *adr, node_t *val)
 {
     node_t *a, *addr, *value;
@@ -263,6 +303,7 @@ void assign(node_t *adr, node_t *val)
     addr  = adr;
     value = val;
     if (rfail == 1) {
+        // Don't assign on failure
         delete_string(value);
         return;
     }
@@ -270,17 +311,17 @@ void assign(node_t *adr, node_t *val)
     default:
         writes("attempt to make an illegal assignment");
         return;
-    case 0:
+    case 0: // Uninitialized variable
         addr->typ = 1;
         /* fall through */
-    case 1:
+    case 1: // String variable
         delete_string(addr->p2);
         addr->p2 = value;
         return;
-    case 4:
+    case 4: // Output (syspot)
         sysput(value);
         return;
-    case 5:
+    case 5: // Function parameter
         a = addr->p2->p1;
         delete_string(a->p2);
         a->p2 = value;

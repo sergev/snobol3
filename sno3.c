@@ -3,6 +3,11 @@
 /*
  * sno3
  */
+//
+// Extend a balanced pattern match (handles nested parentheses).
+// Extends the match position forward while maintaining balanced parentheses.
+// Returns the number of characters matched, or 0 on failure.
+//
 int bextend(node_t *str, node_t *last)
 {
     node_t *a, *s;
@@ -15,8 +20,8 @@ int bextend(node_t *str, node_t *last)
     c = s->p1;
     if (c == NULL)
         goto bad;
-    b = 0;
-    d = 0;
+    b = 0; // Parenthesis balance counter
+    d = 0; // Character count
     a = s->p2;
     if (a == NULL) {
         a = c;
@@ -29,18 +34,18 @@ eb1:
 eb2:
     d++;
     class_val = class(a->ch);
-    if (class_val == 1) { /* rp */
+    if (class_val == 1) { /* rp - right parenthesis */
         if (b == 0)
             goto bad;
         b--;
         goto eb3;
     }
-    if (class_val == 2) { /* lp */
+    if (class_val == 2) { /* lp - left parenthesis */
         b++;
         goto eb1;
     }
 eb3:
-    if (b == 0) {
+    if (b == 0) { // Balanced - found end of pattern
         s->p2 = a;
         return (d);
     }
@@ -49,6 +54,11 @@ bad:
     return (0);
 }
 
+//
+// Extend an unbalanced pattern match (simple extension by one character).
+// Advances the match position by one character.
+// Returns 1 on success, 0 on failure.
+//
 int ubextend(node_t *str, node_t *last)
 {
     node_t *a, *b, *s;
@@ -70,20 +80,28 @@ bad:
     return (0);
 }
 
+//
+// Search for a pattern match in the subject string.
+// Implements backtracking pattern matching algorithm for Snobol patterns.
+// Returns a match result node on success, NULL on failure.
+//
 node_t *search(node_t *arg, node_t *r)
 {
     node_t *list, *back, *str, *etc, *next, *last, *base, *e;
     node_t *a, *b, *var;
     int c, d;
 
-    a    = arg->p2;
-    list = base = alloc();
-    last        = NULL;
-    next        = NULL;
+    // Initialize pattern matching state
+    a    = arg->p2;        // Start of pattern component list
+    list = base = alloc(); // Base of matching state list
+    last        = NULL;    // End of subject string (set later)
+    next        = NULL;    // Next position to match from
     goto badv1;
 badvanc:
+    // Build pattern matching state from pattern components
     a = a->p1;
     if (a->typ == 0) {
+        // End of pattern - initialize search
         list->p1 = NULL;
         if (rfail == 1) {
             a = NULL;
@@ -93,8 +111,8 @@ badvanc:
         if (r == NULL)
             next = last = NULL;
         else {
-            next = r->p1;
-            last = r->p2;
+            next = r->p1; // Start of subject string
+            last = r->p2; // End of subject string
         }
         goto adv1;
     }
@@ -102,38 +120,42 @@ badvanc:
     list->p1 = b;
     list     = b;
 badv1:
+    // Set up backtracking structure for this pattern component
     list->p2 = back = alloc();
     back->p1        = last;
     b               = a->p2;
     c               = a->typ;
     list->typ       = c;
     if (c < 2) {
+        // Simple pattern component - evaluate and store
         back->p2 = eval(b, 1);
         goto badvanc;
     }
+    // Complex pattern component - set up match state
     last     = list;
-    str      = alloc();
-    etc      = alloc();
+    str      = alloc(); // Match position tracker
+    etc      = alloc(); // Pattern metadata
     back->p2 = var = alloc();
-    var->typ       = b->typ;
+    var->typ       = b->typ; // Pattern type (1=balanced, 2=unbalanced, 3=concatenated)
     var->p1        = str;
     var->p2        = etc;
     e              = b->p1;
     if (e == NULL)
-        etc->p1 = NULL;
+        etc->p1 = NULL; // No left side
     else
-        etc->p1 = eval(e, 0);
+        etc->p1 = eval(e, 0); // Evaluate left pattern
     e = b->p2;
     if (e == NULL)
-        etc->p2 = NULL;
+        etc->p2 = NULL; // No right side
     else {
-        e       = eval(e, 1);
-        etc->p2 = (node_t *)(long)(intptr_t)strbin(e);
+        e       = eval(e, 1);                          // Evaluate right pattern (length)
+        etc->p2 = (node_t *)(long)(intptr_t)strbin(e); // Store as integer
         delete_string(e);
     }
     goto badvanc;
 
 retard:
+    // Backtrack to previous pattern component
     a = back->p1;
     if (a == NULL) {
         rfail = 1;
@@ -144,16 +166,18 @@ retard:
     var  = back->p2;
     str  = var->p1;
     etc  = var->p2;
-    if (etc->p2)
+    if (etc->p2) // Has length constraint - need to retry
         goto retard;
-    if (var->typ == 1) {
+    // Try to extend current match
+    if (var->typ == 1) { // Balanced pattern
         if (bextend(str, last) == 0)
             goto retard;
         goto adv0;
     }
-    if (ubextend(str, last) == 0)
+    if (ubextend(str, last) == 0) // Unbalanced pattern
         goto retard;
 adv0:
+    // Advance to next position
     a = str->p2;
 adv01:
     if (a == last)
@@ -161,8 +185,10 @@ adv01:
     else
         next = a->p1;
 advanc:
+    // Process next pattern component
     a = list->p1;
     if (a == NULL) {
+        // End of pattern - check if match succeeded
         a = alloc();
         if (r == NULL) {
             a->p1 = a->p2 = NULL;
@@ -174,6 +200,7 @@ advanc:
             a->p2 = r->p2;
             goto fail;
         }
+        // Find match end position
         while (1) {
             e = b->p1;
             if (e == next) {
@@ -189,6 +216,7 @@ adv1:
     var  = back->p2;
     d    = list->typ;
     if (d < 2) {
+        // Simple pattern - match string directly
         if (var == NULL)
             goto advanc;
         if (next == NULL)
@@ -199,25 +227,27 @@ adv1:
         while (1) {
             if (a->ch != b->ch)
                 goto retard;
-            if (b == e)
+            if (b == e) // Matched entire string
                 goto adv01;
-            if (a == last)
+            if (a == last) // Reached end of subject
                 goto retard;
             a = a->p1;
             b = b->p1;
         }
     }
+    // Complex pattern - handle alternation or concatenation
     str     = var->p1;
     etc     = var->p2;
     str->p1 = next;
     str->p2 = NULL;
-    c       = (int)(intptr_t)etc->p2;
-    if (var->typ == 1) {
+    c       = (int)(intptr_t)etc->p2; // Length constraint
+    if (var->typ == 1) {              // Balanced pattern
         d = bextend(str, last);
         if (d == 0)
             goto retard;
-        if (c == 0)
+        if (c == 0) // No length constraint
             goto adv0;
+        // Match with length constraint
         while (1) {
             c = -d;
             if (c == 0)
@@ -229,19 +259,21 @@ adv1:
                 goto retard;
         }
     }
-    if (c == 0) {
-        if (d == 3 && next != NULL) {
+    if (c == 0) {                     // No length constraint
+        if (d == 3 && next != NULL) { // Concatenated pattern
             str->p2 = last;
             goto adv0;
         }
         goto advanc;
     }
+    // Match with specific length
     while (c--)
         if (ubextend(str, last) == 0)
             goto retard;
     goto adv0;
 
 fail:
+    // Cleanup and assign matched substrings to variables
     list = base;
     goto f1;
 fadv:
@@ -255,12 +287,15 @@ f1:
     back = list->p2;
     var  = back->p2;
     if (list->typ < 2) {
+        // Simple pattern - no assignment needed
         delete_string(var);
         goto fadv;
     }
+    // Complex pattern - assign matched substring
     str = var->p1;
     etc = var->p2;
     if (a != NULL && etc->p1 != NULL) {
+        // Assign matched substring to variable
         if (str->p2 == NULL) {
             free_node(str);
             str = NULL;

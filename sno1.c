@@ -26,11 +26,18 @@ node_t *lookdef   = NULL;
 node_t *lookret   = NULL;
 node_t *lookfret  = NULL;
 
+//
+// Print a message string to output.
+//
 void mes(const char *s)
 {
     sysput(cstr_to_node(s));
 }
 
+//
+// Initialize a symbol in the name table with a given type.
+// Creates a node from the string, looks it up (or creates it), and sets its type.
+//
 node_t *init(const char *s, int t)
 {
     node_t *a, *b;
@@ -42,10 +49,16 @@ node_t *init(const char *s, int t)
     return (b);
 }
 
+//
+// Main entry point for the Snobol III interpreter.
+// Opens input file if provided, initializes built-in symbols, compiles program,
+// and executes it starting from the "start" label if defined.
+//
 int main(int argc, char *argv[])
 {
     node_t *a, *b, *c;
 
+    // Open input file if provided
     if (argc > 1) {
         fin = open(argv[1], 0);
         if (fin < 0) {
@@ -53,7 +66,8 @@ int main(int argc, char *argv[])
             exit(1);
         }
     }
-    fout      = dup(1);
+    fout = dup(1);
+    // Initialize built-in symbols
     lookf     = init("f", 0);
     looks     = init("s", 0);
     lookend   = init("end", 0);
@@ -63,13 +77,16 @@ int main(int argc, char *argv[])
     lookfret  = init("freturn", 0);
     init("syspit", 3);
     init("syspot", 4);
+    // Compile all statements until "end" is encountered
+    // Link statements together in a list
     a = c = compile();
     while (lookend->typ != 2) {
         a->p1 = b = compile();
         a         = b;
     }
-    cfail = 1;
-    a->p1 = 0;
+    cfail = 1; // Enable compilation failure mode
+    a->p1 = 0; // Terminate statement list
+    // Start execution from "start" label if defined, otherwise from first statement
     if (lookstart->typ == 2)
         c = lookstart->p2;
     while ((c = execute(c)) != NULL)
@@ -78,6 +95,10 @@ int main(int argc, char *argv[])
     return 0;
 }
 
+//
+// System function to read a line from input (syspit).
+// Reads characters until newline or EOF, returns a string node or NULL on failure.
+//
 node_t *syspit(void)
 {
     node_t *b, *c, *d;
@@ -92,6 +113,7 @@ node_t *syspit(void)
     l:
         c->ch = a;
         if (a == '\0') {
+            // Handle EOF: close file if open, then read from stdin
             if (fin) {
                 close(fin);
                 fin = 0;
@@ -111,6 +133,10 @@ node_t *syspit(void)
     return (b);
 }
 
+//
+// System function to write a string to output (syspot).
+// Outputs the string followed by a newline character.
+//
 void syspot(node_t *string)
 {
     node_t *a, *b, *s;
@@ -127,52 +153,66 @@ void syspot(node_t *string)
     putchar('\n');
 }
 
+//
+// Convert a C string to a Snobol string node.
+// Creates a linked list of nodes representing the string characters.
+//
 node_t *cstr_to_node(const char *s)
 {
     int c;
     node_t *e, *f, *d;
 
+    // Build linked list: d is head, f tracks tail, e is new node
     d = f = alloc();
     while ((c = *s++) != '\0') {
         (e = alloc())->ch = c;
         f->p1             = e;
         f                 = e;
     }
-    d->p2 = e;
+    d->p2 = e; // Store end marker in head node
     return (d);
 }
 
+//
+// Classify a character for lexical analysis.
+// Returns a numeric code representing the character's syntactic role.
+//
 int class(int c)
 {
     switch (c) {
     case ')':
-        return (1);
+        return (1); // Right parenthesis
     case '(':
-        return (2);
+        return (2); // Left parenthesis
     case '\t':
     case ' ':
-        return (3);
+        return (3); // Whitespace
     case '+':
-        return (4);
+        return (4); // Plus operator
     case '-':
-        return (5);
+        return (5); // Minus operator
     case '*':
-        return (6);
+        return (6); // Asterisk operator
     case '/':
-        return (7);
+        return (7); // Division operator
     case '$':
-        return (8);
+        return (8); // Dollar sign
     case '"':
     case '\'':
-        return (9);
+        return (9); // String delimiter
     case '=':
-        return (10);
+        return (10); // Equals sign
     case ',':
-        return (11);
+        return (11); // Comma
     }
-    return (0);
+    return (0); // Other character
 }
 
+//
+// Allocate a new node from the memory pool.
+// Uses a free list if available, otherwise allocates from the current memory block.
+// Allocates a new block of 200 nodes when the current block is exhausted.
+//
 node_t *alloc(void)
 {
     node_t *f;
@@ -208,17 +248,24 @@ node_t *alloc(void)
         freesize--;
         return (f);
     }
+    // Reuse node from free list
     f        = freelist;
     freelist = freelist->p1;
     return (f);
 }
 
+//
+// Free a node by adding it to the free list for reuse.
+//
 void free_node(node_t *pointer)
 {
     pointer->p1 = freelist;
     freelist    = pointer;
 }
 
+//
+// Count the number of free nodes available (both in current block and free list).
+//
 int nfree(void)
 {
     int i;
@@ -233,18 +280,24 @@ int nfree(void)
     return (i);
 }
 
+//
+// Look up a symbol in the name table, creating it if it doesn't exist.
+// Returns a pointer to the symbol's value node.
+//
 node_t *look(node_t *string)
 {
     node_t *i, *j, *k;
 
     k = NULL;
     i = namelist;
+    // Search existing symbols
     while (i) {
         j = i->p1;
         if (equal(j->p1, string) == 0)
             return (j);
         i = (k = i)->p2;
     }
+    // Symbol not found, create new entry
     i     = alloc();
     i->p2 = NULL;
     if (k)
@@ -259,6 +312,10 @@ node_t *look(node_t *string)
     return (j);
 }
 
+//
+// Create a copy of a string node.
+// Allocates new nodes and copies all characters from the source string.
+//
 node_t *copy(node_t *string)
 {
     node_t *j, *l, *m;
@@ -279,6 +336,10 @@ node_t *copy(node_t *string)
     return (i);
 }
 
+//
+// Compare two strings lexicographically.
+// Returns 0 if equal, 1 if string1 > string2, -1 if string1 < string2.
+//
 int equal(node_t *string1, node_t *string2)
 {
     node_t *i, *j, *k;
@@ -292,13 +353,14 @@ int equal(node_t *string1, node_t *string2)
     }
     if (string2 == NULL)
         return (1);
+    // Compare character by character
     i = string1;
-    j = string1->p2;
+    j = string1->p2; // End marker for string1
     k = string2;
-    l = string2->p2;
+    l = string2->p2; // End marker for string2
     for (;;) {
-        m = (i = i->p1)->ch;
-        n = (k = k->p1)->ch;
+        m = (i = i->p1)->ch; // Next char from string1
+        n = (k = k->p1)->ch; // Next char from string2
         if (m > n)
             return (1);
         if (m < n)
@@ -313,6 +375,10 @@ int equal(node_t *string1, node_t *string2)
     }
 }
 
+//
+// Convert a string node representing a number to an integer.
+// Handles negative numbers and validates digit characters.
+//
 int strbin(node_t *string)
 {
     int n, m, sign;
@@ -342,6 +408,10 @@ loop:
     goto loop;
 }
 
+//
+// Convert an integer to a string node.
+// Builds the string representation digit by digit, handling negative numbers.
+//
 node_t *binstr(int binary)
 {
     int n, sign;
@@ -375,26 +445,42 @@ loop:
     goto loop;
 }
 
+//
+// Add two numeric strings and return the result as a string.
+//
 node_t *add(node_t *string1, node_t *string2)
 {
     return (binstr(strbin(string1) + strbin(string2)));
 }
 
+//
+// Subtract two numeric strings and return the result as a string.
+//
 node_t *sub(node_t *string1, node_t *string2)
 {
     return (binstr(strbin(string1) - strbin(string2)));
 }
 
+//
+// Multiply two numeric strings and return the result as a string.
+//
 node_t *mult(node_t *string1, node_t *string2)
 {
     return (binstr(strbin(string1) * strbin(string2)));
 }
 
+//
+// Divide two numeric strings and return the result as a string.
+//
 node_t *divide(node_t *string1, node_t *string2)
 {
     return (binstr(strbin(string1) / strbin(string2)));
 }
 
+//
+// Concatenate two strings, creating new copies.
+// Returns a new string node containing the concatenation.
+//
 node_t *cat(node_t *string1, node_t *string2)
 {
     node_t *a, *b;
@@ -411,6 +497,10 @@ node_t *cat(node_t *string1, node_t *string2)
     return (a);
 }
 
+//
+// Concatenate two strings and delete the original strings (destructive concatenation).
+// Used when the original strings are no longer needed.
+//
 node_t *dcat(node_t *a, node_t *b)
 {
     node_t *c;
@@ -421,6 +511,10 @@ node_t *dcat(node_t *a, node_t *b)
     return (c);
 }
 
+//
+// Delete a string by freeing all its component nodes.
+// Traverses the linked list and returns each node to the free list.
+//
 void delete_string(node_t *string)
 {
     node_t *a, *b, *c;
@@ -437,17 +531,27 @@ void delete_string(node_t *string)
     free_node(a);
 }
 
+//
+// Output a string and then delete it (system put with cleanup).
+//
 void sysput(node_t *string)
 {
     syspot(string);
     delete_string(string);
 }
 
+//
+// Dump the entire symbol table for debugging.
+//
 void dump(void)
 {
     dump1(namelist);
 }
 
+//
+// Recursively dump symbol table entries starting from a base node.
+// Outputs symbol names, types, and values for debugging purposes.
+//
 void dump1(node_t *base)
 {
     node_t *b, *c, *e;
@@ -469,6 +573,10 @@ void dump1(node_t *base)
     }
 }
 
+//
+// Write an error message with line number and handle error recovery.
+// If compilation is in progress, skips to end of statement and recompiles.
+//
 void writes(const char *s)
 {
     sysput(dcat(binstr(lc), dcat(cstr_to_node("\t"), cstr_to_node(s))));
@@ -478,6 +586,7 @@ void writes(const char *s)
         flush();
         exit(1);
     }
+    // Error recovery: skip to end of current statement
     while (getc_char() != NULL)
         ;
     while (compile() != NULL)
@@ -486,6 +595,11 @@ void writes(const char *s)
     exit(1);
 }
 
+//
+// Get the next character from the current input line.
+// Reads a new line when the current one is exhausted.
+// Returns NULL at end of line (after all characters have been consumed).
+//
 node_t *getc_char(void)
 {
     node_t *a;
@@ -514,6 +628,9 @@ node_t *getc_char(void)
     return (a);
 }
 
+//
+// Flush the output buffer.
+//
 void flush(void)
 {
     fflush(stdout);

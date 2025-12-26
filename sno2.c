@@ -1,16 +1,16 @@
 #include "sno.h"
 
-compon()
+node_t *compon(void)
 {
-    register struct node *a, *b;
-    register int c;
-    static next;
+    node_t *a, *b;
+    int c;
+    static int next;
 
     if (next == 0)
-        schar = getc();
+        schar = getc_char();
     else
         next = 0;
-    if (schar == 0) {
+    if (schar == NULL) {
         (a = alloc())->typ = 0;
         return (a);
     }
@@ -26,14 +26,14 @@ compon()
     case 3:
         a = schar;
         for (;;) {
-            schar = getc();
-            if (schar == 0) {
+            schar = getc_char();
+            if (schar == NULL) {
                 a->typ = 0;
                 return (a);
             }
             if (class(schar->ch) != 3)
                 break;
-            free(schar);
+            free_node(schar);
         }
         next   = 1;
         a->typ = 7;
@@ -49,7 +49,7 @@ compon()
 
     case 6:
         a     = schar;
-        schar = getc();
+        schar = getc_char();
         if (class(schar->ch) == 3)
             a->typ = 10;
         else
@@ -59,7 +59,7 @@ compon()
 
     case 7:
         a     = schar;
-        schar = getc();
+        schar = getc_char();
         if (class(schar->ch) == 3)
             a->typ = 11;
         else
@@ -73,20 +73,20 @@ compon()
 
     case 9:
         c = schar->ch;
-        a = getc();
-        if (a == 0)
+        a = getc_char();
+        if (a == NULL)
             goto lerr;
         b = schar;
         if (a->ch == c) {
-            free(schar);
+            free_node(schar);
             a->typ = 15;
-            a->p1  = 0;
+            a->p1  = NULL;
             return (a);
         }
         b->p1 = a;
         for (;;) {
-            schar = getc();
-            if (schar == 0)
+            schar = getc_char();
+            if (schar == NULL)
             lerr:
                 writes("illegal literal string");
             if (schar->ch == c)
@@ -109,11 +109,11 @@ compon()
     }
     b     = alloc();
     b->p1 = a = schar;
-    schar     = getc();
-    while (schar != 0 & !class(schar->ch)) {
+    schar     = getc_char();
+    while (schar != NULL && !class(schar->ch)) {
         a->p1 = schar;
         a     = schar;
-        schar = getc();
+        schar = getc_char();
     }
     b->p2 = a;
     next  = 1;
@@ -125,52 +125,55 @@ compon()
     return (b);
 }
 
-nscomp()
+node_t *nscomp(void)
 {
-    register struct node *c;
+    node_t *c;
 
     while ((c = compon())->typ == 7)
-        free(c);
+        free_node(c);
     return (c);
 }
 
-push(stack)
+node_t *push(node_t *stack)
 {
-    register struct node *a;
+    node_t *a;
 
     (a = alloc())->p2 = stack;
     return (a);
 }
 
-pop(stack) struct node *stack;
+node_t *pop(node_t *stack)
 {
-    register struct node *a, *s;
+    node_t *a, *s;
 
     s = stack;
-    if (s == 0)
+    if (s == NULL)
         writes("pop");
     a = s->p2;
-    free(s);
+    free_node(s);
     return (a);
 }
 
-expr(start, eof, e) struct node *e;
+node_t *expr(node_t *start, int eof, node_t *e)
 {
-    register struct node *stack, *list, *comp;
-    int operand, op, space, op1;
-    struct node *a, *b, *c;
+    node_t *stack, *list, *comp;
+    int operand, op, op1;
+    node_t *space_ptr;
+    int space_flag;
+    node_t *a, *b, *c;
     int d;
 
     list       = alloc();
     e->p2      = list;
-    stack      = push(0);
+    stack      = push(NULL);
     stack->typ = eof;
     operand    = 0;
-    space      = start;
+    space_ptr  = start;
+    space_flag = 0;
 l1:
-    if (space) {
-        comp  = space;
-        space = 0;
+    if (space_ptr) {
+        comp     = space_ptr;
+        space_ptr = NULL;
     } else
         comp = compon();
 
@@ -178,19 +181,19 @@ l3:
     op = comp->typ;
     switch (op) {
     case 7:
-        space = 1;
-        free(comp);
+        space_flag = 1; /* Mark that we had a space */
+        free_node(comp);
         comp = compon();
         goto l3;
 
     case 10:
-        if (space == 0) {
+        if (space_flag == 0) {
             comp->typ = 1;
             goto l3;
         }
 
     case 11:
-        if (space == 0) {
+        if (space_flag == 0) {
             comp->typ = 2;
             goto l3;
         }
@@ -208,14 +211,14 @@ l3:
             operand = 1;
             goto l5;
         }
-        if (space == 0)
+        if (space_flag == 0)
             goto l7;
         goto l4;
 
     case 12:
         if (operand == 0)
             goto l5;
-        if (space)
+        if (space_flag)
             goto l4;
     l7:
         writes("illegal juxtaposition of operands");
@@ -223,12 +226,12 @@ l3:
     case 16:
         if (operand == 0)
             goto l5;
-        if (space)
+        if (space_flag)
             goto l4;
         b  = compon();
         op = comp->typ = 13;
         if (b->typ == 5) {
-            comp->p1 = 0;
+            comp->p1 = NULL;
             goto l10;
         }
         comp->p1 = a = alloc();
@@ -236,25 +239,26 @@ l3:
         while ((d = b->typ) == 4) {
             a->p1 = b;
             a     = b;
-            b     = expr(0, 6, a);
+            b     = expr(NULL, 6, a);
         }
         if (d != 5)
             writes("error in function");
-        a->p1 = 0;
+        a->p1 = NULL;
     l10:
-        free(b);
+        free_node(b);
         goto l6;
 
     l4:
-        space   = comp;
-        op      = 7;
-        operand = 0;
+        space_ptr  = comp;
+        op         = 7;
+        operand    = 0;
+        space_flag = 0;
         goto l6;
     }
     if (operand == 0)
         writes("no operand at end of expression");
 l5:
-    space = 0;
+    space_flag = 0;
 l6:
     op1 = stack->typ;
     if (op > op1) {
@@ -267,7 +271,7 @@ l6:
     }
     c     = stack->p1;
     stack = pop(stack);
-    if (stack == 0) {
+    if (stack == NULL) {
         list->typ = 0;
         return (comp);
     }
@@ -285,16 +289,17 @@ l6:
     goto l6;
 }
 
-match(start, m) struct node *m;
+node_t *match(node_t *start, node_t *m)
 {
-    register struct node *list, *comp, *term;
-    struct node *a;
+    node_t *list, *comp, *term;
+    node_t *a;
     int b, bal;
 
-    term = bal = 0;
-    list       = alloc();
-    m->p2      = list;
-    comp       = start;
+    term = NULL;
+    bal  = 0;
+    list = alloc();
+    m->p2 = list;
+    comp  = start;
     if (!comp)
         comp = compon();
     goto l2;
@@ -305,7 +310,7 @@ l3:
 l2:
     switch (comp->typ) {
     case 7:
-        free(comp);
+        free_node(comp);
         comp = compon();
         goto l2;
 
@@ -313,50 +318,50 @@ l2:
     case 14:
     case 15:
     case 16:
-        term      = 0;
+        term      = NULL;
         comp      = expr(comp, 6, list);
         list->typ = 1;
         goto l3;
 
     case 1:
-        free(comp);
+        free_node(comp);
         comp = compon();
         bal  = 0;
         if (comp->typ == 16) {
             bal = 1;
-            free(comp);
+            free_node(comp);
             comp = compon();
         }
         a = alloc();
         b = comp->typ;
-        if (b == 2 | b == 5 | b == 10 | b == 1)
-            a->p1 = 0;
+        if (b == 2 || b == 5 || b == 10 || b == 1)
+            a->p1 = NULL;
         else {
             comp  = expr(comp, 11, a);
             a->p1 = a->p2;
         }
         if (comp->typ != 2) {
-            a->p2 = 0;
+            a->p2 = NULL;
         } else {
-            free(comp);
-            comp = expr(0, 6, a);
+            free_node(comp);
+            comp = expr(NULL, 6, a);
         }
         if (bal) {
             if (comp->typ != 5)
                 goto merr;
-            free(comp);
+            free_node(comp);
             comp = compon();
         }
         b = comp->typ;
-        if (b != 1 & b != 10)
+        if (b != 1 && b != 10)
             goto merr;
         list->p2  = a;
         list->typ = 2;
         a->typ    = bal;
-        free(comp);
+        free_node(comp);
         comp = compon();
         if (bal)
-            term = 0;
+            term = NULL;
         else
             term = list;
         goto l3;
@@ -368,30 +373,37 @@ l2:
 
 merr:
     writes("unrecognized component in match");
+    return NULL;
 }
 
-compile()
+node_t *compile(void)
 {
-    register struct node *b, *comp;
-    struct node *r, *l, *xs, *xf, *g;
-    register int a;
-    int m, t, as;
+    node_t *b, *comp;
+    node_t *r, *l, *xs, *xf, *g;
+    int a;
+    node_t *m, *as;
+    int t;
 
-    m = l = as = xs = xf = t = 0;
-    comp                     = compon();
-    a                        = comp->typ;
+    m = NULL;
+    l = NULL;
+    as = NULL;
+    xs = NULL;
+    xf = NULL;
+    t  = 0;
+    comp = compon();
+    a    = comp->typ;
     if (a == 14) {
         l = comp->p1;
-        free(comp);
+        free_node(comp);
         comp = compon();
         a    = comp->typ;
     }
     if (a != 7)
         writes("no space beginning statement");
-    free(comp);
+    free_node(comp);
     if (l == lookdef)
         goto def;
-    comp = expr(0, 11, r = alloc());
+    comp = expr(NULL, 11, r = alloc());
     a    = comp->typ;
     if (a == 0)
         goto asmble;
@@ -409,32 +421,34 @@ compile()
     if (a == 3)
         goto assig;
     writes("unrecognized component in match");
+    return NULL;
 
 assig:
-    free(comp);
-    comp = expr(0, 6, as = alloc());
+    free_node(comp);
+    comp = expr(NULL, 6, as = alloc());
     a    = comp->typ;
     if (a == 0)
         goto asmble;
     if (a == 2)
         goto xfer;
     writes("unrecognized component in assignment");
+    return NULL;
 
 xfer:
-    free(comp);
+    free_node(comp);
     comp = compon();
     a    = comp->typ;
     if (a == 16)
         goto xboth;
     if (a == 0) {
-        if (xs != 0 | xf != 0)
+        if (xs != NULL || xf != NULL)
             goto asmble;
         goto xerr;
     }
     if (a != 14)
         goto xerr;
     b = comp->p1;
-    free(comp);
+    free_node(comp);
     if (b == looks)
         goto xsuc;
     if (b == lookf)
@@ -442,12 +456,13 @@ xfer:
 
 xerr:
     writes("unrecognized component in goto");
+    return NULL;
 
 xboth:
-    free(comp);
+    free_node(comp);
     xs   = alloc();
     xf   = alloc();
-    comp = expr(0, 6, xs);
+    comp = expr(NULL, 6, xs);
     if (comp->typ != 5)
         goto xerr;
     xf->p2 = xs->p2;
@@ -462,7 +477,7 @@ xsuc:
     comp = compon();
     if (comp->typ != 16)
         goto xerr;
-    comp = expr(0, 6, xs = alloc());
+    comp = expr(NULL, 6, xs = alloc());
     if (comp->typ != 5)
         goto xerr;
     goto xfer;
@@ -473,7 +488,7 @@ xfail:
     comp = compon();
     if (comp->typ != 16)
         goto xerr;
-    comp = expr(0, 6, xf = alloc());
+    comp = expr(NULL, 6, xf = alloc());
     if (comp->typ != 5)
         goto xerr;
     goto xfer;
@@ -492,19 +507,19 @@ asmble:
         r     = m;
     }
     if (as) {
-        t     = +2;
+        t     = 2;
         r->p1 = as;
         r     = as;
     }
-    (g = alloc())->p1 = 0;
+    (g = alloc())->p1 = NULL;
     if (xs) {
         g->p1 = xs->p2;
-        free(xs);
+        free_node(xs);
     }
-    g->p2 = 0;
+    g->p2 = NULL;
     if (xf) {
         g->p2 = xf->p2;
-        free(xf);
+        free_node(xf);
     }
     r->p1     = g;
     comp->typ = t;
@@ -519,42 +534,45 @@ def:
     if (l->typ)
         writes("name doubly defined");
     l->typ = 5; /*type function;*/
-    a      = r;
-    l->p2  = a;
-    r      = nscomp();
-    l      = r;
-    a->p1  = l;
-    if (r->typ == 0)
-        goto d4;
-    if (r->typ != 16)
-        goto derr;
+    {
+        node_t *a_ptr = r;
+        l->p2  = a_ptr;
+        r      = nscomp();
+        l      = r;
+        a_ptr->p1  = l;
+        if (r->typ == 0)
+            goto d4;
+        if (r->typ != 16)
+            goto derr;
 
-d2:
-    r = nscomp();
-    if (r->typ != 14)
-        goto derr;
-    a->p2  = r;
-    r->typ = 0;
-    a      = r;
-    r      = nscomp();
-    if (r->typ == 4) {
-        free(r);
-        goto d2;
+    d2:
+        r = nscomp();
+        if (r->typ != 14)
+            goto derr;
+        a_ptr->p2  = r;
+        r->typ = 0;
+        a_ptr      = r;
+        r      = nscomp();
+        if (r->typ == 4) {
+            free_node(r);
+            goto d2;
+        }
+        if (r->typ != 5)
+            goto derr;
+        free_node(r);
+        if ((r = compon())->typ != 0)
+            goto derr;
+        free_node(r);
+
+    d4:
+        r     = compile();
+        a_ptr->p2 = NULL;
     }
-    if (r->typ != 5)
-        goto derr;
-    free(r);
-    if ((r = compon())->typ != 0)
-        goto derr;
-    free(r);
-
-d4:
-    r     = compile();
-    a->p2 = 0;
     l->p1 = r;
-    l->p2 = 0;
+    l->p2 = NULL;
     return (r);
 
 derr:
     writes("illegal component in define");
+    return NULL;
 }

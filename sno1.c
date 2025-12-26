@@ -3,36 +3,54 @@
  */
 #include "sno.h"
 
-int freesize;
-struct node * freespace & end;
-int *fault - 1;
+int freesize = 0;
+node_t *freespace = NULL;
+node_t *freespace_current = NULL;
+node_t *freespace_end = NULL;
 
-mes(s)
+int fin = 0;
+int fout = 1;
+
+/* Global variables */
+int cfail = 0;
+int rfail = 0;
+node_t *freelist = NULL;
+node_t *namelist = NULL;
+int lc = 0;
+node_t *schar = NULL;
+node_t *lookf = NULL;
+node_t *looks = NULL;
+node_t *lookend = NULL;
+node_t *lookstart = NULL;
+node_t *lookdef = NULL;
+node_t *lookret = NULL;
+node_t *lookfret = NULL;
+
+void mes(const char *s)
 {
-    sysput(strstr(s));
+    sysput(cstr_to_node(s));
 }
 
-init(s, t)
+node_t *init(const char *s, int t)
 {
-    register struct node *a, *b;
+    node_t *a, *b;
 
-    a = strstr(s);
+    a = cstr_to_node(s);
     b = look(a);
     delete(a);
     b->typ = t;
     return (b);
 }
 
-main(argc, argv) char *argv[];
+int main(int argc, char *argv[])
 {
-    extern fin, fout;
-    register struct node *a, *b, *c;
+    node_t *a, *b, *c;
 
     if (argc > 1) {
         fin = open(argv[1], 0);
         if (fin < 0) {
             mes("cannot open input");
-            exit();
+            exit(1);
         }
     }
     fout      = dup(1);
@@ -54,19 +72,19 @@ main(argc, argv) char *argv[];
     a->p1 = 0;
     if (lookstart->typ == 2)
         c = lookstart->p2;
-    while (c = execute(c))
+    while ((c = execute(c)) != NULL)
         ;
     flush();
+    return 0;
 }
 
-syspit()
+node_t *syspit(void)
 {
-    extern fin;
-    register struct node *b, *c, *d;
+    node_t *b, *c, *d;
     int a;
 
     if ((a = getchar()) == '\n')
-        return (0);
+        return (NULL);
     b = c = alloc();
     while (a != '\n') {
         c->p1 = d = alloc();
@@ -88,17 +106,17 @@ syspit()
     b->p2 = c;
     if (rfail) {
         delete(b);
-        b = 0;
+        b = NULL;
     }
     return (b);
 }
 
-syspot(string) struct node *string;
+void syspot(node_t *string)
 {
-    register struct node *a, *b, *s;
+    node_t *a, *b, *s;
 
     s = string;
-    if (s != 0) {
+    if (s != NULL) {
         a = s;
         b = s->p2;
         while (a != b) {
@@ -109,10 +127,10 @@ syspot(string) struct node *string;
     putchar('\n');
 }
 
-strstr(s) char s[];
+node_t *cstr_to_node(const char *s)
 {
     int c;
-    register struct node *e, *f, *d;
+    node_t *e, *f, *d;
 
     d = f = alloc();
     while ((c = *s++) != '\0') {
@@ -124,7 +142,7 @@ strstr(s) char s[];
     return (d);
 }
 
-class(c)
+int class(int c)
 {
     switch (c) {
     case ')':
@@ -155,38 +173,56 @@ class(c)
     return (0);
 }
 
-alloc()
+node_t *alloc(void)
 {
-    register struct node *f;
-    register int i;
-    extern fout;
+    node_t *f;
+    size_t alloc_size;
 
-    if (freelist == 0) {
-        if (--freesize < 20) {
-            if ((i = sbrk(1200)) == -1) {
-                flush();
-                write(fout, "Out of free space\n", 18);
-                exit();
+    if (freelist == NULL) {
+        if (freespace_current == NULL || freespace_current >= freespace_end) {
+            alloc_size = 200 * sizeof(node_t);
+            if (freespace == NULL) {
+                freespace = (node_t *)malloc(alloc_size);
+                if (freespace == NULL) {
+                    flush();
+                    write(fout, "Out of free space\n", 18);
+                    exit(1);
+                }
+                freespace_current = freespace;
+                freespace_end = freespace + 200;
+                freesize = 200;
+            } else {
+                /* Allocate new block and append */
+                node_t *new_block = (node_t *)malloc(alloc_size);
+                if (new_block == NULL) {
+                    flush();
+                    write(fout, "Out of free space\n", 18);
+                    exit(1);
+                }
+                freespace_current = new_block;
+                freespace_end = new_block + 200;
+                freesize = 200;
             }
-            freesize = +200;
         }
-        return (freespace++);
+        f = freespace_current++;
+        freesize--;
+        return (f);
     }
     f        = freelist;
     freelist = freelist->p1;
     return (f);
 }
 
-free(pointer) struct node *pointer;
+void free_node(node_t *pointer)
 {
     pointer->p1 = freelist;
     freelist    = pointer;
 }
 
-nfree()
+int nfree(void)
 {
-    register int i;
-    register struct node *a;
+    int i;
+    node_t *a;
 
     i = freesize;
     a = freelist;
@@ -197,11 +233,11 @@ nfree()
     return (i);
 }
 
-look(string) struct node *string;
+node_t *look(node_t *string)
 {
-    register struct node *i, *j, *k;
+    node_t *i, *j, *k;
 
-    k = 0;
+    k = NULL;
     i = namelist;
     while (i) {
         j = i->p1;
@@ -210,7 +246,7 @@ look(string) struct node *string;
         i = (k = i)->p2;
     }
     i     = alloc();
-    i->p2 = 0;
+    i->p2 = NULL;
     if (k)
         k->p2 = i;
     else
@@ -218,18 +254,18 @@ look(string) struct node *string;
     j      = alloc();
     i->p1  = j;
     j->p1  = copy(string);
-    j->p2  = 0;
+    j->p2  = NULL;
     j->typ = 0;
     return (j);
 }
 
-copy(string) struct node *string;
+node_t *copy(node_t *string)
 {
-    register struct node *j, *l, *m;
-    struct node *i, *k;
+    node_t *j, *l, *m;
+    node_t *i, *k;
 
-    if (string == 0)
-        return (0);
+    if (string == NULL)
+        return (NULL);
     i = l = alloc();
     j     = string;
     k     = string->p2;
@@ -243,18 +279,18 @@ copy(string) struct node *string;
     return (i);
 }
 
-equal(string1, string2) struct node *string1, *string2;
+int equal(node_t *string1, node_t *string2)
 {
-    register struct node *i, *j, *k;
-    struct node *l;
+    node_t *i, *j, *k;
+    node_t *l;
     int n, m;
 
-    if (string1 == 0) {
-        if (string2 == 0)
+    if (string1 == NULL) {
+        if (string2 == NULL)
             return (0);
         return (-1);
     }
-    if (string2 == 0)
+    if (string2 == NULL)
         return (1);
     i = string1;
     j = string1->p2;
@@ -277,14 +313,14 @@ equal(string1, string2) struct node *string1, *string2;
     }
 }
 
-strbin(string) struct node *string;
+int strbin(node_t *string)
 {
     int n, m, sign;
-    register struct node *p, *q, *s;
+    node_t *p, *q, *s;
 
     s = string;
     n = 0;
-    if (s == 0)
+    if (s == NULL)
         return (0);
     p    = s->p1;
     q    = s->p2;
@@ -297,7 +333,7 @@ strbin(string) struct node *string;
     }
 loop:
     m = p->ch - '0';
-    if (m > 9 | m < 0)
+    if (m > 9 || m < 0)
         writes("bad integer string");
     n = n * 10 + m;
     if (p == q)
@@ -306,10 +342,10 @@ loop:
     goto loop;
 }
 
-binstr(binary)
+node_t *binstr(int binary)
 {
     int n, sign;
-    register struct node *m, *p, *q;
+    node_t *m, *p, *q;
 
     n    = binary;
     p    = alloc();
@@ -339,45 +375,45 @@ loop:
     goto loop;
 }
 
-add(string1, string2)
+node_t *add(node_t *string1, node_t *string2)
 {
     return (binstr(strbin(string1) + strbin(string2)));
 }
 
-sub(string1, string2)
+node_t *sub(node_t *string1, node_t *string2)
 {
     return (binstr(strbin(string1) - strbin(string2)));
 }
 
-mult(string1, string2)
+node_t *mult(node_t *string1, node_t *string2)
 {
     return (binstr(strbin(string1) * strbin(string2)));
 }
 
-div(string1, string2)
+node_t *divide(node_t *string1, node_t *string2)
 {
     return (binstr(strbin(string1) / strbin(string2)));
 }
 
-cat(string1, string2) struct node *string1, *string2;
+node_t *cat(node_t *string1, node_t *string2)
 {
-    register struct node *a, *b;
+    node_t *a, *b;
 
-    if (string1 == 0)
+    if (string1 == NULL)
         return (copy(string2));
-    if (string2 == 0)
+    if (string2 == NULL)
         return (copy(string1));
     a         = copy(string1);
     b         = copy(string2);
     a->p2->p1 = b->p1;
     a->p2     = b->p2;
-    free(b);
+    free_node(b);
     return (a);
 }
 
-dcat(a, b) struct node *a, *b;
+node_t *dcat(node_t *a, node_t *b)
 {
-    register struct node *c;
+    node_t *c;
 
     c = cat(a, b);
     delete(a);
@@ -385,47 +421,47 @@ dcat(a, b) struct node *a, *b;
     return (c);
 }
 
-delete(string) struct node *string;
+void delete(node_t *string)
 {
-    register struct node *a, *b, *c;
+    node_t *a, *b, *c;
 
-    if (string == 0)
+    if (string == NULL)
         return;
     a = string;
     b = string->p2;
     while (a != b) {
         c = a->p1;
-        free(a);
+        free_node(a);
         a = c;
     }
-    free(a);
+    free_node(a);
 }
 
-sysput(string)
+void sysput(node_t *string)
 {
     syspot(string);
     delete(string);
 }
 
-dump()
+void dump(void)
 {
     dump1(namelist);
 }
 
-dump1(base) struct node *base;
+void dump1(node_t *base)
 {
-    register struct node *b, *c, *e;
-    struct node *d;
+    node_t *b, *c, *e;
+    node_t *d;
 
     while (base) {
         b = base->p1;
         c = binstr(b->typ);
-        d = strstr("  ");
+        d = cstr_to_node("  ");
         e = dcat(c, d);
         sysput(cat(e, b->p1));
         delete(e);
         if (b->typ == 1) {
-            c = strstr("   ");
+            c = cstr_to_node("   ");
             sysput(cat(c, b->p2));
             delete(c);
         }
@@ -433,30 +469,30 @@ dump1(base) struct node *base;
     }
 }
 
-writes(s)
+void writes(const char *s)
 {
-    sysput(dcat(binstr(lc), dcat(strstr("\t"), strstr(s))));
+    sysput(dcat(binstr(lc), dcat(cstr_to_node("\t"), cstr_to_node(s))));
     flush();
     if (cfail) {
         dump();
         flush();
-        exit();
+        exit(1);
     }
-    while (getc())
+    while (getc_char() != NULL)
         ;
-    while (compile())
+    while (compile() != NULL)
         ;
     flush();
-    exit();
+    exit(1);
 }
 
-getc()
+node_t *getc_char(void)
 {
-    register struct node *a;
-    static struct node *line;
-    static linflg;
+    node_t *a;
+    static node_t *line;
+    static int linflg;
 
-    while (line == 0) {
+    while (line == NULL) {
         line = syspit();
         if (rfail) {
             cfail++;
@@ -465,15 +501,20 @@ getc()
         lc++;
     }
     if (linflg) {
-        line   = 0;
+        line   = NULL;
         linflg = 0;
-        return (0);
+        return (NULL);
     }
     a = line->p1;
     if (a == line->p2) {
-        free(line);
+        free_node(line);
         linflg++;
     } else
         line->p1 = a->p1;
     return (a);
+}
+
+void flush(void)
+{
+    fflush(stdout);
 }

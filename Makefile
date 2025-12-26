@@ -1,0 +1,27 @@
+#
+# make
+# make all      -- build everything
+#
+# make test     -- run unit tests
+#
+# make install  -- install binaries to /usr/local
+#
+# make clean    -- remove build files
+#
+
+all:    build
+	$(MAKE) -Cbuild $@
+
+test:   build
+	$(MAKE) -Cbuild unit_tests
+	ctest --test-dir build/tests
+
+install: build
+	$(MAKE) -Cbuild $@
+
+clean:
+	rm -rf build
+
+build:
+	mkdir $@
+	cmake -B$@ -DCMAKE_BUILD_TYPE=RelWithDebInfo

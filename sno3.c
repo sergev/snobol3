@@ -3,18 +3,22 @@
 /*
  * sno3
  */
-bextend(str, last) struct node *str, *last;
+int bextend(node_t *str, node_t *last)
 {
-    register struct node *a, *s;
-    register int b;
-    int c, d;
+    node_t *a, *s;
+    int b;
+    node_t *c;
+    int d;
+    int class_val;
 
     s = str;
-    if ((c = s->p1) == 0)
+    c = s->p1;
+    if (c == NULL)
         goto bad;
-    b = d = 0;
-    a     = s->p2;
-    if (a == 0) {
+    b = 0;
+    d = 0;
+    a = s->p2;
+    if (a == NULL) {
         a = c;
         goto eb2;
     }
@@ -24,14 +28,14 @@ eb1:
     a = a->p1;
 eb2:
     d++;
-    c = class(a->ch);
-    if (c == 1) { /* rp */
+    class_val = class(a->ch);
+    if (class_val == 1) { /* rp */
         if (b == 0)
             goto bad;
         b--;
         goto eb3;
     }
-    if (c == 2) { /* lp */
+    if (class_val == 2) { /* lp */
         b++;
         goto eb1;
     }
@@ -45,16 +49,16 @@ bad:
     return (0);
 }
 
-ubextend(str, last) struct node *str, *last;
+int ubextend(node_t *str, node_t *last)
 {
-    register struct node *a, *b, *s;
+    node_t *a, *b, *s;
 
     s = str;
     a = s->p1;
-    if (a == 0)
+    if (a == NULL)
         goto bad;
     b = s->p2;
-    if (b == 0)
+    if (b == NULL)
         goto good;
     if (b == last)
         goto bad;
@@ -66,27 +70,28 @@ bad:
     return (0);
 }
 
-search(arg, r) struct node *arg, *r;
+node_t *search(node_t *arg, node_t *r)
 {
-    struct node *list, *back, *str, *etc, *next, *last, *base, *e;
-    register struct node *a, *b, *var;
+    node_t *list, *back, *str, *etc, *next, *last, *base, *e;
+    node_t *a, *b, *var;
     int c, d;
 
     a    = arg->p2;
     list = base = alloc();
-    last = next = 0;
+    last = NULL;
+    next = NULL;
     goto badv1;
 badvanc:
     a = a->p1;
     if (a->typ == 0) {
-        list->p1 = 0;
+        list->p1 = NULL;
         if (rfail == 1) {
-            a = 0;
+            a = NULL;
             goto fail;
         }
         list = base;
-        if (r == 0)
-            next = last = 0;
+        if (r == NULL)
+            next = last = NULL;
         else {
             next = r->p1;
             last = r->p2;
@@ -114,23 +119,23 @@ badv1:
     var->p1        = str;
     var->p2        = etc;
     e              = b->p1;
-    if (e == 0)
-        etc->p1 = 0;
+    if (e == NULL)
+        etc->p1 = NULL;
     else
         etc->p1 = eval(e, 0);
     e = b->p2;
-    if (e == 0)
-        etc->p2 = 0;
+    if (e == NULL)
+        etc->p2 = NULL;
     else {
         e       = eval(e, 1);
-        etc->p2 = strbin(e);
+        etc->p2 = (node_t *)(long)(intptr_t)strbin(e);
         delete(e);
     }
     goto badvanc;
 
 retard:
     a = back->p1;
-    if (a == 0) {
+    if (a == NULL) {
         rfail = 1;
         goto fail;
     }
@@ -152,20 +157,20 @@ adv0:
     a = str->p2;
 adv01:
     if (a == last)
-        next = 0;
+        next = NULL;
     else
         next = a->p1;
 advanc:
     a = list->p1;
-    if (a == 0) {
+    if (a == NULL) {
         a = alloc();
-        if (r == 0) {
-            a->p1 = a->p2 = 0;
+        if (r == NULL) {
+            a->p1 = a->p2 = NULL;
             goto fail;
         }
         b     = r->p1;
         a->p1 = b;
-        if (next == 0) {
+        if (next == NULL) {
             a->p2 = r->p2;
             goto fail;
         }
@@ -184,9 +189,9 @@ adv1:
     var  = back->p2;
     d    = list->typ;
     if (d < 2) {
-        if (var == 0)
+        if (var == NULL)
             goto advanc;
-        if (next == 0)
+        if (next == NULL)
             goto retard;
         a = next;
         b = var->p1;
@@ -205,8 +210,8 @@ adv1:
     str     = var->p1;
     etc     = var->p2;
     str->p1 = next;
-    str->p2 = 0;
-    c       = etc->p2;
+    str->p2 = NULL;
+    c       = (int)(intptr_t)etc->p2;
     if (var->typ == 1) {
         d = bextend(str, last);
         if (d == 0)
@@ -225,7 +230,7 @@ adv1:
         }
     }
     if (c == 0) {
-        if (d == 3 & next != 0) {
+        if (d == 3 && next != NULL) {
             str->p2 = last;
             goto adv0;
         }
@@ -240,10 +245,10 @@ fail:
     list = base;
     goto f1;
 fadv:
-    free(back);
+    free_node(back);
     b = list->p1;
-    free(list);
-    if (b == 0)
+    free_node(list);
+    if (b == NULL)
         return (a);
     list = b;
 f1:
@@ -255,16 +260,16 @@ f1:
     }
     str = var->p1;
     etc = var->p2;
-    if (a != 0 & etc->p1 != 0) {
-        if (str->p2 == 0) {
-            free(str);
-            str = 0;
+    if (a != NULL && etc->p1 != NULL) {
+        if (str->p2 == NULL) {
+            free_node(str);
+            str = NULL;
         }
         assign(etc->p1, copy(str));
     }
     if (str)
-        free(str);
-    free(etc);
-    free(var);
+        free_node(str);
+    free_node(etc);
+    free_node(var);
     goto fadv;
 }

@@ -16,6 +16,10 @@ int main(int argc, char *argv[])
             mes("cannot open input");
             exit(1);
         }
+        // Redirect stdin to read from the file
+        dup2(fin, 0);
+        close(fin);
+        fin = 0;
     }
     fout = dup(1);
     // Initialize built-in symbols

@@ -58,17 +58,22 @@ node_t *syspit(void)
     node_t *b, *c, *d;
     int a;
 
-    if ((a = getchar()) == '\n')
+    a = getchar();
+    if (a == '\n')
         return (NULL);
+    if (a == EOF) {
+        rfail = 1;
+        return (NULL);
+    }
     b = c = alloc();
     while (a != '\n') {
         c->p1 = d = alloc();
         c         = d;
     l:
         c->ch = a;
-        if (a == '\0') {
+        if (a == EOF || a == '\0') {
             // Handle EOF: close file if open, then read from stdin
-            if (fin) {
+            if (fin && a == '\0') {
                 close(fin);
                 fin = 0;
                 a   = getchar();
@@ -78,6 +83,10 @@ node_t *syspit(void)
             break;
         }
         a = getchar();
+        if (a == EOF) {
+            rfail = 1;
+            break;
+        }
     }
     b->p2 = c;
     if (rfail) {

@@ -92,11 +92,15 @@ node_t *compon(void)
         b->p1 = a;
         for (;;) {
             schar = getc_char();
-            if (schar == NULL)
-            lerr:
-                writes("illegal literal string");
-            if (schar->ch == c)
+            if (schar == NULL) {
+                // End of input reached without closing quote
+                goto lerr;
+            }
+            if (schar->ch == c) {
+                // Found closing quote - break out of loop
                 break;
+            }
+            // Add this character to the string
             a->p1 = schar;
             a     = schar;
         }
@@ -104,6 +108,9 @@ node_t *compon(void)
         schar->typ = 15;
         schar->p1  = b;
         return (schar);
+    lerr:
+        writes("illegal literal string");
+        return NULL; // Never reached, but needed for compilation
 
     case 10: // Equals sign
         schar->typ = 3;

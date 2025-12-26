@@ -9,7 +9,6 @@ extern "C" {
 #include "sno.h"
 }
 
-
 // Helper function to convert node_t string back to std::string
 std::string node_to_string(node_t *str)
 {

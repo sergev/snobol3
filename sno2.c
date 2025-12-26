@@ -52,23 +52,23 @@ node_t *compon(void)
         schar->typ = 9;
         return (schar);
 
-    case 6: // Asterisk - could be multiplication or exponentiation
+    case 6: // Asterisk - could be multiplication or unanchored search
         a     = schar;
         schar = getc_char();
         if (char_class(schar->ch) == 3)
-            a->typ = 10; // Pattern alternation? (followed by space)
+            a->typ = 10; // Multiplication (followed by space)
         else
-            a->typ = 1; // Multiplication
+            a->typ = 1; // Unanchored search
         next = 1;
         return (a);
 
-    case 7: // Division - could be division or pattern alternation
+    case 7: // Division - could be pattern alternation
         a     = schar;
         schar = getc_char();
         if (char_class(schar->ch) == 3)
-            a->typ = 11; // Pattern alternation (followed by space)
+            a->typ = 11; // Division (followed by space)
         else
-            a->typ = 2; // Division
+            a->typ = 2; // Pattern alternation
         next = 1;
         return (a);
 
@@ -217,15 +217,15 @@ l3:
         comp = compon();
         goto l3;
 
-    case 10: // Exponentiation operator
+    case 10: // Multiplication or something else
         if (space_flag == 0) {
-            comp->typ = 1; // Treat as multiplication if no space
+            comp->typ = 1; // Treat as something else if no space
             goto l3;
         }
 
-    case 11: // Pattern alternation
+    case 11: // Division or pattern alternation
         if (space_flag == 0) {
-            comp->typ = 2; // Treat as division if no space
+            comp->typ = 2; // Treat as pattern alternation if no space
             goto l3;
         }
 

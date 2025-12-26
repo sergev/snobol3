@@ -1,8 +1,9 @@
 #include <gtest/gtest.h>
-#include "test_helpers.h"
 
 #include <cstring>
 #include <string>
+
+#include "test_helpers.h"
 
 extern "C" {
 #include "sno.h"

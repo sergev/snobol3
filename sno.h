@@ -42,7 +42,6 @@ extern int fout;
 /* Function prototypes from sno1.c */
 void mes(const char *s);
 node_t *init(const char *s, int t);
-int main(int argc, char *argv[]);
 node_t *syspit(void);
 void syspot(node_t *string);
 node_t *cstr_to_node(const char *s);

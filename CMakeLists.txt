@@ -11,6 +11,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror")
 
 # Source files
 set(SOURCES
+    main.c
     sno1.c
     sno2.c
     sno3.c

@@ -61,7 +61,7 @@ SNO differs from standard Snobol III in the following ways:
 
 6. **No builtin functions**: There are no builtin functions.
 
-7. **Arithmetic precedence**: Parentheses for arithmetic are not needed. Normal precedence applies. Because of this, the arithmetic operators `/` and `*` must be set off by space.
+7. **Arithmetic precedence**: Parentheses for arithmetic are not needed. Normal precedence applies. The arithmetic operators `/` and `*` must be set off by space.
 
 8. **Assignments**: The right side of assignments must be non-empty.
 
@@ -82,4 +82,3 @@ This is the Snobol III implementation from Unix 4 tape, originally written by Ke
 ## License
 
 This code is from historical Unix sources. Please refer to the original Unix license terms.
-

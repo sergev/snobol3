@@ -57,9 +57,8 @@ The lexical analyzer (`compon()` in `sno2.c`) recognizes the following token typ
 #### 4. Operators
 - `+` - Addition
 - `-` - Subtraction
-- `*` - Multiplication
-- `/` - Division (must be followed by space for pattern alternation)
-- `//` - Pattern alternation (slash followed by space)
+- `*` - Multiplication (or unanchored search when followed by non-space)
+- `/` - Division (or transfer mark when followed by non-space)
 
 #### 5. Delimiters
 - `(` - Left parenthesis (grouping, function calls)
@@ -96,14 +95,13 @@ Expressions are parsed using operator precedence parsing (Shunting Yard algorith
 
 Operators have the following precedence (higher numbers = higher precedence):
 
-1. **Pattern Alternation** (`//`) - Precedence 11
-2. **Multiplication** (`*`) - Precedence 1
-3. **Division** (`/`) - Precedence 2
-4. **Addition** (`+`) - Precedence 8
-5. **Subtraction** (`-`) - Precedence 9
-6. **Concatenation** (implicit via whitespace) - Precedence 7
+1. **Multiplication** (`*`) - Precedence 1
+2. **Division** (`/`) - Precedence 2
+3. **Addition** (`+`) - Precedence 8
+4. **Subtraction** (`-`) - Precedence 9
+5. **Concatenation** (implicit via whitespace) - Precedence 7
 
-**Note**: Parentheses for arithmetic are not needed due to normal precedence rules. However, the arithmetic operator `/` must be set off by space to distinguish it from pattern alternation (`//`).
+**Note**: Parentheses for arithmetic are not needed due to normal precedence rules. However, arithmetic operators `*` and `/` must be set off by space to distinguish it from other usage.
 
 ### Expression Components
 
@@ -119,8 +117,8 @@ Operators have the following precedence (higher numbers = higher precedence):
 #### 3. Arithmetic Operations
 - **Addition**: `expr1 + expr2`
 - **Subtraction**: `expr1 - expr2`
-- **Multiplication**: `expr1 * expr2`
-- **Division**: `expr1 / expr2` (note: space required around `/` to distinguish from pattern alternation)
+- **Multiplication**: `expr1 * expr2` (note: space required around `*`)
+- **Division**: `expr1 / expr2` (note: space required around `/`)
 
 #### 4. String Concatenation
 - **Syntax**: `expr1 expr2` (whitespace between expressions)
@@ -282,24 +280,24 @@ The statement body can be one of:
 The goto clause controls program flow after statement execution:
 
 ##### a) Simple Goto
-- **Syntax**: `, label`
+- **Syntax**: `/(label)`
 - **Semantics**: Transfers control to the label
-- **Example**: `x = x + 1, loop`
+- **Example**: `x = x + 1 /(loop)`
 
 ##### b) Success/Failure Goto
-- **Syntax**: `, (success, failure)`
+- **Syntax**: `/s(success)f(failure)`
 - **Semantics**: Transfers to `success` on success, `failure` on failure
-- **Example**: `str pattern, (ok, fail)`
+- **Example**: `str pattern /s(ok)f(fail)`
 
 ##### c) Success Goto Only
-- **Syntax**: `, s(label)`
+- **Syntax**: `/s(label)`
 - **Semantics**: Transfers to label only on success
-- **Example**: `str pattern, s(ok)`
+- **Example**: `str pattern /s(ok)`
 
 ##### d) Failure Goto Only
-- **Syntax**: `, f(label)`
+- **Syntax**: `/f(label)`
 - **Semantics**: Transfers to label only on failure
-- **Example**: `str pattern, f(fail)`
+- **Example**: `str pattern /f(fail)`
 
 ### Statement Examples
 
@@ -310,17 +308,17 @@ The goto clause controls program flow after statement execution:
     x = "hello"
 
 # Assignment with goto
-    x = x + 1, loop
+    x = x + 1 /(loop)
 
 # Pattern matching
-    str "hello", (found, notfound)
+    str "hello" /s(found)f(notfound)
 
 # Pattern matching with assignment
-    str "old" = "new", (done, error)
+    str "old" = "new" /s(done)f(error)
 
 # Function definition (define on one line, body on next)
 define factorial(n)
-    n = 0, (base, recurse)
+    n = 0 /s(base)f(recurse)
 base
     return 1
 recurse
@@ -328,7 +326,7 @@ recurse
 
 # Labeled statements (label and body on same line)
 start    x = syspit()
-    x "end", (done, start)
+    x "end" /s(done)f(start)
 done    syspot = x
 end
 ```
@@ -381,7 +379,7 @@ end
 define add(a, b)
     return a + b
 start    x = syspit()
-    x "end", (done, start)
+    x "end" /s(done)f(start)
 done    y = add(x, "!")
     syspot = y
 end
@@ -484,10 +482,10 @@ pattern-match-stmt ::= expression pattern
 pattern-assign-stmt ::= expression pattern "=" expression
 function-def     ::= "define" identifier "(" [param-list] ")" statement
 
-goto-clause      ::= "," identifier
-                  |  "," "(" identifier "," identifier ")"
-                  |  "," "s" "(" identifier ")"
-                  |  "," "f" "(" identifier ")"
+goto-clause      ::= "/" "(" identifier ")"
+                  |  "/" "s" "(" identifier ")" "f" "(" identifier ")"
+                  |  "/" "s" "(" identifier ")"
+                  |  "/" "f" "(" identifier ")"
 
 expression       ::= term (("+" | "-") term)*
 term             ::= factor (("*" | "/") factor)*

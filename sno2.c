@@ -219,13 +219,13 @@ l3:
 
     case 10: // Multiplication or something else
         if (space_flag == 0) {
-            comp->typ = 1; // Treat as something else if no space
+            comp->typ = 1; // Treat as multiplication else if no space
             goto l3;
         }
 
     case 11: // Division or pattern alternation
         if (space_flag == 0) {
-            comp->typ = 2; // Treat as pattern alternation if no space
+            comp->typ = 2; // Treat as division if no space
             goto l3;
         }
 

@@ -27,6 +27,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(TEST_SOURCES
     smoke_test.cpp
     basic_tests.cpp
+    test_helpers.cpp
+    expression_tests.cpp
+    pattern_tests.cpp
+    statement_tests.cpp
+    function_tests.cpp
+    control_flow_tests.cpp
+    integration_tests.cpp
+    edge_case_tests.cpp
 )
 
 #

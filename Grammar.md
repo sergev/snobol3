@@ -500,4 +500,3 @@ variable         ::= identifier
 - Snobol III manual (JACM; Vol. 11 No. 1; Jan 1964; pp 21)
 - [Unix V4 Manual](https://dspinellis.github.io/unix-v4man/v4man.pdf)
 - [Snobol III Paper](https://dl.acm.org/doi/epdf/10.1145/321203.321207)
-

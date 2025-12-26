@@ -131,7 +131,7 @@ node_t *cstr_to_node(const char *s)
 // Classify a character for lexical analysis.
 // Returns a numeric code representing the character's syntactic role.
 //
-int class(int c)
+int char_class(int c)
 {
     switch (c) {
     case ')':
@@ -345,7 +345,7 @@ int strbin(node_t *string)
     p    = s->p1;
     q    = s->p2;
     sign = 1;
-    if (class(p->ch) == 5) { /* minus */
+    if (char_class(p->ch) == 5) { /* minus */
         sign = -1;
         if (p == q)
             return (0);

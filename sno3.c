@@ -33,7 +33,7 @@ eb1:
     a = a->p1;
 eb2:
     d++;
-    class_val = class(a->ch);
+    class_val = char_class(a->ch);
     if (class_val == 1) { /* rp - right parenthesis */
         if (b == 0)
             goto bad;

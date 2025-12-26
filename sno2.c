@@ -19,7 +19,7 @@ node_t *compon(void)
         (a = alloc())->typ = 0;
         return (a);
     }
-    switch (class(schar->ch)) {
+    switch (char_class(schar->ch)) {
     case 1: // Right parenthesis
         schar->typ = 5;
         return (schar);
@@ -36,7 +36,7 @@ node_t *compon(void)
                 a->typ = 0;
                 return (a);
             }
-            if (class(schar->ch) != 3)
+            if (char_class(schar->ch) != 3)
                 break;
             free_node(schar);
         }
@@ -55,7 +55,7 @@ node_t *compon(void)
     case 6: // Asterisk - could be multiplication or exponentiation
         a     = schar;
         schar = getc_char();
-        if (class(schar->ch) == 3)
+        if (char_class(schar->ch) == 3)
             a->typ = 10; // Exponentiation (followed by space)
         else
             a->typ = 1; // Multiplication
@@ -65,7 +65,7 @@ node_t *compon(void)
     case 7: // Division - could be division or pattern alternation
         a     = schar;
         schar = getc_char();
-        if (class(schar->ch) == 3)
+        if (char_class(schar->ch) == 3)
             a->typ = 11; // Pattern alternation (followed by space)
         else
             a->typ = 2; // Division
@@ -117,7 +117,7 @@ node_t *compon(void)
     b     = alloc();
     b->p1 = a = schar;
     schar     = getc_char();
-    while (schar != NULL && !class(schar->ch)) {
+    while (schar != NULL && !char_class(schar->ch)) {
         a->p1 = schar;
         a     = schar;
         schar = getc_char();

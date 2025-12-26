@@ -45,7 +45,7 @@ node_t *init(const char *s, int t);
 node_t *syspit(void);
 void syspot(node_t *string);
 node_t *cstr_to_node(const char *s);
-int class(int c);
+int char_class(int c);
 node_t *alloc(void);
 void free_node(node_t *pointer);
 int nfree(void);

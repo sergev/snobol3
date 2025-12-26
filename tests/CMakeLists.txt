@@ -20,8 +20,13 @@ link_libraries(snobol gtest_main)
 add_definitions(-DTEST_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 add_definitions(-DBUILD_DIR="${CMAKE_BINARY_DIR}")
 
+# Set C++17 standard for tests
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 set(TEST_SOURCES
     smoke_test.cpp
+    basic_tests.cpp
 )
 
 #

@@ -26,8 +26,7 @@ protected:
 TEST_F(IntegrationTest, HelloWorld)
 {
     std::string program = R"(
-start
-    syspot = "Hello, World!"
+start    syspot = "Hello, World!"
 end
 )";
 
@@ -39,11 +38,9 @@ end
 TEST_F(IntegrationTest, InputOutput_WithSyspit)
 {
     std::string program = R"(
-start
-    x = syspit()
+start    x = syspit()
     x "end", (done, start)
-done
-    syspot = x
+done    syspot = x
 end
 )";
 
@@ -58,14 +55,11 @@ TEST_F(IntegrationTest, FactorialCalculation)
     std::string program = R"(
 define factorial(n)
     n = 0, (base, recurse)
-base
-    return "1"
-recurse
-    n1 = n - "1"
+base    return "1"
+recurse    n1 = n - "1"
     factn1 = factorial(n1)
     return n * factn1
-start
-    result = factorial("5")
+start    result = factorial("5")
     syspot = result
 end
 )";
@@ -78,8 +72,7 @@ end
 TEST_F(IntegrationTest, StringProcessing)
 {
     std::string program = R"(
-start
-    str = "hello world"
+start    str = "hello world"
     str "world" = "universe"
     syspot = str
     str "hello" = "hi"
@@ -95,22 +88,16 @@ end
 TEST_F(IntegrationTest, PatternMatchingProgram)
 {
     std::string program = R"(
-start
-    str = "test string"
+start    str = "test string"
     str "test", (found, notfound)
-found
-    syspot = "pattern found"
+found    syspot = "pattern found"
     str "string", (found2, notfound2)
-found2
-    syspot = "both patterns found"
+found2    syspot = "both patterns found"
     goto end
-notfound2
-    syspot = "second pattern not found"
+notfound2    syspot = "second pattern not found"
     goto end
-notfound
-    syspot = "pattern not found"
-end
-    syspot = "done"
+notfound    syspot = "pattern not found"
+end    syspot = "done"
 end
 )";
 
@@ -129,8 +116,7 @@ define multiply(x, y)
 define calculate(x, y, z)
     sum = add(x, y)
     return multiply(sum, z)
-start
-    result = calculate("2", "3", "4")
+start    result = calculate("2", "3", "4")
     syspot = result
 end
 )";
@@ -145,21 +131,15 @@ TEST_F(IntegrationTest, ComplexMultiFeatureProgram)
     std::string program = R"(
 define process(str)
     str "old" = "new", (changed, unchanged)
-changed
-    return str
-unchanged
-    return str
-start
-    input = "old value"
+changed    return str
+unchanged    return str
+start    input = "old value"
     output = process(input)
     output "new", (found, notfound)
-found
-    syspot = "processed: " output
+found    syspot = "processed: " output
     goto end
-notfound
-    syspot = "not processed"
-end
-    syspot = "done"
+notfound    syspot = "not processed"
+end    syspot = "done"
 end
 )";
 
@@ -171,8 +151,7 @@ end
 TEST_F(IntegrationTest, ArithmeticOperations)
 {
     std::string program = R"(
-start
-    a = "10"
+start    a = "10"
     b = "20"
     c = "3"
     sum = a + b
@@ -192,8 +171,7 @@ end
 TEST_F(IntegrationTest, StringConcatenation)
 {
     std::string program = R"(
-start
-    a = "hello"
+start    a = "hello"
     b = " "
     c = "world"
     result = a b c "!"
@@ -214,10 +192,8 @@ TEST_F(IntegrationTest, ProgramWithStartLabel)
 {
     std::string program = R"(
     syspot = "before start"
-start
-    syspot = "at start"
-end
-    syspot = "end"
+start    syspot = "at start"
+end    syspot = "end"
 end
 )";
 
@@ -229,13 +205,10 @@ end
 TEST_F(IntegrationTest, ProgramWithoutStartLabel)
 {
     std::string program = R"(
-first
-    syspot = "first"
+first    syspot = "first"
     goto second
-second
-    syspot = "second"
-end
-    syspot = "end"
+second    syspot = "second"
+end    syspot = "end"
 end
 )";
 
@@ -247,16 +220,12 @@ end
 TEST_F(IntegrationTest, ProgramWithMultipleLabels)
 {
     std::string program = R"(
-start
-    syspot = "start"
+start    syspot = "start"
     goto middle
-middle
-    syspot = "middle"
+middle    syspot = "middle"
     goto end_label
-end_label
-    syspot = "end_label"
-end
-    syspot = "end"
+end_label    syspot = "end_label"
+end    syspot = "end"
 end
 )";
 
@@ -268,16 +237,12 @@ end
 TEST_F(IntegrationTest, ProgramExecutionOrder)
 {
     std::string program = R"(
-start
-    syspot = "1"
+start    syspot = "1"
     goto two
-two
-    syspot = "2"
+two    syspot = "2"
     goto three
-three
-    syspot = "3"
-end
-    syspot = "4"
+three    syspot = "3"
+end    syspot = "4"
 end
 )";
 
@@ -289,10 +254,8 @@ end
 TEST_F(IntegrationTest, EndOfProgramHandling)
 {
     std::string program = R"(
-start
-    syspot = "start"
-end
-    syspot = "end statement"
+start    syspot = "start"
+end    syspot = "end statement"
 end
 )";
 
@@ -308,8 +271,7 @@ define func1()
     return "1"
 define func2()
     return "2"
-start
-    result = func1()
+start    result = func1()
     syspot = result
     result = func2()
     syspot = result
@@ -326,11 +288,9 @@ TEST_F(IntegrationTest, CompleteExampleFromGrammar)
     std::string program = R"(
 define add(a, b)
     return a + b
-start
-    x = syspit()
+start    x = syspit()
     x "end", (done, start)
-done
-    y = add(x, "!")
+done    y = add(x, "!")
     syspot = y
 end
 )";
@@ -344,15 +304,11 @@ end
 TEST_F(IntegrationTest, LoopWithCondition)
 {
     std::string program = R"(
-start
-    count = "0"
-loop
-    count = count + "1"
+start    count = "0"
+loop    count = count + "1"
     count = "5", (done, loop)
-done
-    syspot = count
-end
-    syspot = "finished"
+done    syspot = count
+end    syspot = "finished"
 end
 )";
 
@@ -370,8 +326,7 @@ define square(x)
     return x * x
 define add(x, y)
     return x + y
-start
-    a = double("5")
+start    a = double("5")
     b = square("4")
     c = add(a, b)
     syspot = c

@@ -28,8 +28,7 @@ TEST_F(FunctionTest, FunctionNoParameters)
     std::string program = R"(
 define getvalue()
     return "42"
-start
-    x = getvalue()
+start    x = getvalue()
     syspot = x
 end
 )";
@@ -44,8 +43,7 @@ TEST_F(FunctionTest, FunctionWithOneParameter)
     std::string program = R"(
 define double(x)
     return x + x
-start
-    result = double("5")
+start    result = double("5")
     syspot = result
 end
 )";
@@ -60,8 +58,7 @@ TEST_F(FunctionTest, FunctionWithTwoParameters)
     std::string program = R"(
 define add(a, b)
     return a + b
-start
-    result = add("10", "20")
+start    result = add("10", "20")
     syspot = result
 end
 )";
@@ -76,8 +73,7 @@ TEST_F(FunctionTest, FunctionWithMultipleParameters)
     std::string program = R"(
 define sum(a, b, c)
     return a + b + c
-start
-    result = sum("1", "2", "3")
+start    result = sum("1", "2", "3")
     syspot = result
 end
 )";
@@ -96,8 +92,7 @@ TEST_F(FunctionTest, SimpleFunctionCall)
     std::string program = R"(
 define hello()
     return "hello"
-start
-    x = hello()
+start    x = hello()
     syspot = x
 end
 )";
@@ -112,8 +107,7 @@ TEST_F(FunctionTest, FunctionCallWithArguments)
     std::string program = R"(
 define multiply(x, y)
     return x * y
-start
-    result = multiply("6", "7")
+start    result = multiply("6", "7")
     syspot = result
 end
 )";
@@ -130,8 +124,7 @@ define add(x, y)
     return x + y
 define multiply(x, y)
     return x * y
-start
-    result = multiply(add("2", "3"), "4")
+start    result = multiply(add("2", "3"), "4")
     syspot = result
 end
 )";
@@ -146,8 +139,7 @@ TEST_F(FunctionTest, FunctionCallInExpression)
     std::string program = R"(
 define getfive()
     return "5"
-start
-    result = getfive() + "10"
+start    result = getfive() + "10"
     syspot = result
 end
 )";
@@ -162,8 +154,7 @@ TEST_F(FunctionTest, FunctionCallWithVariableArguments)
     std::string program = R"(
 define add(x, y)
     return x + y
-start
-    a = "10"
+start    a = "10"
     b = "20"
     result = add(a, b)
     syspot = result
@@ -184,8 +175,7 @@ TEST_F(FunctionTest, ReturnWithValue)
     std::string program = R"(
 define getstring()
     return "test"
-start
-    x = getstring()
+start    x = getstring()
     syspot = x
 end
 )";
@@ -200,8 +190,7 @@ TEST_F(FunctionTest, ReturnWithExpression)
     std::string program = R"(
 define calculate()
     return "10" + "20"
-start
-    result = calculate()
+start    result = calculate()
     syspot = result
 end
 )";
@@ -216,8 +205,7 @@ TEST_F(FunctionTest, FunctionReturnInExpressions)
     std::string program = R"(
 define getten()
     return "10"
-start
-    result = getten() + getten()
+start    result = getten() + getten()
     syspot = result
 end
 )";
@@ -237,8 +225,7 @@ TEST_F(FunctionTest, ParameterBinding)
 define testparam(x)
     syspot = x
     return x
-start
-    a = "original"
+start    a = "original"
     result = testparam("bound")
     syspot = a
 end
@@ -255,8 +242,7 @@ TEST_F(FunctionTest, ParameterValueRestoration)
 define test(x)
     x = "changed"
     return x
-start
-    x = "original"
+start    x = "original"
     result = test("param")
     syspot = x
 end
@@ -273,14 +259,11 @@ TEST_F(FunctionTest, RecursiveFunction)
     std::string program = R"(
 define factorial(n)
     n = 0, (base, recurse)
-base
-    return "1"
-recurse
-    n1 = n - "1"
+base    return "1"
+recurse    n1 = n - "1"
     factn1 = factorial(n1)
     return n * factn1
-start
-    result = factorial("5")
+start    result = factorial("5")
     syspot = result
 end
 )";
@@ -295,20 +278,14 @@ TEST_F(FunctionTest, FunctionFailureReturn)
     std::string program = R"(
 define mayfail(flag)
     flag = "0", (success, fail)
-success
-    return "success"
-fail
-    freturn
-start
-    result = mayfail("1")
+success    return "success"
+fail    freturn
+start    result = mayfail("1")
     result = 0, (found, notfound)
-found
-    syspot = "function succeeded"
+found    syspot = "function succeeded"
     goto end
-notfound
-    syspot = "function failed"
-end
-    syspot = "done"
+notfound    syspot = "function failed"
+end    syspot = "done"
 end
 )";
 
@@ -324,8 +301,7 @@ define add(x, y)
     return x + y
 define multiply(x, y)
     return x * y
-start
-    a = add("2", "3")
+start    a = add("2", "3")
     b = multiply("4", "5")
     result = a + b
     syspot = result
@@ -342,12 +318,9 @@ TEST_F(FunctionTest, FunctionWithPatternMatching)
     std::string program = R"(
 define checkpattern(str)
     str "test", (found, notfound)
-found
-    return "found"
-notfound
-    return "not found"
-start
-    result = checkpattern("test string")
+found    return "found"
+notfound    return "not found"
+start    result = checkpattern("test string")
     syspot = result
 end
 )";
@@ -364,8 +337,7 @@ define addone(x)
     return x + "1"
 define addtwo(x)
     return addone(addone(x))
-start
-    result = addtwo("5")
+start    result = addtwo("5")
     syspot = result
 end
 )";

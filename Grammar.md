@@ -46,8 +46,13 @@ The lexical analyzer (`compon()` in `sno2.c`) recognizes the following token typ
 
 #### 3. Whitespace
 - **Syntax**: One or more spaces or tabs
-- **Significance**: Whitespace is significant and used for string concatenation
-- **Note**: Whitespace must separate certain operators (`*` and `/`) from operands
+- **Significance**:
+  - Whitespace is significant and used for string concatenation
+  - **Required** at the start of statement bodies (even without labels)
+  - **Required** between labels and statement bodies on the same line
+- **Note**:
+  - Whitespace must separate certain operators (`*` and `/`) from operands
+  - **Newlines are NOT whitespace** - they end statements and are handled by the line-oriented input system
 
 #### 4. Operators
 - `+` - Addition
@@ -212,15 +217,28 @@ Statements are compiled by the `compile()` function in `sno2.c`. Each statement 
 
 ### Statement Structure
 
+**Important**: This is a **line-oriented language**. Each statement must be on a **single line**. Statements cannot span multiple lines.
+
 #### 1. Label (Optional)
-- **Syntax**: `identifier` followed by whitespace
+- **Syntax**: `identifier` followed by **whitespace (space or tab) on the same line**
 - **Rules**:
+  - Labels **must be on the same line** as the statement body
+  - There **must be whitespace** (space or tab) between the label and the statement body
   - All labels except `define` must have a non-empty statement
   - The label `end` marks the end of the program
   - The label `start` marks the program entry point
-- **Example**: `loop x = x + 1`
+  - Newlines are **not** whitespace - they end the statement
+- **Example**: `loop x = x + 1` (label and statement on same line)
+- **Invalid**:
+  ```
+  loop
+      x = x + 1
+  ```
+  (label on separate line - this would be parsed as two statements)
 
 #### 2. Statement Body
+
+**Important**: The statement body **must start with whitespace** (space or tab), even if there is no label. This is enforced by the parser (see line 448-449 in `sno2.c`).
 
 The statement body can be one of:
 
@@ -247,12 +265,13 @@ The statement body can be one of:
 - **Example**: `str "old" = "new"`, `x pattern = value`
 
 ##### e) Function Definition
-- **Syntax**: `define name(params) body`
+- **Syntax**: `define name(params)` on one line, followed by function body statement on next line
 - **Rules**:
   - `define` is a special label (not a regular label)
+  - The `define` statement itself must end with end-of-line after the closing parenthesis
   - Parameters are comma-separated identifiers
-  - Empty parameter list: `define name() body`
-  - Function body is a single statement
+  - Empty parameter list: `define name()`
+  - Function body is a single statement on the **next line** (this is the only case where a statement can follow a label on a separate line)
 - **Examples**:
   ```
   define f()
@@ -260,6 +279,7 @@ The statement body can be one of:
   define add(a, b)
       return a + b
   ```
+  Note: The function body statement must still start with whitespace on its line.
 
 #### 3. Goto Clause (Optional)
 
@@ -287,20 +307,22 @@ The goto clause controls program flow after statement execution:
 
 ### Statement Examples
 
+**Note**: All examples show statements on single lines. Whitespace at the start of statement bodies is required.
+
 ```
-# Simple assignment
-x = "hello"
+# Simple assignment (must start with whitespace)
+    x = "hello"
 
 # Assignment with goto
-x = x + 1, loop
+    x = x + 1, loop
 
 # Pattern matching
-str "hello", (found, notfound)
+    str "hello", (found, notfound)
 
 # Pattern matching with assignment
-str "old" = "new", (done, error)
+    str "old" = "new", (done, error)
 
-# Function definition
+# Function definition (define on one line, body on next)
 define factorial(n)
     n = 0, (base, recurse)
 base
@@ -308,14 +330,18 @@ base
 recurse
     return n * factorial(n - 1)
 
-# Labeled statement
-start
-    x = syspit()
+# Labeled statements (label and body on same line)
+start    x = syspit()
     x "end", (done, start)
-done
-    syspot = x
+done    syspot = x
 end
 ```
+
+**Important Formatting Rules**:
+- Each statement is on a single line
+- Labels must be on the same line as their statement body
+- Statement bodies must start with whitespace (space or tab)
+- The only exception is function definitions: `define name(params)` ends a line, and the function body is on the next line
 
 ---
 
@@ -324,8 +350,12 @@ end
 ### Program Compilation
 
 1. **Input Source**: Programs are read from a file (if specified) and then from standard input
-2. **Compilation**: All input through a statement containing the label `end` is considered program and is compiled
-3. **Post-compilation**: Input after `end` is available to `syspit`
+2. **Line-oriented Processing**: The parser reads one line at a time using `syspit()` (see `getc_char()` in `sno1.c`)
+   - Each line is processed as a complete statement
+   - When a line ends, `getc_char()` returns NULL (type 0), signaling end of statement
+   - Newlines are not treated as whitespace - they terminate statements
+3. **Compilation**: All input through a statement containing the label `end` is considered program and is compiled
+4. **Post-compilation**: Input after `end` is available to `syspit`
 
 ### Entry Point
 
@@ -354,15 +384,18 @@ end
 ```
 define add(a, b)
     return a + b
-
-start
-    x = syspit()
+start    x = syspit()
     x "end", (done, start)
-done
-    y = add(x, "!")
+done    y = add(x, "!")
     syspot = y
 end
 ```
+
+**Note**: In this example:
+- `define add(a, b)` is on one line (ends with newline after closing paren)
+- Function body `return a + b` is on the next line (starts with whitespace)
+- `start    x = syspit()` shows label and statement on same line with whitespace between
+- All other statements start with whitespace
 
 ---
 
@@ -424,8 +457,10 @@ This implementation differs from standard Snobol III in the following ways (as d
 1. **No unanchored searches**: Use `**` for unanchored search or `*x* b = x c` for unanchored assignment
 2. **No back referencing**: Back references are not supported
 3. **Function declaration**: Functions are declared at compile time using `define` label
-4. **Labels**: All labels except `define` must have non-empty statements
-5. **Start label**: `start` label determines entry point; otherwise first statement executes
+4. **Labels**: All labels except `define` must have non-empty statements on the same line
+5. **Line-oriented**: Each statement must be on a single line; labels must be on the same line as their statement body
+6. **Whitespace requirement**: Statement bodies must start with whitespace (space or tab)
+7. **Start label**: `start` label determines entry point; otherwise first statement executes
 6. **No builtin functions**: Only `syspit` and `syspot` are available
 7. **Arithmetic precedence**: Normal precedence applies; `/` and `*` must be set off by space
 8. **Assignments**: Right side of assignments must be non-empty

@@ -27,8 +27,7 @@ TEST_F(EdgeCaseTest, EmptyProgram)
 {
     std::string program = R"(
 start
-end
-    syspot = "end"
+end    syspot = "end"
 end
 )";
 
@@ -40,8 +39,7 @@ end
 TEST_F(EdgeCaseTest, UninitializedVariable)
 {
     std::string program = R"(
-start
-    syspot = x
+start    syspot = x
 end
 )";
 
@@ -54,8 +52,7 @@ end
 TEST_F(EdgeCaseTest, VeryLongString)
 {
     std::string program = R"(
-start
-    x = "a"
+start    x = "a"
     y = "b"
     z = x y x y x y x y x y x y x y x y
     syspot = z
@@ -70,8 +67,7 @@ end
 TEST_F(EdgeCaseTest, VeryLongExpression)
 {
     std::string program = R"(
-start
-    a = "1"
+start    a = "1"
     b = "2"
     c = "3"
     d = "4"
@@ -90,8 +86,7 @@ TEST_F(EdgeCaseTest, DeeplyNestedCalls)
     std::string program = R"(
 define id(x)
     return x
-start
-    result = id(id(id(id("5"))))
+start    result = id(id(id(id("5"))))
     syspot = result
 end
 )";
@@ -104,16 +99,12 @@ end
 TEST_F(EdgeCaseTest, PatternMatching_EmptyString)
 {
     std::string program = R"(
-start
-    str = ""
+start    str = ""
     str "", (found, notfound)
-found
-    syspot = "found"
+found    syspot = "found"
     goto end
-notfound
-    syspot = "not found"
-end
-    syspot = "done"
+notfound    syspot = "not found"
+end    syspot = "done"
 end
 )";
 
@@ -125,16 +116,12 @@ end
 TEST_F(EdgeCaseTest, PatternMatching_NoMatch)
 {
     std::string program = R"(
-start
-    str = "hello"
+start    str = "hello"
     str "goodbye", (found, notfound)
-found
-    syspot = "found"
+found    syspot = "found"
     goto end
-notfound
-    syspot = "not found"
-end
-    syspot = "done"
+notfound    syspot = "not found"
+end    syspot = "done"
 end
 )";
 
@@ -148,8 +135,7 @@ TEST_F(EdgeCaseTest, FunctionParameterMismatch_TooFew)
     std::string program = R"(
 define add(x, y)
     return x + y
-start
-    result = add("5")
+start    result = add("5")
     syspot = result
 end
 )";
@@ -164,8 +150,7 @@ TEST_F(EdgeCaseTest, FunctionParameterMismatch_TooMany)
     std::string program = R"(
 define add(x, y)
     return x + y
-start
-    result = add("5", "10", "15")
+start    result = add("5", "10", "15")
     syspot = result
 end
 )";
@@ -178,8 +163,7 @@ end
 TEST_F(EdgeCaseTest, ZeroOperations)
 {
     std::string program = R"(
-start
-    x = "0"
+start    x = "0"
     y = "10"
     sum = x + y
     product = x * y
@@ -196,8 +180,7 @@ end
 TEST_F(EdgeCaseTest, NegativeNumbers)
 {
     std::string program = R"(
-start
-    x = "-10"
+start    x = "-10"
     y = "5"
     sum = x + y
     diff = x - y
@@ -214,8 +197,7 @@ end
 TEST_F(EdgeCaseTest, LargeNumbers)
 {
     std::string program = R"(
-start
-    x = "1000"
+start    x = "1000"
     y = "2000"
     sum = x + y
     syspot = sum
@@ -230,8 +212,7 @@ end
 TEST_F(EdgeCaseTest, StringWithQuotes)
 {
     std::string program = R"(
-start
-    x = "hello 'world'"
+start    x = "hello 'world'"
     syspot = x
 end
 )";
@@ -244,8 +225,7 @@ end
 TEST_F(EdgeCaseTest, StringWithDoubleQuotes)
 {
     std::string program = R"(
-start
-    x = 'hello "world"'
+start    x = 'hello "world"'
     syspot = x
 end
 )";
@@ -258,8 +238,7 @@ end
 TEST_F(EdgeCaseTest, MultipleAssignmentsToSameVariable)
 {
     std::string program = R"(
-start
-    x = "1"
+start    x = "1"
     x = "2"
     x = "3"
     syspot = x
@@ -274,8 +253,7 @@ end
 TEST_F(EdgeCaseTest, SelfReferencingAssignment)
 {
     std::string program = R"(
-start
-    x = "5"
+start    x = "5"
     x = x + "1"
     syspot = x
 end
@@ -289,16 +267,12 @@ end
 TEST_F(EdgeCaseTest, PatternReplacement_NoMatch)
 {
     std::string program = R"(
-start
-    str = "hello"
+start    str = "hello"
     str "goodbye" = "world", (found, notfound)
-found
-    syspot = str
+found    syspot = str
     goto end
-notfound
-    syspot = "not found"
-end
-    syspot = "done"
+notfound    syspot = "not found"
+end    syspot = "done"
 end
 )";
 
@@ -310,10 +284,8 @@ end
 TEST_F(EdgeCaseTest, GotoToUndefinedLabel)
 {
     std::string program = R"(
-start
-    goto undefined
-end
-    syspot = "end"
+start    goto undefined
+end    syspot = "end"
 end
 )";
 
@@ -327,16 +299,12 @@ TEST_F(EdgeCaseTest, FunctionCallInPattern)
     std::string program = R"(
 define getpattern()
     return "test"
-start
-    str = "test string"
+start    str = "test string"
     str getpattern(), (found, notfound)
-found
-    syspot = "found"
+found    syspot = "found"
     goto end
-notfound
-    syspot = "not found"
-end
-    syspot = "done"
+notfound    syspot = "not found"
+end    syspot = "done"
 end
 )";
 
@@ -350,14 +318,11 @@ TEST_F(EdgeCaseTest, RecursiveFunction_BaseCase)
     std::string program = R"(
 define factorial(n)
     n = 0, (base, recurse)
-base
-    return "1"
-recurse
-    n1 = n - "1"
+base    return "1"
+recurse    n1 = n - "1"
     factn1 = factorial(n1)
     return n * factn1
-start
-    result = factorial("0")
+start    result = factorial("0")
     syspot = result
 end
 )";
@@ -370,16 +335,12 @@ end
 TEST_F(EdgeCaseTest, AlternationPattern_NoMatch)
 {
     std::string program = R"(
-start
-    str = "xyz"
+start    str = "xyz"
     str *"a"*"b"*, (found, notfound)
-found
-    syspot = "found"
+found    syspot = "found"
     goto end
-notfound
-    syspot = "not found"
-end
-    syspot = "done"
+notfound    syspot = "not found"
+end    syspot = "done"
 end
 )";
 
@@ -391,8 +352,7 @@ end
 TEST_F(EdgeCaseTest, ComplexExpression_Precedence)
 {
     std::string program = R"(
-start
-    a = "2"
+start    a = "2"
     b = "3"
     c = "4"
     d = "5"
@@ -409,8 +369,7 @@ end
 TEST_F(EdgeCaseTest, EmptyStringOperations)
 {
     std::string program = R"(
-start
-    x = ""
+start    x = ""
     y = "test"
     concat = x y
     syspot = concat
@@ -425,8 +384,7 @@ end
 TEST_F(EdgeCaseTest, PatternImmediateInExpression)
 {
     std::string program = R"(
-start
-    x = "test"
+start    x = "test"
     y = $x
     syspot = y
 end

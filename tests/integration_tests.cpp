@@ -26,8 +26,8 @@ protected:
 TEST_F(IntegrationTest, HelloWorld)
 {
     std::string program = R"(
-start    syspot = "Hello, World!"
-end return
+start   syspot = "Hello, World!"
+end     return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -38,10 +38,10 @@ end return
 TEST_F(IntegrationTest, InputOutput_WithSyspit)
 {
     std::string program = R"(
-start    x = syspit()
-    x "end", (done, start)
+start   x = syspit()
+        x "end"         /s(done)f(start)
 done    syspot = x
-end return
+end     return
 )";
 
     std::string input       = "test input\n";
@@ -53,15 +53,15 @@ end return
 TEST_F(IntegrationTest, FactorialCalculation)
 {
     std::string program = R"(
-define factorial(n)
-    n = 0, (base, recurse)
+define  factorial(n)
+        n = 0               /s(base)f(recurse)
 base    return "1"
-recurse    n1 = n - "1"
-    factn1 = factorial(n1)
-    return n * factn1
-start    result = factorial("5")
-    syspot = result
-end return
+recurse n1 = n - "1"
+        factn1 = factorial(n1)
+        return n * factn1
+start   result = factorial("5")
+        syspot = result
+end     return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -88,16 +88,14 @@ end return
 TEST_F(IntegrationTest, PatternMatchingProgram)
 {
     std::string program = R"(
-start    str = "test string"
-    str "test", (found, notfound)
-found    syspot = "pattern found"
-    str "string", (found2, notfound2)
-found2    syspot = "both patterns found"
-    goto end
-notfound2    syspot = "second pattern not found"
-    goto end
+start       str = "test string"
+            str "test"                          /s(found)f(notfound)
+found       syspot = "pattern found"
+            str "string"                        /s(found2)f(notfound2)
+found2      syspot = "both patterns found"      /(end)
+notfound2   syspot = "second pattern not found" /(end)
 notfound    syspot = "pattern not found"
-end    syspot = "done"
+end         syspot = "done"
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -129,16 +127,15 @@ TEST_F(IntegrationTest, ComplexMultiFeatureProgram)
 {
     std::string program = R"(
 define process(str)
-    str "old" = "new", (changed, unchanged)
-changed    return str
-unchanged    return str
-start    input = "old value"
-    output = process(input)
-    output "new", (found, notfound)
-found    syspot = "processed: " output
-    goto end
+            str "old" = "new"               /s(changed)f(unchanged)
+changed     return str
+unchanged   return str
+start       input = "old value"
+            output = process(input)
+            output "new"                    /s(found)f(notfound)
+found       syspot = "processed: " output   /(end)
 notfound    syspot = "not processed"
-end    syspot = "done"
+end         syspot = "done"
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -202,10 +199,9 @@ end    syspot = "end"
 TEST_F(IntegrationTest, ProgramWithoutStartLabel)
 {
     std::string program = R"(
-first    syspot = "first"
-    goto second
-second    syspot = "second"
-end    syspot = "end"
+first   syspot = "first"    /(second)
+second  syspot = "second"
+end     syspot = "end"
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -216,12 +212,10 @@ end    syspot = "end"
 TEST_F(IntegrationTest, ProgramWithMultipleLabels)
 {
     std::string program = R"(
-start    syspot = "start"
-    goto middle
-middle    syspot = "middle"
-    goto end_label
-end_label    syspot = "end_label"
-end    syspot = "end"
+start       syspot = "start"        /(middle)
+middle      syspot = "middle"       /(end_label)
+end_label   syspot = "end_label"
+end         syspot = "end"
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -232,12 +226,10 @@ end    syspot = "end"
 TEST_F(IntegrationTest, ProgramExecutionOrder)
 {
     std::string program = R"(
-start    syspot = "1"
-    goto two
-two    syspot = "2"
-    goto three
-three    syspot = "3"
-end    syspot = "4"
+start   syspot = "1"    /(two)
+two     syspot = "2"    /(three)
+three   syspot = "3"
+end     syspot = "4"
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -248,8 +240,8 @@ end    syspot = "4"
 TEST_F(IntegrationTest, EndOfProgramHandling)
 {
     std::string program = R"(
-start    syspot = "start"
-end    syspot = "end statement"
+start   syspot = "start"
+end     syspot = "end statement"
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -279,13 +271,13 @@ end return
 TEST_F(IntegrationTest, CompleteExampleFromGrammar)
 {
     std::string program = R"(
-define add(a, b)
-    return a + b
-start    x = syspit()
-    x "end", (done, start)
+define  add(a, b)
+        return a + b
+start   x = syspit()
+        x "end"             /s(done)f(start)
 done    y = add(x, "!")
-    syspot = y
-end return
+        syspot = y
+end     return
 )";
 
     std::string input       = "test\n";
@@ -297,11 +289,11 @@ end return
 TEST_F(IntegrationTest, LoopWithCondition)
 {
     std::string program = R"(
-start    count = "0"
+start   count = "0"
 loop    count = count + "1"
-    count = "5", (done, loop)
+        count = "5"             /s(done)f(loop)
 done    syspot = count
-end    syspot = "finished"
+end     syspot = "finished"
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -312,17 +304,17 @@ end    syspot = "finished"
 TEST_F(IntegrationTest, MultipleFunctionDefinitions)
 {
     std::string program = R"(
-define double(x)
-    return x + x
-define square(x)
-    return x * x
-define add(x, y)
-    return x + y
-start    a = double("5")
-    b = square("4")
-    c = add(a, b)
-    syspot = c
-end return
+define  double(x)
+        return x + x
+define  square(x)
+        return x * x
+define  add(x, y)
+        return x + y
+start   a = double("5")
+        b = square("4")
+        c = add(a, b)
+        syspot = c
+end     return
 )";
 
     SnobolTestResult result = run_snobol_program(program);

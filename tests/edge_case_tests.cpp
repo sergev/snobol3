@@ -98,12 +98,11 @@ end return
 TEST_F(EdgeCaseTest, PatternMatching_EmptyString)
 {
     std::string program = R"(
-start    str = ""
-    str "", (found, notfound)
-found    syspot = "found"
-    goto end
+start       str = ""
+            str ""                  /s(found)f(notfound)
+found       syspot = "found"        /(end)
 notfound    syspot = "not found"
-end    syspot = "done"
+end         syspot = "done"
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -114,12 +113,11 @@ end    syspot = "done"
 TEST_F(EdgeCaseTest, PatternMatching_NoMatch)
 {
     std::string program = R"(
-start    str = "hello"
-    str "goodbye", (found, notfound)
-found    syspot = "found"
-    goto end
+start       str = "hello"
+            str "goodbye"           /s(found)f(notfound)
+found       syspot = "found"        /(end)
 notfound    syspot = "not found"
-end    syspot = "done"
+end         syspot = "done"
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -264,12 +262,11 @@ end return
 TEST_F(EdgeCaseTest, PatternReplacement_NoMatch)
 {
     std::string program = R"(
-start    str = "hello"
-    str "goodbye" = "world", (found, notfound)
-found    syspot = str
-    goto end
+start       str = "hello"
+            str "goodbye" = "world"     /s(found)f(notfound)
+found       syspot = str                /(end)
 notfound    syspot = "not found"
-end    syspot = "done"
+end         syspot = "done"
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -280,8 +277,8 @@ end    syspot = "done"
 TEST_F(EdgeCaseTest, GotoToUndefinedLabel)
 {
     std::string program = R"(
-start    goto undefined
-end    syspot = "end"
+start                   /(undefined)
+end     syspot = "end"
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -292,14 +289,13 @@ end    syspot = "end"
 TEST_F(EdgeCaseTest, FunctionCallInPattern)
 {
     std::string program = R"(
-define getpattern()
-    return "test"
-start    str = "test string"
-    str getpattern(), (found, notfound)
-found    syspot = "found"
-    goto end
+define      getpattern()
+            return "test"
+start       str = "test string"
+            str getpattern()        /s(found)f(notfound)
+found       syspot = "found"        /(end)
 notfound    syspot = "not found"
-end    syspot = "done"
+end         syspot = "done"
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -310,15 +306,15 @@ end    syspot = "done"
 TEST_F(EdgeCaseTest, RecursiveFunction_BaseCase)
 {
     std::string program = R"(
-define factorial(n)
-    n = 0, (base, recurse)
+define  factorial(n)
+        n = 0                   /s(base)f(recurse)
 base    return "1"
-recurse    n1 = n - "1"
-    factn1 = factorial(n1)
-    return n * factn1
-start    result = factorial("0")
-    syspot = result
-end return
+recurse n1 = n - "1"
+        factn1 = factorial(n1)
+        return n * factn1
+start   result = factorial("0")
+        syspot = result
+end     return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -329,12 +325,11 @@ end return
 TEST_F(EdgeCaseTest, AlternationPattern_NoMatch)
 {
     std::string program = R"(
-start    str = "xyz"
-    str *"a"*"b"*, (found, notfound)
-found    syspot = "found"
-    goto end
+start       str = "xyz"
+            str *"a"*"b"*           /s(found)f(notfound)
+found       syspot = "found"        /(end)
 notfound    syspot = "not found"
-end    syspot = "done"
+end         syspot = "done"
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -345,13 +340,13 @@ end    syspot = "done"
 TEST_F(EdgeCaseTest, ComplexExpression_Precedence)
 {
     std::string program = R"(
-start    a = "2"
-    b = "3"
-    c = "4"
-    d = "5"
-    result = a + b * c - d
-    syspot = result
-end return
+start   a = "2"
+        b = "3"
+        c = "4"
+        d = "5"
+        result = a + b * c - d
+        syspot = result
+end     return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -362,11 +357,11 @@ end return
 TEST_F(EdgeCaseTest, EmptyStringOperations)
 {
     std::string program = R"(
-start    x = ""
-    y = "test"
-    concat = x y
-    syspot = concat
-end return
+start   x = ""
+        y = "test"
+        concat = x y
+        syspot = concat
+end     return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -377,10 +372,10 @@ end return
 TEST_F(EdgeCaseTest, PatternImmediateInExpression)
 {
     std::string program = R"(
-start    x = "test"
-    y = $x
-    syspot = y
-end return
+start   x = "test"
+        y = $x
+        syspot = y
+end     return
 )";
 
     SnobolTestResult result = run_snobol_program(program);

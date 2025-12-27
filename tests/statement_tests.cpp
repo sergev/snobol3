@@ -26,9 +26,9 @@ protected:
 TEST_F(StatementTest, SimpleAssignment)
 {
     std::string program = R"(
-start    x = "hello"
-    syspot = x
-end return
+start   x = "hello"
+        syspot = x
+end     return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -39,11 +39,11 @@ end return
 TEST_F(StatementTest, AssignmentWithExpression)
 {
     std::string program = R"(
-start    a = "10"
-    b = "20"
-    result = a + b
-    syspot = result
-end return
+start   a = "10"
+        b = "20"
+        result = a + b
+        syspot = result
+end     return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -54,11 +54,11 @@ end return
 TEST_F(StatementTest, AssignmentWithFunctionCall)
 {
     std::string program = R"(
-define getvalue()
-    return "42"
-start    x = getvalue()
-    syspot = x
-end return
+define  getvalue()
+        return "42"
+start   x = getvalue()
+        syspot = x
+end     return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -69,13 +69,13 @@ end return
 TEST_F(StatementTest, MultipleAssignments)
 {
     std::string program = R"(
-start    a = "1"
-    b = "2"
-    c = "3"
-    syspot = a
-    syspot = b
-    syspot = c
-end return
+start   a = "1"
+        b = "2"
+        c = "3"
+        syspot = a
+        syspot = b
+        syspot = c
+end     return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -86,9 +86,9 @@ end return
 TEST_F(StatementTest, AssignmentToSyspot)
 {
     std::string program = R"(
-start    syspot = "hello"
-    syspot = "world"
-end return
+start   syspot = "hello"
+        syspot = "world"
+end     return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -99,11 +99,11 @@ end return
 TEST_F(StatementTest, AssignmentChain)
 {
     std::string program = R"(
-start    a = "10"
-    b = a
-    c = b
-    syspot = c
-end return
+start   a = "10"
+        b = a
+        c = b
+        syspot = c
+end     return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -118,12 +118,11 @@ end return
 TEST_F(StatementTest, PatternMatchStatement)
 {
     std::string program = R"(
-start    str = "hello world"
-    str "hello", (found, notfound)
-found    syspot = "pattern found"
-    goto end
+start       str = "hello world"
+            str "hello"                     /s(found)f(notfound)
+found       syspot = "pattern found"        /(end)
 notfound    syspot = "pattern not found"
-end    syspot = "done"
+end         syspot = "done"
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -134,10 +133,10 @@ end    syspot = "done"
 TEST_F(StatementTest, PatternReplacementStatement)
 {
     std::string program = R"(
-start    str = "hello world"
-    str "world" = "universe"
-    syspot = str
-end return
+start   str = "hello world"
+        str "world" = "universe"
+        syspot = str
+end     return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -148,13 +147,12 @@ end return
 TEST_F(StatementTest, PatternMatchWithVariables)
 {
     std::string program = R"(
-start    str = "test string"
-    pattern = "test"
-    str pattern, (found, notfound)
-found    syspot = "found"
-    goto end
+start       str = "test string"
+            pattern = "test"
+            str pattern             /s(found)f(notfound)
+found       syspot = "found"        /(end)
 notfound    syspot = "not found"
-end    syspot = "done"
+end         syspot = "done"
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -165,12 +163,11 @@ end    syspot = "done"
 TEST_F(StatementTest, PatternMatchFailureHandling)
 {
     std::string program = R"(
-start    str = "hello"
-    str "goodbye", (found, notfound)
-found    syspot = "found"
-    goto end
+start       str = "hello"
+            str "goodbye"           /s(found)f(notfound)
+found       syspot = "found"        /(end)
 notfound    syspot = "not found"
-end    syspot = "done"
+end         syspot = "done"
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -185,11 +182,11 @@ end    syspot = "done"
 TEST_F(StatementTest, SimpleExpressionStatement)
 {
     std::string program = R"(
-start    x = "10"
-    y = "20"
-    x + y
-    syspot = "done"
-end return
+start   x = "10"
+        y = "20"
+        x + y
+        syspot = "done"
+end     return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -200,12 +197,12 @@ end return
 TEST_F(StatementTest, ExpressionWithSideEffects)
 {
     std::string program = R"(
-start    x = "5"
-    y = "10"
-    x + y
-    syspot = x
-    syspot = y
-end return
+start   x = "5"
+        y = "10"
+        x + y
+        syspot = x
+        syspot = y
+end     return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -220,11 +217,9 @@ end return
 TEST_F(StatementTest, LabeledStatement)
 {
     std::string program = R"(
-start    syspot = "start"
-    goto middle
-middle    syspot = "middle"
-    goto end
-end    syspot = "end"
+start   syspot = "start"    /(middle)
+middle  syspot = "middle"   /(end)
+end     syspot = "end"
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -235,9 +230,9 @@ end    syspot = "end"
 TEST_F(StatementTest, StartLabelBehavior)
 {
     std::string program = R"(
-    syspot = "before start"
-start    syspot = "at start"
-end    syspot = "end"
+        syspot = "before start"
+start   syspot = "at start"
+end     syspot = "end"
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -248,10 +243,9 @@ end    syspot = "end"
 TEST_F(StatementTest, NoStartLabel_ExecutesFirst)
 {
     std::string program = R"(
-first    syspot = "first"
-    goto second
-second    syspot = "second"
-end    syspot = "end"
+first   syspot = "first"    /(second)
+second  syspot = "second"
+end     syspot = "end"
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -262,8 +256,8 @@ end    syspot = "end"
 TEST_F(StatementTest, EndLabelBehavior)
 {
     std::string program = R"(
-start    syspot = "start"
-end    syspot = "end statement"
+start   syspot = "start"
+end     syspot = "end statement"
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -274,12 +268,10 @@ end    syspot = "end statement"
 TEST_F(StatementTest, MultipleLabels)
 {
     std::string program = R"(
-start    syspot = "start"
-    goto label1
-label1    syspot = "label1"
-    goto label2
-label2    syspot = "label2"
-end    syspot = "end"
+start   yspot = "start"     /(label1)
+label1  syspot = "label1"   /(label2)
+label2  syspot = "label2"
+end     syspot = "end"
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -290,9 +282,9 @@ end    syspot = "end"
 TEST_F(StatementTest, LabelLookup)
 {
     std::string program = R"(
-start    goto target
-target    syspot = "target reached"
-end    syspot = "end"
+start                               /(target)
+target  syspot = "target reached"
+end     syspot = "end"
 )";
 
     SnobolTestResult result = run_snobol_program(program);

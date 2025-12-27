@@ -58,12 +58,12 @@ The lexical analyzer (`compon()` in `sno2.c`) recognizes the following token typ
 - `+` - Addition
 - `-` - Subtraction
 - `*` - Multiplication (or unanchored search when followed by non-space)
-- `/` - Division (or transfer mark when followed by non-space)
+- `/` - Division (or goto target when followed by non-space)
 
 #### 5. Delimiters
 - `(` - Left parenthesis (grouping, function calls)
 - `)` - Right parenthesis
-- `,` - Comma (argument separator, goto targets)
+- `,` - Comma (argument separator)
 - `=` - Equals (assignment operator)
 
 #### 6. Special Characters
@@ -282,22 +282,22 @@ The goto clause controls program flow after statement execution:
 ##### a) Simple Goto
 - **Syntax**: `/(label)`
 - **Semantics**: Transfers control to the label
-- **Example**: `x = x + 1 /(loop)`
+- **Example**: `x = x + 1   /(loop)`
 
 ##### b) Success/Failure Goto
 - **Syntax**: `/s(success)f(failure)`
 - **Semantics**: Transfers to `success` on success, `failure` on failure
-- **Example**: `str pattern /s(ok)f(fail)`
+- **Example**: `str pattern     /s(ok)f(fail)`
 
 ##### c) Success Goto Only
 - **Syntax**: `/s(label)`
 - **Semantics**: Transfers to label only on success
-- **Example**: `str pattern /s(ok)`
+- **Example**: `str pattern     /s(ok)`
 
 ##### d) Failure Goto Only
 - **Syntax**: `/f(label)`
 - **Semantics**: Transfers to label only on failure
-- **Example**: `str pattern /f(fail)`
+- **Example**: `str pattern     /f(fail)`
 
 ### Statement Examples
 
@@ -308,25 +308,25 @@ The goto clause controls program flow after statement execution:
     x = "hello"
 
 # Assignment with goto
-    x = x + 1 /(loop)
+    x = x + 1   /(loop)
 
 # Pattern matching
-    str "hello" /s(found)f(notfound)
+    str "hello"     /s(found)f(notfound)
 
 # Pattern matching with assignment
-    str "old" = "new" /s(done)f(error)
+    str "old" = "new"   /s(done)f(error)
 
 # Function definition (define on one line, body on next)
 define factorial(n)
-    n = 0 /s(base)f(recurse)
+    n = 0           /s(base)f(recurse)
 base
     return 1
 recurse
     return n * factorial(n - 1)
 
 # Labeled statements (label and body on same line)
-start    x = syspit()
-    x "end" /s(done)f(start)
+start   x = syspit()
+        x "end"         /s(done)f(start)
 done    syspot = x
 end
 ```
@@ -376,12 +376,12 @@ end
 ### Program Example
 
 ```
-define add(a, b)
-    return a + b
-start    x = syspit()
-    x "end" /s(done)f(start)
+define  add(a, b)
+        return a + b
+start   x = syspit()
+        x "end"         /s(done)f(start)
 done    y = add(x, "!")
-    syspot = y
+        syspot = y
 end
 ```
 
@@ -495,7 +495,7 @@ primary          ::= identifier
                   |  "$" identifier
                   |  identifier "(" [arg-list] ")"
                   |  "(" expression ")"
-                  |  primary primary  // concatenation
+                  |  primary primary        // concatenation
 
 pattern          ::= pattern-elem+
 pattern-elem     ::= identifier

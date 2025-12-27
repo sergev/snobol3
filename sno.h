@@ -1,7 +1,10 @@
 #ifndef SNO_H
 #define SNO_H
 
+#include <array>
 #include <iostream>
+#include <memory>
+#include <vector>
 
 //
 // Character class enumeration for lexical analysis
@@ -118,7 +121,7 @@ public:
 
     // Memory management
     static const unsigned BLOCK_SIZE = 200;
-    using NodeBlock = std::array<Node, BLOCK_SIZE>;
+    using NodeBlock                  = std::array<Node, BLOCK_SIZE>;
     std::vector<std::unique_ptr<NodeBlock>> mem_pool;
     Node *freelist{};
     int freesize{};

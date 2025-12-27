@@ -410,6 +410,14 @@ l2:
             term = list; // Mark for potential concatenation
         goto l3;
 
+    case TOKEN_END:
+    case TOKEN_ALTERNATION: // Pattern alternation or end of pattern (goto)
+    case TOKEN_COMMA:       // Comma (goto)
+    case TOKEN_EQUALS:      // Equals (assignment)
+    case TOKEN_RPAREN:      // Right paren (used in expressions)
+        // End of pattern - fall through to normal return
+        break;
+
     default:
         // Other token types not valid in pattern context
         goto merr;

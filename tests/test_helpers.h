@@ -1,16 +1,7 @@
 #ifndef TEST_HELPERS_H
 #define TEST_HELPERS_H
 
-#include <fcntl.h>
-#include <sys/wait.h>
-#include <unistd.h>
-
-#include <cstdio>
-#include <cstdlib>
-#include <fstream>
-#include <sstream>
 #include <string>
-#include <vector>
 
 // Structure to hold test results
 struct SnobolTestResult {

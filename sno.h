@@ -1,10 +1,6 @@
 #ifndef SNO_H
 #define SNO_H
 
-#include <cstdint>
-#include <cstdlib>
-#include <cstring>
-#include <fstream>
 #include <iostream>
 
 //

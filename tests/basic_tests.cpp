@@ -1,9 +1,5 @@
 #include <gtest/gtest.h>
 
-#include <cstring>
-#include <sstream>
-#include <string>
-
 #include "sno.h"
 #include "test_helpers.h"
 

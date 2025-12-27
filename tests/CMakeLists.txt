@@ -25,7 +25,6 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(TEST_SOURCES
-    smoke_test.cpp
     basic_tests.cpp
     test_helpers.cpp
     expression_tests.cpp

@@ -1,6 +1,8 @@
 #include "test_helpers.h"
 
-#include <cstring>
+#include <fcntl.h>
+#include <sys/wait.h>
+#include <unistd.h>
 #include <fstream>
 #include <iostream>
 #include <sstream>

@@ -144,7 +144,7 @@ public:
 
     // Methods from sno1.c
     void mes(const char *s);
-    node_t *init(const char *s, int t);
+    node_t *init(const char *s, token_type_t t);
     node_t *syspit();
     void syspot(node_t *string);
     node_t *cstr_to_node(const char *s);
@@ -173,7 +173,7 @@ public:
     node_t *nscomp();
     node_t *push(node_t *stack);
     node_t *pop(node_t *stack);
-    node_t *expr(node_t *start, int eof, node_t *e);
+    node_t *expr(node_t *start, token_type_t eof, node_t *e);
     node_t *match(node_t *start, node_t *m);
     node_t *compile();
 

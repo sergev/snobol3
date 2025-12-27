@@ -26,14 +26,14 @@ void SnobolContext::mes(const char *s)
 // Initialize a symbol in the name table with a given type.
 // Creates a node from the string, looks it up (or creates it), and sets its type.
 //
-node_t *SnobolContext::init(const char *s, int t)
+node_t *SnobolContext::init(const char *s, token_type_t t)
 {
     node_t *a, *b;
 
     a = cstr_to_node(s);
     b = look(a);
     delete_string(a);
-    b->typ = (token_type_t)t;
+    b->typ = t;
     return (b);
 }
 

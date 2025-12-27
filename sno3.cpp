@@ -86,7 +86,9 @@ node_t *SnobolContext::search(node_t *arg, node_t *r)
 {
     node_t *list, *back, *str, *etc, *next, *last, *base, *e;
     node_t *a, *b, *var;
-    int c, d;
+    token_type_t c;
+    int d;
+    intptr_t len;
 
     // Initialize pattern matching state
     a    = arg->p2;        // Start of pattern component list
@@ -122,8 +124,8 @@ badv1:
     back->p1        = last;
     b               = a->p2;
     c               = a->typ;
-    list->typ       = (token_type_t)c;
-    if (c < 2) {
+    list->typ       = c;
+    if (c < STMT_ASSIGN) {
         // Simple pattern component - evaluate and store
         back->p2 = eval(b, 1);
         goto badvanc;
@@ -237,26 +239,26 @@ adv1:
     etc     = var->p2;
     str->p1 = next;
     str->p2 = nullptr;
-    c       = (int)(intptr_t)etc->p2;   // Length constraint
+    len     = (intptr_t)etc->p2;        // Length constraint
     if (var->typ == TOKEN_UNANCHORED) { // Balanced pattern (value 1)
         d = bextend(str, last);
         if (d == 0)
             goto retard;
-        if (c == 0) // No length constraint
+        if (len == 0) // No length constraint
             goto adv0;
         // Match with length constraint
         while (1) {
-            c = -d;
-            if (c == 0)
+            len = -d;
+            if (len == 0)
                 goto adv0;
-            if (c < 0)
+            if (len < 0)
                 goto retard;
             d = bextend(str, last);
             if (d == 0)
                 goto retard;
         }
     }
-    if (c == 0) {                        // No length constraint
+    if (len == 0) {                      // No length constraint
         if (d == 3 && next != nullptr) { // Concatenated pattern
             str->p2 = last;
             goto adv0;
@@ -264,7 +266,7 @@ adv1:
         goto advanc;
     }
     // Match with specific length
-    while (c--)
+    while (len--)
         if (ubextend(str, last) == 0)
             goto retard;
     goto adv0;

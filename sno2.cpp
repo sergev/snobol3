@@ -186,10 +186,11 @@ node_t *SnobolContext::pop(node_t *stack)
 // Handles infix operators, function calls, and parentheses.
 // Returns the compiled expression tree.
 //
-node_t *SnobolContext::expr(node_t *start, int eof, node_t *e)
+node_t *SnobolContext::expr(node_t *start, token_type_t eof, node_t *e)
 {
     node_t *stack, *list, *comp;
-    int operand, op, op1;
+    int operand;
+    token_type_t op, op1;
     node_t *space_ptr;
     int space_flag;
     node_t *a, *b, *c;
@@ -198,11 +199,11 @@ node_t *SnobolContext::expr(node_t *start, int eof, node_t *e)
     // Initialize expression parser
     list       = alloc(); // Output list (postfix expression)
     e->p2      = list;
-    stack      = push(nullptr);     // Operator stack
-    stack->typ = (token_type_t)eof; // End-of-expression marker (lowest precedence)
-    operand    = 0;                 // Flag: expecting operand (1) or operator (0)
-    space_ptr  = start;             // Deferred component (for concatenation)
-    space_flag = 0;                 // Flag: space seen (implies concatenation)
+    stack      = push(nullptr); // Operator stack
+    stack->typ = eof;           // End-of-expression marker (lowest precedence)
+    operand    = 0;             // Flag: expecting operand (1) or operator (0)
+    space_ptr  = start;         // Deferred component (for concatenation)
+    space_flag = 0;             // Flag: space seen (implies concatenation)
 l1:
     if (space_ptr) {
         comp      = space_ptr;
@@ -269,11 +270,11 @@ l3:
             goto l10;
         }
         comp->p1 = a = alloc();
-        b            = expr(b, 6, a);         // Parse first argument
-        while ((d = b->typ) == TOKEN_COMMA) { // Comma - more arguments
+        b            = expr(b, EXPR_SPECIAL, a); // Parse first argument
+        while ((d = b->typ) == TOKEN_COMMA) {    // Comma - more arguments
             a->p1 = b;
             a     = b;
-            b     = expr(nullptr, 6, a);
+            b     = expr(nullptr, EXPR_SPECIAL, a);
         }
         if (d != TOKEN_RPAREN) // Should end with right parenthesis
             writes("error in function");
@@ -288,6 +289,8 @@ l3:
         operand    = 0;
         space_flag = 0;
         goto l6;
+    default:
+        break;
     }
     if (operand == 0)
         writes("no operand at end of expression");
@@ -301,7 +304,7 @@ l6:
         stack = push(stack);
         if (op == TOKEN_LPAREN)
             op = EXPR_SPECIAL; // Treat left paren as low precedence
-        stack->typ = (token_type_t)op;
+        stack->typ = op;
         stack->p1  = comp;
         goto l1;
     }
@@ -319,7 +322,7 @@ l6:
     }
     if (op1 == TOKEN_WHITESPACE) // Concatenation operator
         c = alloc();
-    list->typ = (token_type_t)op1;
+    list->typ = op1;
     list->p2  = c->p1;
     list->p1  = c;
     list      = c;
@@ -335,10 +338,11 @@ node_t *SnobolContext::match(node_t *start, node_t *m)
 {
     node_t *list, *comp, *term;
     node_t *a;
-    int b, bal;
+    int b;
+    token_type_t bal;
 
     term  = nullptr;
-    bal   = 0;
+    bal   = STMT_SIMPLE;
     list  = alloc();
     m->p2 = list;
     comp  = start;
@@ -361,17 +365,17 @@ l2:
     case TOKEN_STRING:   // String literal
     case TOKEN_LPAREN:   // Left parenthesis
         term      = nullptr;
-        comp      = expr(comp, 6, list); // Parse as expression
-        list->typ = TOKEN_UNANCHORED;    // Pattern component
+        comp      = expr(comp, EXPR_SPECIAL, list); // Parse as expression
+        list->typ = TOKEN_UNANCHORED;               // Pattern component
         goto l3;
 
     case TOKEN_UNANCHORED: // Multiplication operator - pattern alternation
         free_node(comp);
         comp = compon();
-        bal  = 0;
+        bal  = STMT_SIMPLE;
         if (comp->typ == TOKEN_LPAREN) {
             // Balanced pattern (parenthesized)
-            bal = 1;
+            bal = STMT_MATCH;
             free_node(comp);
             comp = compon();
         }
@@ -380,14 +384,14 @@ l2:
         if (b == TOKEN_ALTERNATION || b == TOKEN_RPAREN || b == TOKEN_MULT || b == TOKEN_UNANCHORED)
             a->p1 = nullptr; // No left side
         else {
-            comp  = expr(comp, 11, a); // Parse left side
+            comp  = expr(comp, TOKEN_DIV, a); // Parse left side
             a->p1 = a->p2;
         }
         if (comp->typ != TOKEN_ALTERNATION) {
             a->p2 = nullptr; // No right side
         } else {
             free_node(comp);
-            comp = expr(nullptr, 6, a); // Parse right side
+            comp = expr(nullptr, EXPR_SPECIAL, a); // Parse right side
         }
         if (bal) {
             if (comp->typ != TOKEN_RPAREN) // Should end with right paren
@@ -400,7 +404,7 @@ l2:
             goto merr;
         list->p2  = a;
         list->typ = TOKEN_ALTERNATION; // Alternation pattern
-        a->typ    = (token_type_t)bal;
+        a->typ    = bal;
         free_node(comp);
         comp = compon();
         if (bal)
@@ -442,14 +446,14 @@ node_t *SnobolContext::compile()
     node_t *r, *l, *xs, *xf, *g;
     int a;
     node_t *m, *as;
-    int t;
+    token_type_t t;
 
-    m    = nullptr; // Match pattern
-    l    = nullptr; // Label
-    as   = nullptr; // Assignment target
-    xs   = nullptr; // Success goto
-    xf   = nullptr; // Failure goto
-    t    = 0;       // Statement type
+    m    = nullptr;     // Match pattern
+    l    = nullptr;     // Label
+    as   = nullptr;     // Assignment target
+    xs   = nullptr;     // Success goto
+    xf   = nullptr;     // Failure goto
+    t    = STMT_SIMPLE; // Statement type
     comp = compon();
     a    = comp->typ;
     // Check for optional label
@@ -466,7 +470,7 @@ node_t *SnobolContext::compile()
     if (l == lookdef)
         goto def;
     // Parse expression (subject of statement)
-    comp = expr(nullptr, 11, r = alloc());
+    comp = expr(nullptr, TOKEN_DIV, r = alloc());
     a    = comp->typ;
     if (a == TOKEN_END) // End of statement
         goto asmble;
@@ -490,7 +494,7 @@ node_t *SnobolContext::compile()
 assig:
     // Parse assignment value
     free_node(comp);
-    comp = expr(nullptr, 6, as = alloc());
+    comp = expr(nullptr, EXPR_SPECIAL, as = alloc());
     a    = comp->typ;
     if (a == TOKEN_END)
         goto asmble;
@@ -529,8 +533,8 @@ xboth:
     free_node(comp);
     xs   = alloc();
     xf   = alloc();
-    comp = expr(nullptr, 6, xs);   // Parse success target
-    if (comp->typ != TOKEN_RPAREN) // Should end with right paren
+    comp = expr(nullptr, EXPR_SPECIAL, xs); // Parse success target
+    if (comp->typ != TOKEN_RPAREN)          // Should end with right paren
         goto xerr;
     xf->p2 = xs->p2; // Share expression list
     comp   = compon();
@@ -545,7 +549,7 @@ xsuc:
     comp = compon();
     if (comp->typ != TOKEN_LPAREN)
         goto xerr;
-    comp = expr(nullptr, 6, xs = alloc());
+    comp = expr(nullptr, EXPR_SPECIAL, xs = alloc());
     if (comp->typ != TOKEN_RPAREN)
         goto xerr;
     goto xfer;
@@ -557,7 +561,7 @@ xfail:
     comp = compon();
     if (comp->typ != TOKEN_LPAREN)
         goto xerr;
-    comp = expr(nullptr, 6, xf = alloc());
+    comp = expr(nullptr, EXPR_SPECIAL, xf = alloc());
     if (comp->typ != TOKEN_RPAREN)
         goto xerr;
     goto xfer;
@@ -572,12 +576,12 @@ asmble:
     }
     comp->p2 = r; // Link to expression
     if (m) {
-        t++; // Type 1: pattern matching statement
+        t     = STMT_MATCH; // Type 1: pattern matching statement
         r->p1 = m;
         r     = m;
     }
     if (as) {
-        t     = 2; // Type 2: assignment statement
+        t     = STMT_ASSIGN; // Type 2: assignment statement
         r->p1 = as;
         r     = as;
     }
@@ -592,9 +596,9 @@ asmble:
         g->p2 = xf->p2; // Failure goto target (expression list)
         free_node(xf);
     }
-    r->p1     = g;               // Link goto structure to statement
-    comp->typ = (token_type_t)t; // Statement type: 0=simple, 1=match, 2=assign
-    comp->ch  = lc;              // Store line number
+    r->p1     = g;  // Link goto structure to statement
+    comp->typ = t;  // Statement type: 0=simple, 1=match, 2=assign
+    comp->ch  = lc; // Store line number
     return (comp);
 
 def:

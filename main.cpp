@@ -27,15 +27,15 @@ int main(int argc, char *argv[])
     SnobolContext ctx(*input_stream, std::cout);
 
     // Initialize built-in symbols
-    ctx.lookf     = ctx.init("f", 0);
-    ctx.looks     = ctx.init("s", 0);
-    ctx.lookend   = ctx.init("end", 0);
-    ctx.lookstart = ctx.init("start", 0);
-    ctx.lookdef   = ctx.init("define", 0);
-    ctx.lookret   = ctx.init("return", 0);
-    ctx.lookfret  = ctx.init("freturn", 0);
-    ctx.init("syspit", 3);
-    ctx.init("syspot", 4);
+    ctx.lookf     = ctx.init("f", EXPR_VAR_REF);
+    ctx.looks     = ctx.init("s", EXPR_VAR_REF);
+    ctx.lookend   = ctx.init("end", EXPR_VAR_REF);
+    ctx.lookstart = ctx.init("start", EXPR_VAR_REF);
+    ctx.lookdef   = ctx.init("define", EXPR_VAR_REF);
+    ctx.lookret   = ctx.init("return", EXPR_VAR_REF);
+    ctx.lookfret  = ctx.init("freturn", EXPR_VAR_REF);
+    ctx.init("syspit", EXPR_SYSPIT);
+    ctx.init("syspot", EXPR_SYSPOT);
 
     // Compile all statements until "end" is encountered
     // Link statements together in a list

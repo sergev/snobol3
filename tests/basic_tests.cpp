@@ -553,21 +553,21 @@ TEST_F(SnobolTest, Divide_Truncation)
 
 TEST_F(SnobolTest, Init_CreatesSymbol)
 {
-    node_t *sym = ctx.init("testvar", 0);
+    node_t *sym = ctx.init("testvar", EXPR_VAR_REF);
     ASSERT_NE(sym, nullptr);
     EXPECT_EQ(sym->typ, 0);
 }
 
 TEST_F(SnobolTest, Init_SetsType)
 {
-    node_t *sym = ctx.init("mytype", 5);
+    node_t *sym = ctx.init("mytype", EXPR_FUNCTION);
     ASSERT_NE(sym, nullptr);
-    EXPECT_EQ(sym->typ, 5);
+    EXPECT_EQ(sym->typ, EXPR_FUNCTION);
 }
 
 TEST_F(SnobolTest, Look_FindsExistingSymbol)
 {
-    node_t *sym1 = ctx.init("lookup_test", 3);
+    node_t *sym1 = ctx.init("lookup_test", EXPR_SYSPIT);
     node_t *str  = ctx.cstr_to_node("lookup_test");
     node_t *sym2 = ctx.look(str);
 

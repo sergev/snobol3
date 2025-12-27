@@ -113,10 +113,10 @@ struct Node {
 class SnobolContext {
 public:
     // Constructor - references must be initialized in initializer list
-    SnobolContext(std::istream &input, std::ostream &output) : fin(input), fout(output) {}
+    SnobolContext(std::ostream &output);
 
-    // I/O streams (references - cannot be reassigned)
-    std::istream &fin;
+    // I/O streams
+    std::istream *fin;
     std::ostream &fout;
 
     // Memory management
@@ -137,6 +137,7 @@ public:
     Node *lookfret{};
 
     // Execution state
+    Node *program{};
     int cfail{};
     int rfail{};
     int lc{};
@@ -146,6 +147,8 @@ public:
     int compon_next{};    // Flag for compon() to reuse current character
 
     // Methods from sno1.c
+    void compile_program(std::istream &input);
+    void execute_program(std::istream &input);
     void mes(const char *s);
     Node &init(const char *s, Token t);
     Node *syspit();

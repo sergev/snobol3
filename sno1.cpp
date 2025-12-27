@@ -4,6 +4,61 @@
 #include "sno.h"
 
 //
+// Constructor - initialize all fields including stream references
+//
+SnobolContext::SnobolContext(std::ostream &output)
+    : fin(&std::cin), fout(output)
+{
+    // Initialize built-in symbols
+    lookf     = &init("f", Token::EXPR_VAR_REF);
+    looks     = &init("s", Token::EXPR_VAR_REF);
+    lookend   = &init("end", Token::EXPR_VAR_REF);
+    lookstart = &init("start", Token::EXPR_VAR_REF);
+    lookdef   = &init("define", Token::EXPR_VAR_REF);
+    lookret   = &init("return", Token::EXPR_VAR_REF);
+    lookfret  = &init("freturn", Token::EXPR_VAR_REF);
+    init("syspit", Token::EXPR_SYSPIT);
+    init("syspot", Token::EXPR_SYSPOT);
+}
+
+void SnobolContext::compile_program(std::istream &input)
+{
+    Node *cur, *next;
+
+    // Compile all statements until "end" is encountered
+    // Link statements together in a list
+    fin = &input;
+    program = compile();
+    for (cur = program; lookend->typ != Token::EXPR_LABEL; cur = next) {
+        next    = compile();
+        cur->p1 = next;
+    }
+    cur->p1 = nullptr; // Terminate statement list
+    cfail   = 1;       // Enable compilation failure mode
+    fin     = &std::cin;
+}
+
+void SnobolContext::execute_program(std::istream &input)
+{
+    Node *c = program;
+
+    // Start execution from "start" label if defined, otherwise from first statement
+    if (lookstart->typ == Token::EXPR_LABEL)
+        c = lookstart->p2;
+
+    if (!c) {
+        // Nothing to run.
+        return;
+    }
+
+    fin = &input;
+    while ((c = execute(*c)) != nullptr)
+        ;
+    flush();
+    fin = &std::cin;
+}
+
+//
 // Print a message string to output.
 //
 void SnobolContext::mes(const char *s)
@@ -33,10 +88,10 @@ Node *SnobolContext::syspit()
     Node *b, *c, *d;
     int a;
 
-    a = fin.get();
+    a = fin->get();
     if (a == '\n')
         return (nullptr);
-    if (fin.eof() || a == std::char_traits<char>::eof()) {
+    if (fin->eof() || a == std::char_traits<char>::eof()) {
         rfail = 1;
         return (nullptr);
     }
@@ -46,8 +101,8 @@ Node *SnobolContext::syspit()
         c->p1 = d;
         c     = d;
         c->ch = a;
-        a     = fin.get();
-        if (fin.eof() || a == std::char_traits<char>::eof()) {
+        a     = fin->get();
+        if (fin->eof() || a == std::char_traits<char>::eof()) {
             rfail = 1;
             break;
         }

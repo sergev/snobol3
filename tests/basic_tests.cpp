@@ -10,7 +10,7 @@ protected:
     std::stringstream output_stream;
     SnobolContext ctx;
 
-    SnobolTest() : ctx(input_stream, output_stream) {}
+    SnobolTest() : ctx(output_stream) {}
 
     void SetUp() override
     {
@@ -18,7 +18,7 @@ protected:
     }
 
     // Helper method to convert Node string to std::string
-    std::string Nodeo_string(Node *str)
+    std::string node_to_string(Node *str)
     {
         if (str == nullptr) {
             return "";
@@ -42,7 +42,7 @@ protected:
         if (str == nullptr || cstr == nullptr) {
             return false;
         }
-        return Nodeo_string(str) == cstr;
+        return node_to_string(str) == cstr;
     }
 };
 

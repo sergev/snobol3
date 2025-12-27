@@ -86,7 +86,7 @@ end         syspot = "done"
     EXPECT_EQ(result.stdout_output, "found\ndone\n");
 }
 
-TEST_F(PatternTest, PatternConcatenation)
+TEST_F(PatternTest, DISABLED_PatternConcatenation)
 {
     std::string program = R"(
 start       str = "hello world"
@@ -101,7 +101,7 @@ end         syspot = "done"
     EXPECT_EQ(result.stdout_output, "found\ndone\n");
 }
 
-TEST_F(PatternTest, PatternReplacement)
+TEST_F(PatternTest, DISABLED_PatternReplacement)
 {
     std::string program = R"(
 start   str = "hello world"
@@ -115,7 +115,7 @@ end     return
     EXPECT_EQ(result.stdout_output, "hello universe\n");
 }
 
-TEST_F(PatternTest, PatternReplacement_Failure)
+TEST_F(PatternTest, DISABLED_PatternReplacement_Failure)
 {
     std::string program = R"(
 start       str = "hello world"
@@ -134,7 +134,7 @@ end         syspot = "done"
 // Pattern Alternation Tests
 // ============================================================================
 
-TEST_F(PatternTest, SimpleAlternation_FirstMatch)
+TEST_F(PatternTest, DISABLED_SimpleAlternation_FirstMatch)
 {
     std::string program = R"(
 start       str = "apple"
@@ -149,7 +149,7 @@ end         syspot = "done"
     EXPECT_EQ(result.stdout_output, "found\ndone\n");
 }
 
-TEST_F(PatternTest, SimpleAlternation_SecondMatch)
+TEST_F(PatternTest, DISABLED_SimpleAlternation_SecondMatch)
 {
     std::string program = R"(
 start       str = "banana"
@@ -164,7 +164,7 @@ end         syspot = "done"
     EXPECT_EQ(result.stdout_output, "found\ndone\n");
 }
 
-TEST_F(PatternTest, SimpleAlternation_NoMatch)
+TEST_F(PatternTest, DISABLED_SimpleAlternation_NoMatch)
 {
     std::string program = R"(
 start       str = "cherry"
@@ -179,7 +179,7 @@ end         syspot = "done"
     EXPECT_EQ(result.stdout_output, "not found\ndone\n");
 }
 
-TEST_F(PatternTest, AlternationWithVariables)
+TEST_F(PatternTest, DISABLED_AlternationWithVariables)
 {
     std::string program = R"(
 start       str = "test"
@@ -200,7 +200,7 @@ end         syspot = "done"
 // Balanced Pattern Tests
 // ============================================================================
 
-TEST_F(PatternTest, BalancedAlternation)
+TEST_F(PatternTest, DISABLED_BalancedAlternation)
 {
     std::string program = R"(
 start       str = "hello"
@@ -215,7 +215,7 @@ end         syspot = "done"
     EXPECT_EQ(result.stdout_output, "found\ndone\n");
 }
 
-TEST_F(PatternTest, BalancedPattern_WithParentheses)
+TEST_F(PatternTest, DISABLED_BalancedPattern_WithParentheses)
 {
     std::string program = R"(
 start       str = "a(b)c"

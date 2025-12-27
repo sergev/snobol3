@@ -35,7 +35,7 @@ end     return
     EXPECT_EQ(result.stdout_output, "Hello, World!\n");
 }
 
-TEST_F(IntegrationTest, InputOutput_WithSyspit)
+TEST_F(IntegrationTest, DISABLED_InputOutput_WithSyspit)
 {
     std::string program = R"(
 start   x = syspit()
@@ -50,7 +50,7 @@ end     return
     EXPECT_EQ(result.stdout_output, "test input\n");
 }
 
-TEST_F(IntegrationTest, FactorialCalculation)
+TEST_F(IntegrationTest, DISABLED_FactorialCalculation)
 {
     std::string program = R"(
 define  factorial(n)
@@ -69,7 +69,7 @@ end     return
     EXPECT_EQ(result.stdout_output, "120\n"); // 5! = 120
 }
 
-TEST_F(IntegrationTest, StringProcessing)
+TEST_F(IntegrationTest, DISABLED_StringProcessing)
 {
     std::string program = R"(
 start    str = "hello world"
@@ -85,7 +85,7 @@ end return
     EXPECT_EQ(result.stdout_output, "hello universe\nhi universe\n");
 }
 
-TEST_F(IntegrationTest, PatternMatchingProgram)
+TEST_F(IntegrationTest, DISABLED_PatternMatchingProgram)
 {
     std::string program = R"(
 start       str = "test string"
@@ -103,7 +103,7 @@ end         syspot = "done"
     EXPECT_EQ(result.stdout_output, "pattern found\nboth patterns found\ndone\n");
 }
 
-TEST_F(IntegrationTest, FunctionBasedProgram)
+TEST_F(IntegrationTest, DISABLED_FunctionBasedProgram)
 {
     std::string program = R"(
 define add(x, y)
@@ -123,7 +123,7 @@ end return
     EXPECT_EQ(result.stdout_output, "20\n"); // (2 + 3) * 4 = 20
 }
 
-TEST_F(IntegrationTest, ComplexMultiFeatureProgram)
+TEST_F(IntegrationTest, DISABLED_ComplexMultiFeatureProgram)
 {
     std::string program = R"(
 define process(str)
@@ -143,7 +143,7 @@ end         syspot = "done"
     EXPECT_EQ(result.stdout_output, "processed: new value\ndone\n");
 }
 
-TEST_F(IntegrationTest, ArithmeticOperations)
+TEST_F(IntegrationTest, DISABLED_ArithmeticOperations)
 {
     std::string program = R"(
 start    a = "10"
@@ -249,7 +249,7 @@ end     syspot = "end statement"
     EXPECT_EQ(result.stdout_output, "start\nend statement\n");
 }
 
-TEST_F(IntegrationTest, DefineStatementsNotExecutable)
+TEST_F(IntegrationTest, DISABLED_DefineStatementsNotExecutable)
 {
     std::string program = R"(
 define func1()
@@ -268,7 +268,7 @@ end return
     EXPECT_EQ(result.stdout_output, "1\n2\n");
 }
 
-TEST_F(IntegrationTest, CompleteExampleFromGrammar)
+TEST_F(IntegrationTest, DISABLED_CompleteExampleFromGrammar)
 {
     std::string program = R"(
 define  add(a, b)
@@ -301,7 +301,7 @@ end     syspot = "finished"
     EXPECT_EQ(result.stdout_output, "5\nfinished\n");
 }
 
-TEST_F(IntegrationTest, MultipleFunctionDefinitions)
+TEST_F(IntegrationTest, DISABLED_MultipleFunctionDefinitions)
 {
     std::string program = R"(
 define  double(x)

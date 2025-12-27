@@ -82,17 +82,17 @@ bad:
 // Implements backtracking pattern matching algorithm for Snobol patterns.
 // Returns a match result node on success, NULL on failure.
 //
-node_t *search(node_t *arg, node_t *r)
+node_t *search(snobol_context_t *ctx, node_t *arg, node_t *r)
 {
     node_t *list, *back, *str, *etc, *next, *last, *base, *e;
     node_t *a, *b, *var;
     int c, d;
 
     // Initialize pattern matching state
-    a    = arg->p2;        // Start of pattern component list
-    list = base = alloc(); // Base of matching state list
-    last        = NULL;    // End of subject string (set later)
-    next        = NULL;    // Next position to match from
+    a    = arg->p2;           // Start of pattern component list
+    list = base = alloc(ctx); // Base of matching state list
+    last        = NULL;       // End of subject string (set later)
+    next        = NULL;       // Next position to match from
     goto badv1;
 badvanc:
     // Build pattern matching state from pattern components
@@ -100,7 +100,7 @@ badvanc:
     if (a->typ == TOKEN_END) {
         // End of pattern - initialize search
         list->p1 = NULL;
-        if (rfail == 1) {
+        if (ctx->rfail == 1) {
             a = NULL;
             goto fail;
         }
@@ -113,26 +113,26 @@ badvanc:
         }
         goto adv1;
     }
-    b        = alloc();
+    b        = alloc(ctx);
     list->p1 = b;
     list     = b;
 badv1:
     // Set up backtracking structure for this pattern component
-    list->p2 = back = alloc();
+    list->p2 = back = alloc(ctx);
     back->p1        = last;
     b               = a->p2;
     c               = a->typ;
     list->typ       = c;
     if (c < 2) {
         // Simple pattern component - evaluate and store
-        back->p2 = eval(b, 1);
+        back->p2 = eval(ctx, b, 1);
         goto badvanc;
     }
     // Complex pattern component - set up match state
     last     = list;
-    str      = alloc(); // Match position tracker
-    etc      = alloc(); // Pattern metadata
-    back->p2 = var = alloc();
+    str      = alloc(ctx); // Match position tracker
+    etc      = alloc(ctx); // Pattern metadata
+    back->p2 = var = alloc(ctx);
     var->typ       = b->typ; // Pattern type (1=balanced, 2=unbalanced, 3=concatenated)
     var->p1        = str;
     var->p2        = etc;
@@ -140,14 +140,14 @@ badv1:
     if (e == NULL)
         etc->p1 = NULL; // No left side
     else
-        etc->p1 = eval(e, 0); // Evaluate left pattern
+        etc->p1 = eval(ctx, e, 0); // Evaluate left pattern
     e = b->p2;
     if (e == NULL)
         etc->p2 = NULL; // No right side
     else {
-        e       = eval(e, 1);                          // Evaluate right pattern (length)
-        etc->p2 = (node_t *)(long)(intptr_t)strbin(e); // Store as integer
-        delete_string(e);
+        e       = eval(ctx, e, 1);                          // Evaluate right pattern (length)
+        etc->p2 = (node_t *)(long)(intptr_t)strbin(ctx, e); // Store as integer
+        delete_string(ctx, e);
     }
     goto badvanc;
 
@@ -155,7 +155,7 @@ retard:
     // Backtrack to previous pattern component
     a = back->p1;
     if (a == NULL) {
-        rfail = 1;
+        ctx->rfail = 1;
         goto fail;
     }
     list = a;
@@ -186,7 +186,7 @@ advanc:
     a = list->p1;
     if (a == NULL) {
         // End of pattern - check if match succeeded
-        a = alloc();
+        a = alloc(ctx);
         if (r == NULL) {
             a->p1 = a->p2 = NULL;
             goto fail;
@@ -274,9 +274,9 @@ fail:
     list = base;
     goto f1;
 fadv:
-    free_node(back);
+    free_node(ctx, back);
     b = list->p1;
-    free_node(list);
+    free_node(ctx, list);
     if (b == NULL)
         return (a);
     list = b;
@@ -285,7 +285,7 @@ f1:
     var  = back->p2;
     if (list->typ < TOKEN_ALTERNATION) {
         // Simple pattern - no assignment needed
-        delete_string(var);
+        delete_string(ctx, var);
         goto fadv;
     }
     // Complex pattern - assign matched substring
@@ -294,14 +294,14 @@ f1:
     if (a != NULL && etc->p1 != NULL) {
         // Assign matched substring to variable
         if (str->p2 == NULL) {
-            free_node(str);
+            free_node(ctx, str);
             str = NULL;
         }
-        assign(etc->p1, copy(str));
+        assign(ctx, etc->p1, copy(ctx, str));
     }
     if (str)
-        free_node(str);
-    free_node(etc);
-    free_node(var);
+        free_node(ctx, str);
+    free_node(ctx, etc);
+    free_node(ctx, var);
     goto fadv;
 }

@@ -27,11 +27,5 @@ struct SnobolTestResult {
 // Returns the output captured from stdout
 SnobolTestResult run_snobol_program(const std::string& program, const std::string& input = "");
 
-// Helper to convert node_t string to std::string (from basic_tests.cpp)
-std::string node_to_string(node_t *str);
-
-// Helper to compare node_t string with C string
-bool node_equals_cstr(node_t *str, const char *cstr);
-
 #endif // TEST_HELPERS_H
 

@@ -9,33 +9,6 @@ extern "C" {
 #include "sno.h"
 }
 
-// Helper function to convert node_t string back to std::string
-std::string node_to_string(node_t *str)
-{
-    if (str == nullptr) {
-        return "";
-    }
-    std::string result;
-    node_t *a = str;
-    node_t *b = str->p2;
-    while (a != b) {
-        a = a->p1;
-        result += a->ch;
-    }
-    return result;
-}
-
-// Helper function to compare node_t string with C string
-bool node_equals_cstr(node_t *str, const char *cstr)
-{
-    if (str == nullptr && cstr == nullptr) {
-        return true;
-    }
-    if (str == nullptr || cstr == nullptr) {
-        return false;
-    }
-    return node_to_string(str) == cstr;
-}
 // Run a Snobol program by executing the sno binary
 SnobolTestResult run_snobol_program(const std::string &program, const std::string &input)
 {

@@ -88,8 +88,7 @@ Node *SnobolContext::search(const Node &arg, Node *r)
     Node *a, *b, *var;
     Token c;
     Token d_token;
-    int d;
-    intptr_t len;
+    int d{}, len;
 
     // Initialize pattern matching state
     a    = arg.p2;          // Start of pattern component list
@@ -148,8 +147,8 @@ badv1:
     if (e == nullptr)
         etc->p2 = nullptr; // No right side
     else {
-        e       = eval(*e, 1);                       // Evaluate right pattern (length)
-        etc->p2 = (Node *)(long)(intptr_t)strbin(e); // Store as integer
+        e       = eval(*e, 1);             // Evaluate right pattern (length)
+        etc->p2 = (Node *)(long)strbin(e); // Store as integer
         delete_string(e);
     }
     goto badvanc;
@@ -240,7 +239,7 @@ adv1:
     etc     = var->p2;
     str->p1 = next;
     str->p2 = nullptr;
-    len     = (intptr_t)etc->p2;               // Length constraint
+    len     = (long)etc->p2;                   // Length constraint
     if (var->typ == Token::TOKEN_UNANCHORED) { // Balanced pattern (value 1)
         d = str->bextend(last);
         if (d == 0)

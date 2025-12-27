@@ -87,7 +87,7 @@ void SnobolContext::syspot(Node *string) const
 Node &SnobolContext::cstr_to_node(const char *s)
 {
     int c;
-    Node *e, *f;
+    Node *e{}, *f;
     Node &d = alloc();
 
     // Build linked list: d is head, f tracks tail, e is new node

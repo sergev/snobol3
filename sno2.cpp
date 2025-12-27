@@ -230,12 +230,14 @@ l3:
             comp->typ = Token::TOKEN_UNANCHORED; // Treat as multiplication else if no space
             goto l3;
         }
+        [[fallthrough]];
 
     case Token::TOKEN_DIV: // Division or pattern alternation
         if (space_flag == 0) {
             comp->typ = Token::TOKEN_ALTERNATION; // Treat as division if no space
             goto l3;
         }
+        [[fallthrough]];
 
     case Token::TOKEN_PLUS:  // Addition
     case Token::TOKEN_MINUS: // Subtraction
@@ -261,6 +263,7 @@ l3:
             goto l4;
     l7:
         writes("illegal juxtaposition of operands");
+        break;
 
     case Token::TOKEN_LPAREN: // Left parenthesis - function call or grouping
         if (operand == 0)

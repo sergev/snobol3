@@ -10,21 +10,21 @@
 int main(int argc, char *argv[])
 {
     Node *a, *b, *c;
-    std::unique_ptr<std::ifstream> file_input;
-    std::istream *input_stream = &std::cin;
 
-    // Open input file if provided
-    if (argc > 1) {
-        file_input = std::make_unique<std::ifstream>(argv[1]);
-        if (!file_input->is_open()) {
-            std::cerr << "cannot open input" << std::endl;
-            return 1;
-        }
-        input_stream = file_input.get();
+    if (argc != 2) {
+        std::cout << "Usage: sno FILE\n";
+        return 1;
+    }
+
+    // Open input file
+    std::ifstream file_input(argv[1]);
+    if (!file_input.is_open()) {
+        std::cerr << "cannot open input" << std::endl;
+        return 1;
     }
 
     // Create context with stream references
-    SnobolContext ctx(*input_stream, std::cout);
+    SnobolContext ctx(file_input, std::cout);
 
     // Initialize built-in symbols
     ctx.lookf     = &ctx.init("f", Token::EXPR_VAR_REF);

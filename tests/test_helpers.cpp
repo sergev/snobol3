@@ -22,7 +22,9 @@ SnobolTestResult run_snobol_program(const std::string &program, const std::strin
     }
 
     // Write program to temp file
-    write(fd_program, program.c_str(), program.length());
+    if (write(fd_program, program.c_str(), program.length()) != (ssize_t)program.length()) {
+        return result;
+    }
     close(fd_program);
 
     // Create temporary file for input (if provided)
@@ -34,7 +36,9 @@ SnobolTestResult run_snobol_program(const std::string &program, const std::strin
             unlink(tmp_program);
             return result;
         }
-        write(fd_input, input.c_str(), input.length());
+        if (write(fd_input, input.c_str(), input.length()) != (ssize_t)input.length()) {
+            return result;
+        }
         close(fd_input);
     }
 

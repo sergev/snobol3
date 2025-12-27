@@ -8,22 +8,20 @@
 //
 void SnobolContext::mes(const char *s)
 {
-    sysput(cstr_to_node(s));
+    sysput(&cstr_to_node(s));
 }
 
 //
 // Initialize a symbol in the name table with a given type.
 // Creates a node from the string, looks it up (or creates it), and sets its type.
 //
-Node *SnobolContext::init(const char *s, Token t)
+Node &SnobolContext::init(const char *s, Token t)
 {
-    Node *a, *b;
-
-    a = cstr_to_node(s);
-    b = look(*a);
-    delete_string(a);
-    b->typ = t;
-    return (b);
+    Node &a = cstr_to_node(s);
+    Node &b = look(a);
+    delete_string(&a);
+    b.typ = t;
+    return b;
 }
 
 //
@@ -42,12 +40,13 @@ Node *SnobolContext::syspit()
         rfail = 1;
         return (nullptr);
     }
-    b = c = alloc();
+    b = c = &alloc();
     while (a != '\n') {
-        c->p1 = d = alloc();
-        c         = d;
-        c->ch     = a;
-        a         = fin.get();
+        d     = &alloc();
+        c->p1 = d;
+        c     = d;
+        c->ch = a;
+        a     = fin.get();
         if (fin.eof() || a == std::char_traits<char>::eof()) {
             rfail = 1;
             break;
@@ -65,7 +64,7 @@ Node *SnobolContext::syspit()
 // System function to write a string to output (syspot).
 // Outputs the string followed by a newline character.
 //
-void SnobolContext::syspot(Node *string)
+void SnobolContext::syspot(Node *string) const
 {
     Node *a, *b, *s;
 
@@ -85,20 +84,22 @@ void SnobolContext::syspot(Node *string)
 // Convert a C string to a Snobol string node.
 // Creates a linked list of nodes representing the string characters.
 //
-Node *SnobolContext::cstr_to_node(const char *s)
+Node &SnobolContext::cstr_to_node(const char *s)
 {
     int c;
-    Node *e, *f, *d;
+    Node *e, *f;
+    Node &d = alloc();
 
     // Build linked list: d is head, f tracks tail, e is new node
-    d = f = alloc();
+    f = &d;
     while ((c = *s++) != '\0') {
-        (e = alloc())->ch = c;
-        f->p1             = e;
-        f                 = e;
+        e     = &alloc();
+        e->ch = c;
+        f->p1 = e;
+        f     = e;
     }
-    d->p2 = e; // Store end marker in head node
-    return (d);
+    d.p2 = e; // Store end marker in head node
+    return d;
 }
 
 //
@@ -141,7 +142,7 @@ CharClass SnobolContext::char_class(int c)
 // Uses a free list if available, otherwise allocates from the current memory block.
 // Allocates a new block of 200 nodes when the current block is exhausted.
 //
-Node *SnobolContext::alloc()
+Node &SnobolContext::alloc()
 {
     Node *f;
     size_t alloc_size;
@@ -174,12 +175,12 @@ Node *SnobolContext::alloc()
         }
         f = freespace_current++;
         freesize--;
-        return (f);
+        return *f;
     }
     // Reuse node from free list
     f        = freelist;
     freelist = freelist->p1;
-    return (f);
+    return *f;
 }
 
 //
@@ -194,7 +195,7 @@ void SnobolContext::free_node(Node &pointer)
 //
 // Count the number of free nodes available (both in current block and free list).
 //
-int SnobolContext::nfree()
+int SnobolContext::nfree() const
 {
     int i;
     Node *a;
@@ -210,9 +211,9 @@ int SnobolContext::nfree()
 
 //
 // Look up a symbol in the name table, creating it if it doesn't exist.
-// Returns a pointer to the symbol's value node.
+// Returns a reference to the symbol's value node.
 //
-Node *SnobolContext::look(const Node &string)
+Node &SnobolContext::look(const Node &string)
 {
     Node *i, *j, *k;
 
@@ -222,22 +223,22 @@ Node *SnobolContext::look(const Node &string)
     while (i) {
         j = i->p1;
         if (j->p1->equal(&string) == 0)
-            return (j);
+            return *j;
         i = (k = i)->p2;
     }
     // Symbol not found, create new entry
-    i     = alloc();
+    i     = &alloc();
     i->p2 = nullptr;
     if (k)
         k->p2 = i;
     else
         namelist = i;
-    j      = alloc();
+    j      = &alloc();
     i->p1  = j;
     j->p1  = copy(&string);
     j->p2  = nullptr;
     j->typ = Token::EXPR_VAR_REF;
-    return (j);
+    return *j;
 }
 
 //
@@ -252,11 +253,11 @@ Node *SnobolContext::copy(const Node *string)
 
     if (string == nullptr)
         return (nullptr);
-    i = l = alloc();
+    i = l = &alloc();
     j_src = string;
     k     = const_cast<Node *>(string->p2);
     while (j_src != k) {
-        m     = alloc();
+        m     = &alloc();
         m->ch = (j_src = j_src->p1)->ch;
         l->p1 = m;
         l     = m;
@@ -337,34 +338,34 @@ loop:
 // Convert an integer to a string node.
 // Builds the string representation digit by digit, handling negative numbers.
 //
-Node *SnobolContext::binstr(int binary)
+Node &SnobolContext::binstr(int binary)
 {
     int n, sign;
-    Node *m, *p, *q;
+    Node *m, *q;
+    Node &p = alloc();
 
     n    = binary;
-    p    = alloc();
-    q    = alloc();
+    q    = &alloc();
     sign = 1;
     if (binary < 0) {
         sign = -1;
         n    = -binary;
     }
-    p->p2 = q;
+    p.p2 = q;
 loop:
     q->ch = n % 10 + '0';
     n     = n / 10;
     if (n == 0) {
         if (sign < 0) {
-            m     = alloc();
+            m     = &alloc();
             m->p1 = q;
             q     = m;
             q->ch = '-';
         }
-        p->p1 = q;
-        return (p);
+        p.p1 = q;
+        return p;
     }
-    m     = alloc();
+    m     = &alloc();
     m->p1 = q;
     q     = m;
     goto loop;
@@ -373,33 +374,33 @@ loop:
 //
 // Add two numeric strings and return the result as a string.
 //
-Node *SnobolContext::add(const Node &string1, const Node &string2)
+Node &SnobolContext::add(const Node &string1, const Node &string2)
 {
-    return (binstr(strbin(&string1) + strbin(&string2)));
+    return binstr(strbin(&string1) + strbin(&string2));
 }
 
 //
 // Subtract two numeric strings and return the result as a string.
 //
-Node *SnobolContext::sub(const Node &string1, const Node &string2)
+Node &SnobolContext::sub(const Node &string1, const Node &string2)
 {
-    return (binstr(strbin(&string1) - strbin(&string2)));
+    return binstr(strbin(&string1) - strbin(&string2));
 }
 
 //
 // Multiply two numeric strings and return the result as a string.
 //
-Node *SnobolContext::mult(const Node &string1, const Node &string2)
+Node &SnobolContext::mult(const Node &string1, const Node &string2)
 {
-    return (binstr(strbin(&string1) * strbin(&string2)));
+    return binstr(strbin(&string1) * strbin(&string2));
 }
 
 //
 // Divide two numeric strings and return the result as a string.
 //
-Node *SnobolContext::divide(const Node &string1, const Node &string2)
+Node &SnobolContext::divide(const Node &string1, const Node &string2)
 {
-    return (binstr(strbin(&string1) / strbin(&string2)));
+    return binstr(strbin(&string1) / strbin(&string2));
 }
 
 //
@@ -484,13 +485,13 @@ void SnobolContext::dump1(Node *base)
 
     while (base) {
         b = base->p1;
-        c = binstr(static_cast<int>(b->typ));
-        d = cstr_to_node("  ");
+        c = &binstr(static_cast<int>(b->typ));
+        d = &cstr_to_node("  ");
         e = dcat(*c, *d);
         sysput(cat(e, b->p1));
         delete_string(e);
         if (b->typ == Token::EXPR_VALUE) {
-            c = cstr_to_node("   ");
+            c = &cstr_to_node("   ");
             sysput(cat(c, b->p2));
             delete_string(c);
         }
@@ -504,10 +505,10 @@ void SnobolContext::dump1(Node *base)
 //
 void SnobolContext::writes(const char *s)
 {
-    Node *n1 = cstr_to_node(s);
-    Node *n2 = cstr_to_node("\t");
+    Node *n1 = &cstr_to_node(s);
+    Node *n2 = &cstr_to_node("\t");
     Node *n3 = dcat(*n2, *n1);
-    Node *n4 = binstr(lc);
+    Node *n4 = &binstr(lc);
     sysput(dcat(*n4, *n3));
     flush();
     if (cfail) {
@@ -558,7 +559,7 @@ Node *SnobolContext::getc_char()
 //
 // Flush the output buffer.
 //
-void SnobolContext::flush()
+void SnobolContext::flush() const
 {
     fout.flush();
 }

@@ -92,10 +92,10 @@ Node *SnobolContext::search(const Node &arg, Node *r)
     intptr_t len;
 
     // Initialize pattern matching state
-    a    = arg.p2;         // Start of pattern component list
-    list = base = alloc(); // Base of matching state list
-    last        = nullptr; // End of subject string (set later)
-    next        = nullptr; // Next position to match from
+    a    = arg.p2;          // Start of pattern component list
+    list = base = &alloc(); // Base of matching state list
+    last        = nullptr;  // End of subject string (set later)
+    next        = nullptr;  // Next position to match from
     goto badv1;
 badvanc:
     // Build pattern matching state from pattern components
@@ -116,12 +116,12 @@ badvanc:
         }
         goto adv1;
     }
-    b        = alloc();
+    b        = &alloc();
     list->p1 = b;
     list     = b;
 badv1:
     // Set up backtracking structure for this pattern component
-    list->p2 = back = alloc();
+    list->p2 = back = &alloc();
     back->p1        = last;
     b               = a->p2;
     c               = a->typ;
@@ -133,9 +133,9 @@ badv1:
     }
     // Complex pattern component - set up match state
     last     = list;
-    str      = alloc(); // Match position tracker
-    etc      = alloc(); // Pattern metadata
-    back->p2 = var = alloc();
+    str      = &alloc(); // Match position tracker
+    etc      = &alloc(); // Pattern metadata
+    back->p2 = var = &alloc();
     var->typ       = b->typ; // Pattern type (1=balanced, 2=unbalanced, 3=concatenated)
     var->p1        = str;
     var->p2        = etc;
@@ -189,7 +189,7 @@ advanc:
     a = list->p1;
     if (a == nullptr) {
         // End of pattern - check if match succeeded
-        a = alloc();
+        a = &alloc();
         if (r == nullptr) {
             a->p1 = a->p2 = nullptr;
             goto fail;

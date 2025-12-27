@@ -27,13 +27,13 @@ int main(int argc, char *argv[])
     SnobolContext ctx(*input_stream, std::cout);
 
     // Initialize built-in symbols
-    ctx.lookf     = ctx.init("f", Token::EXPR_VAR_REF);
-    ctx.looks     = ctx.init("s", Token::EXPR_VAR_REF);
-    ctx.lookend   = ctx.init("end", Token::EXPR_VAR_REF);
-    ctx.lookstart = ctx.init("start", Token::EXPR_VAR_REF);
-    ctx.lookdef   = ctx.init("define", Token::EXPR_VAR_REF);
-    ctx.lookret   = ctx.init("return", Token::EXPR_VAR_REF);
-    ctx.lookfret  = ctx.init("freturn", Token::EXPR_VAR_REF);
+    ctx.lookf     = &ctx.init("f", Token::EXPR_VAR_REF);
+    ctx.looks     = &ctx.init("s", Token::EXPR_VAR_REF);
+    ctx.lookend   = &ctx.init("end", Token::EXPR_VAR_REF);
+    ctx.lookstart = &ctx.init("start", Token::EXPR_VAR_REF);
+    ctx.lookdef   = &ctx.init("define", Token::EXPR_VAR_REF);
+    ctx.lookret   = &ctx.init("return", Token::EXPR_VAR_REF);
+    ctx.lookfret  = &ctx.init("freturn", Token::EXPR_VAR_REF);
     ctx.init("syspit", Token::EXPR_SYSPIT);
     ctx.init("syspot", Token::EXPR_SYSPOT);
 

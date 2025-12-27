@@ -26,7 +26,7 @@ Node *SnobolContext::eval_operand(const Node &ptr)
             a = a->p2->p1;
             goto l1;
         case Token::EXPR_SPECIAL: // Special value - free space count
-            return (binstr(nfree()));
+            return &binstr(nfree());
         default:
             writes("attempt to take an illegal value");
             goto l1;
@@ -78,7 +78,7 @@ l1:
         return (a1);
     case Token::TOKEN_DOLLAR: // Pattern immediate value ($)
         a1        = eval_operand(*stack);
-        stack->p1 = look(*a1); // Look up variable
+        stack->p1 = &look(*a1); // Look up variable
         delete_string(a1);
         stack->typ = Token::EXPR_VAR_REF; // Mark as variable reference
         goto advanc;
@@ -91,7 +91,7 @@ l1:
         a1 = a1->p2;
         {
             Node *op_ptr = a1->p1; // Function body
-            a3base = a3 = alloc();
+            a3base = a3 = &alloc();
             a3->p2      = op_ptr->p2; // Save return address
             op_ptr->p2  = nullptr;
             a1          = a1->p2;   // Parameter list
@@ -106,7 +106,7 @@ l1:
             goto f3;
         f2:
             // Bind parameter to argument value
-            a3->p1 = a4 = alloc();
+            a3->p1 = a4 = &alloc();
             a3          = a4;
             a3->p2      = eval_operand(*a1);    // Save old parameter value
             assign(*a1->p1, *eval(*a2->p2, 1)); // recursive
@@ -156,7 +156,7 @@ l1:
     case Token::TOKEN_STRING: // String literal
         a1 = copy(list->p2);
         {
-            stack      = push(stack);
+            stack      = &push(stack);
             stack->p1  = a1;
             stack->typ = Token::EXPR_VALUE; // Mark as value
             goto advanc;
@@ -164,7 +164,7 @@ l1:
     case Token::TOKEN_VARIABLE: // Variable reference
         a1 = list->p2;
         {
-            stack      = push(stack);
+            stack      = &push(stack);
             stack->p1  = a1;
             stack->typ = Token::EXPR_VAR_REF; // Mark as variable reference
             goto advanc;
@@ -182,13 +182,13 @@ Node *SnobolContext::doop(Token op, const Node &arg1, const Node &arg2)
 {
     switch (op) {
     case Token::TOKEN_DIV: // Division
-        return (divide(arg1, arg2));
+        return &divide(arg1, arg2);
     case Token::TOKEN_MULT: // Multiplication
-        return (mult(arg1, arg2));
+        return &mult(arg1, arg2);
     case Token::TOKEN_PLUS: // Addition
-        return (add(arg1, arg2));
+        return &add(arg1, arg2);
     case Token::TOKEN_MINUS: // Subtraction
-        return (sub(arg1, arg2));
+        return &sub(arg1, arg2);
     case Token::TOKEN_WHITESPACE: // Concatenation
         return (cat(&arg1, &arg2));
     default:
@@ -252,8 +252,9 @@ Node *SnobolContext::execute(const Node &e)
             goto xsuc;
         }
         // Match in middle - replace matched portion
-        (r = alloc())->p1 = d->p2->p1;
-        r->p2             = b->p2->p2;
+        r     = &alloc();
+        r->p1 = d->p2->p1;
+        r->p2 = b->p2->p2;
         assign(*b, *cat(c, r));
         free_node(*d);
         free_node(*r);

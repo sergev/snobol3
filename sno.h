@@ -148,21 +148,21 @@ public:
 
     // Methods from sno1.c
     void mes(const char *s);
-    Node *init(const char *s, Token t);
+    Node &init(const char *s, Token t);
     Node *syspit();
-    void syspot(Node *string);
-    Node *cstr_to_node(const char *s);
-    Node *alloc();
+    void syspot(Node *string) const;
+    Node &cstr_to_node(const char *s);
+    Node &alloc();
     void free_node(Node &pointer);
-    int nfree();
-    Node *look(const Node &string);
+    int nfree() const;
+    Node &look(const Node &string);
     Node *copy(const Node *string);
     int strbin(const Node *string);
-    Node *binstr(int binary);
-    Node *add(const Node &string1, const Node &string2);
-    Node *sub(const Node &string1, const Node &string2);
-    Node *mult(const Node &string1, const Node &string2);
-    Node *divide(const Node &string1, const Node &string2);
+    Node &binstr(int binary);
+    Node &add(const Node &string1, const Node &string2);
+    Node &sub(const Node &string1, const Node &string2);
+    Node &mult(const Node &string1, const Node &string2);
+    Node &divide(const Node &string1, const Node &string2);
     Node *cat(const Node *string1, const Node *string2);
     Node *dcat(Node &a, Node &b); // Deletes a and b, so non-const
     void delete_string(Node *string);
@@ -170,15 +170,15 @@ public:
     void dump();
     void writes(const char *s);
     Node *getc_char();
-    void flush();
+    void flush() const;
 
     // Methods from sno2.c
-    Node *compon();
-    Node *nscomp();
-    Node *push(Node *stack); // Can be null, must stay as pointer
+    Node &compon();
+    Node &nscomp();
+    Node &push(Node *stack); // Can be null, must stay as pointer
     Node *pop(Node *stack);  // Can be null, must stay as pointer
-    Node *expr(Node *start, Token eof, Node &e);
-    Node *match(Node *start, Node &m);
+    Node &expr(Node *start, Token eof, Node &e);
+    Node &match(Node *start, Node &m);
     Node *compile();
 
     // Methods from sno3.c

@@ -3,24 +3,11 @@
 #include "sno.h"
 #include "test_helpers.h"
 
-class IntegrationTest : public ::testing::Test {
-protected:
-    void SetUp() override
-    {
-        // Setup if needed
-    }
-
-    void TearDown() override
-    {
-        // Cleanup if needed
-    }
-};
-
 // ============================================================================
 // Complete Program Tests
 // ============================================================================
 
-TEST_F(IntegrationTest, HelloWorld)
+TEST(IntegrationTest, HelloWorld)
 {
     std::string program = R"(
 start   syspot = "Hello, World!"
@@ -32,7 +19,7 @@ end     return
     EXPECT_EQ(result.stdout_output, "Hello, World!\n");
 }
 
-TEST_F(IntegrationTest, DISABLED_InputOutput_WithSyspit)
+TEST(IntegrationTest, DISABLED_InputOutput_WithSyspit)
 {
     std::string program = R"(
 start   x = syspit()
@@ -47,7 +34,7 @@ end     return
     EXPECT_EQ(result.stdout_output, "test input\n");
 }
 
-TEST_F(IntegrationTest, DISABLED_FactorialCalculation)
+TEST(IntegrationTest, DISABLED_FactorialCalculation)
 {
     std::string program = R"(
 define  factorial(n)
@@ -66,7 +53,7 @@ end     return
     EXPECT_EQ(result.stdout_output, "120\n"); // 5! = 120
 }
 
-TEST_F(IntegrationTest, DISABLED_StringProcessing)
+TEST(IntegrationTest, DISABLED_StringProcessing)
 {
     std::string program = R"(
 start    str = "hello world"
@@ -82,7 +69,7 @@ end return
     EXPECT_EQ(result.stdout_output, "hello universe\nhi universe\n");
 }
 
-TEST_F(IntegrationTest, DISABLED_PatternMatchingProgram)
+TEST(IntegrationTest, DISABLED_PatternMatchingProgram)
 {
     std::string program = R"(
 start       str = "test string"
@@ -100,7 +87,7 @@ end         syspot = "done"
     EXPECT_EQ(result.stdout_output, "pattern found\nboth patterns found\ndone\n");
 }
 
-TEST_F(IntegrationTest, DISABLED_FunctionBasedProgram)
+TEST(IntegrationTest, DISABLED_FunctionBasedProgram)
 {
     std::string program = R"(
 define add(x, y)
@@ -120,7 +107,7 @@ end return
     EXPECT_EQ(result.stdout_output, "20\n"); // (2 + 3) * 4 = 20
 }
 
-TEST_F(IntegrationTest, DISABLED_ComplexMultiFeatureProgram)
+TEST(IntegrationTest, DISABLED_ComplexMultiFeatureProgram)
 {
     std::string program = R"(
 define process(str)
@@ -140,7 +127,7 @@ end         syspot = "done"
     EXPECT_EQ(result.stdout_output, "processed: new value\ndone\n");
 }
 
-TEST_F(IntegrationTest, DISABLED_ArithmeticOperations)
+TEST(IntegrationTest, DISABLED_ArithmeticOperations)
 {
     std::string program = R"(
 start    a = "10"
@@ -160,7 +147,7 @@ end return
     EXPECT_EQ(result.stdout_output, "30\n30\n1000\n");
 }
 
-TEST_F(IntegrationTest, StringConcatenation)
+TEST(IntegrationTest, StringConcatenation)
 {
     std::string program = R"(
 start    a = "hello"
@@ -180,7 +167,7 @@ end return
 // Program Structure Tests
 // ============================================================================
 
-TEST_F(IntegrationTest, ProgramWithStartLabel)
+TEST(IntegrationTest, ProgramWithStartLabel)
 {
     std::string program = R"(
     syspot = "before start"
@@ -193,7 +180,7 @@ end    syspot = "end"
     EXPECT_EQ(result.stdout_output, "at start\nend\n");
 }
 
-TEST_F(IntegrationTest, ProgramWithoutStartLabel)
+TEST(IntegrationTest, ProgramWithoutStartLabel)
 {
     std::string program = R"(
 first   syspot = "first"    /(second)
@@ -206,7 +193,7 @@ end     syspot = "end"
     EXPECT_EQ(result.stdout_output, "first\nsecond\nend\n");
 }
 
-TEST_F(IntegrationTest, ProgramWithMultipleLabels)
+TEST(IntegrationTest, ProgramWithMultipleLabels)
 {
     std::string program = R"(
 start       syspot = "start"        /(middle)
@@ -220,7 +207,7 @@ end         syspot = "end"
     EXPECT_EQ(result.stdout_output, "start\nmiddle\nend_label\nend\n");
 }
 
-TEST_F(IntegrationTest, ProgramExecutionOrder)
+TEST(IntegrationTest, ProgramExecutionOrder)
 {
     std::string program = R"(
 start   syspot = "1"    /(two)
@@ -234,7 +221,7 @@ end     syspot = "4"
     EXPECT_EQ(result.stdout_output, "1\n2\n3\n4\n");
 }
 
-TEST_F(IntegrationTest, EndOfProgramHandling)
+TEST(IntegrationTest, EndOfProgramHandling)
 {
     std::string program = R"(
 start   syspot = "start"
@@ -246,7 +233,7 @@ end     syspot = "end statement"
     EXPECT_EQ(result.stdout_output, "start\nend statement\n");
 }
 
-TEST_F(IntegrationTest, DISABLED_DefineStatementsNotExecutable)
+TEST(IntegrationTest, DISABLED_DefineStatementsNotExecutable)
 {
     std::string program = R"(
 define func1()
@@ -265,7 +252,7 @@ end return
     EXPECT_EQ(result.stdout_output, "1\n2\n");
 }
 
-TEST_F(IntegrationTest, DISABLED_CompleteExampleFromGrammar)
+TEST(IntegrationTest, DISABLED_CompleteExampleFromGrammar)
 {
     std::string program = R"(
 define  add(a, b)
@@ -283,7 +270,7 @@ end     return
     EXPECT_EQ(result.stdout_output, "test!\n");
 }
 
-TEST_F(IntegrationTest, LoopWithCondition)
+TEST(IntegrationTest, LoopWithCondition)
 {
     std::string program = R"(
 start   count = "0"
@@ -298,7 +285,7 @@ end     syspot = "finished"
     EXPECT_EQ(result.stdout_output, "5\nfinished\n");
 }
 
-TEST_F(IntegrationTest, DISABLED_MultipleFunctionDefinitions)
+TEST(IntegrationTest, DISABLED_MultipleFunctionDefinitions)
 {
     std::string program = R"(
 define  double(x)

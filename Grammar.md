@@ -57,7 +57,7 @@ The lexical analyzer (`compon()` in `sno2.c`) recognizes the following token typ
 #### 4. Operators
 - `+` - Addition
 - `-` - Subtraction
-- `*` - Multiplication (or unanchored search when followed by non-space)
+- `*` - Multiplication (or pattern alternation/unanchored search when followed by non-space)
 - `/` - Division (or goto target when followed by non-space)
 
 #### 5. Delimiters
@@ -133,10 +133,16 @@ Operators have the following precedence (higher numbers = higher precedence):
   - Empty argument list: `identifier()`
 - **Examples**: `f()`, `add(x, y)`, `process("input")`
 
-#### 6. Pattern Immediate Values
+#### 6. Pattern Immediate Values (Indirect Referencing)
 - **Syntax**: `$identifier`
-- **Semantics**: Returns a reference to the variable (for pattern matching)
-- **Example**: `$x` returns a reference to variable `x`
+- **Semantics**: Returns a reference to the variable named by the contents of `identifier` (indirect referencing). If the string `FACTOR` contains the literals `"TERM"`, then `$FACTOR` is equivalent to `TERM`.
+- **Usage**:
+  - In patterns: Used for indirect pattern matching
+  - In expressions: Provides a level of indirectness for variable access
+  - In goto clauses: Allows dynamic label selection (e.g., `/($LABEL)` where `LABEL` contains the target label name)
+- **Example**:
+  - `$x` returns a reference to the variable whose name is stored in `x`
+  - If `LABEL = "B3.2"`, then `/($LABEL)` transfers to the statement labeled `B3.2`
 
 ### Expression Examples
 
@@ -160,29 +166,47 @@ Patterns are used in pattern matching statements. They are parsed by the `match(
 - **String Literals**: `"string"` or `'string'` - matches the literal string
 - **Pattern Immediate**: `$identifier` - matches the variable's value dynamically
 
-#### 2. Pattern Alternation
-- **Syntax**: `*left*right*`
+#### 2. Pattern Alternation (Snobol III)
+- **Syntax**: `*left/right*`
 - **Semantics**: Matches either the left pattern or the right pattern
-- **Example**: `*"a"*"b"*` matches either `"a"` or `"b"`
+- **Example**: `*"a"/"b"*` matches either `"a"` or `"b"`
 
-#### 3. Balanced Patterns
-- **Syntax**: `*(left*right)*`
-- **Semantics**: Matches a balanced pattern (handles nested parentheses)
-- **Example**: `*("a"*"b")*` matches a balanced pattern
+#### 3. Balanced Patterns (Snobol III)
+- **Syntax**: `*(left/right)*`
+- **Semantics**: Matches a balanced pattern (handles nested parentheses). A balanced pattern can only match a non-void substring which is balanced with respect to parentheses.
+- **Balanced substring examples** (from original Snobol concept):
+  - `A` is balanced
+  - `A + (BC)` is balanced
+  - `((A,B)ACD)` is balanced
+  - `)(` is not balanced
+  - `(((A+B))+C))` is not balanced
+- **Example**: `*("a"/"b")*` matches a balanced alternation pattern
 
 #### 4. Pattern Concatenation
 - **Syntax**: Patterns separated by whitespace
 - **Semantics**: Matches patterns in sequence
 - **Example**: `"hello" "world"` matches `"hello"` followed by `"world"`
 
-#### 5. Pattern with Length Constraint
-- **Syntax**: `*left*right* = length`
-- **Semantics**: Matches with a specific length constraint
-- **Note**: The right side of the alternation can specify a length
+#### 5. Fixed-Length Patterns (Snobol III)
+- **Syntax**: Pattern alternation with length constraint `/length`
+- **Semantics**: Matches a substring of specified length
+- **Example**: `*"abc"*/3*` matches a substring of exactly 3 characters
 
 ### Pattern Matching Semantics
 
-Pattern matching uses backtracking (implemented in `search()` in `sno3.c`):
+Pattern matching uses backtracking (implemented in `search()` in `sno3.c`). The scanning algorithm follows these rules:
+
+**Rule 1**: An attempt is made to match the first pattern element starting at the first symbol of the string. If this match cannot be made, the match is attempted starting at the next symbol of the string, and so on.
+
+**Rule 2**: The matching process proceeds from left to right, successively matching pattern elements. Each pattern element matches the shortest possible substring.
+
+**Rule 3**: If at some point an element cannot match a substring, an attempt is made to obtain a new match for the preceding pattern element. This new match is accomplished by extending the substring formerly matched to obtain the next shortest acceptable value. If this extension cannot be made, Rule 3 is applied again. If there is no preceding element, a new match is attempted according to Rule 1.
+
+**Rule 4**: If the last pattern element is an arbitrary string variable (i.e., not fixed-length or balanced), its matching substring is extended to the end of the string.
+
+The pattern match succeeds when the last pattern element has been matched. The pattern match fails when the first element cannot be matched at any position in the string.
+
+**Implementation Details**:
 - Patterns are matched left-to-right
 - On failure, the matcher backtracks to try alternatives
 - Balanced patterns maintain parenthesis balance during matching
@@ -192,11 +216,11 @@ Pattern matching uses backtracking (implemented in `search()` in `sno3.c`):
 
 ```
 "hello"                    # Simple literal pattern
-x                          # Variable pattern
-$var                       # Pattern immediate
-*"a"*"b"*                  # Alternation pattern
-*("a"*"b")*                # Balanced alternation
-"hello" "world"             # Concatenated patterns
+x                          # Variable pattern (matches value of x)
+$var                       # Pattern immediate (indirect reference)
+*"a"/"b"*                  # Alternation pattern (matches either "a" or "b")
+*("a"/"b")*                # Balanced alternation (matches balanced pattern)
+"hello" "world"            # Concatenated patterns (matches "hello" followed by "world")
 ```
 
 ---
@@ -449,17 +473,18 @@ Pattern matching uses backtracking:
 This implementation differs from standard Snobol III in the following ways (as documented in `README.md`):
 
 1. **No unanchored searches**: Use `**` for unanchored search or `*x* b = x c` for unanchored assignment
-2. **No back referencing**: Back references are not supported
+2. **No back referencing**: Back references are not supported (see Patterns section)
 3. **Function declaration**: Functions are declared at compile time using `define` label
 4. **Labels**: All labels except `define` must have non-empty statements on the same line
 5. **Line-oriented**: Each statement must be on a single line; labels must be on the same line as their statement body
 6. **Whitespace requirement**: Statement bodies must start with whitespace (space or tab)
 7. **Start label**: `start` label determines entry point; otherwise first statement executes
-6. **No builtin functions**: Only `syspit` and `syspot` are available
-7. **Arithmetic precedence**: Normal precedence applies; `/` and `*` must be set off by space
-8. **Assignments**: Right side of assignments must be non-empty
-9. **String quotes**: Either `'` or `"` may be used
-10. **Pseudo-variables**: `sysppt` is not available
+8. **No builtin functions**: Only `syspit` and `syspot` are available
+9. **Arithmetic precedence**: Normal precedence applies; `/` and `*` must be set off by space
+10. **Arithmetic operations**: Exponentiation (`**`) is not supported
+11. **Assignments**: Right side of assignments must be non-empty
+12. **String quotes**: Either `'` or `"` may be used
+13. **Pseudo-variables**: `sysppt` is not available
 
 ---
 
@@ -501,8 +526,8 @@ pattern          ::= pattern-elem+
 pattern-elem     ::= identifier
                   |  string-literal
                   |  "$" identifier
-                  |  "*" pattern "*" pattern "*"
-                  |  "*" "(" pattern "*" pattern "*" ")"
+                  |  "*" pattern "/" pattern "*"           // alternation (Snobol III)
+                  |  "*" "(" pattern "/" pattern "*" ")"   // balanced alternation (Snobol III)
 
 param-list       ::= identifier ("," identifier)*
 arg-list         ::= expression ("," expression)*
@@ -528,4 +553,4 @@ variable         ::= identifier
 
 - Snobol III manual (JACM; Vol. 11 No. 1; Jan 1964; pp 21)
 - [Unix V4 Manual](https://dspinellis.github.io/unix-v4man/v4man.pdf)
-- [Snobol III Paper](https://dl.acm.org/doi/epdf/10.1145/321203.321207)
+- Farber, D. J., Griswold, R. E., & Polonsky, I. P. (1964). SNOBOL, A String Manipulation Language. *Journal of the ACM*, 11(1), 21-30. [https://dl.acm.org/doi/epdf/10.1145/321203.321207](https://dl.acm.org/doi/epdf/10.1145/321203.321207)

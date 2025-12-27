@@ -11,7 +11,9 @@ node_t *freespace_end     = NULL;
 int fin  = 0;
 int fout = 1;
 
-/* Global variables */
+//
+// Global variables
+//
 int cfail         = 0;
 int rfail         = 0;
 node_t *freelist  = NULL;
@@ -140,35 +142,35 @@ node_t *cstr_to_node(const char *s)
 // Classify a character for lexical analysis.
 // Returns a numeric code representing the character's syntactic role.
 //
-int char_class(int c)
+char_class_t char_class(int c)
 {
     switch (c) {
     case ')':
-        return (1); // Right parenthesis
+        return (CHAR_CLASS_RPAREN); // Right parenthesis
     case '(':
-        return (2); // Left parenthesis
+        return (CHAR_CLASS_LPAREN); // Left parenthesis
     case '\t':
     case ' ':
-        return (3); // Whitespace
+        return (CHAR_CLASS_WHITESPACE); // Whitespace
     case '+':
-        return (4); // Plus operator
+        return (CHAR_CLASS_PLUS); // Plus operator
     case '-':
-        return (5); // Minus operator
+        return (CHAR_CLASS_MINUS); // Minus operator
     case '*':
-        return (6); // Asterisk operator
+        return (CHAR_CLASS_ASTERISK); // Asterisk operator
     case '/':
-        return (7); // Division operator
+        return (CHAR_CLASS_SLASH); // Division operator
     case '$':
-        return (8); // Dollar sign
+        return (CHAR_CLASS_DOLLAR); // Dollar sign
     case '"':
     case '\'':
-        return (9); // String delimiter
+        return (CHAR_CLASS_STRING_DELIM); // String delimiter
     case '=':
-        return (10); // Equals sign
+        return (CHAR_CLASS_EQUALS); // Equals sign
     case ',':
-        return (11); // Comma
+        return (CHAR_CLASS_COMMA); // Comma
     }
-    return (0); // Other character
+    return (CHAR_CLASS_OTHER); // Other character
 }
 
 //
@@ -271,7 +273,7 @@ node_t *look(node_t *string)
     i->p1  = j;
     j->p1  = copy(string);
     j->p2  = NULL;
-    j->typ = 0;
+    j->typ = EXPR_VAR_REF;
     return (j);
 }
 
@@ -354,7 +356,7 @@ int strbin(node_t *string)
     p    = s->p1;
     q    = s->p2;
     sign = 1;
-    if (char_class(p->ch) == 5) { /* minus */
+    if (char_class(p->ch) == CHAR_CLASS_MINUS) { /* minus */
         sign = -1;
         if (p == q)
             return (0);
@@ -527,7 +529,7 @@ void dump1(node_t *base)
         e = dcat(c, d);
         sysput(cat(e, b->p1));
         delete_string(e);
-        if (b->typ == 1) {
+        if (b->typ == EXPR_VALUE) {
             c = cstr_to_node("   ");
             sysput(cat(c, b->p2));
             delete_string(c);

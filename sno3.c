@@ -1,8 +1,5 @@
 #include "sno.h"
 
-/*
- * sno3
- */
 //
 // Extend a balanced pattern match (handles nested parentheses).
 // Extends the match position forward while maintaining balanced parentheses.
@@ -14,7 +11,7 @@ int bextend(node_t *str, node_t *last)
     int b;
     node_t *c;
     int d;
-    int class_val;
+    char_class_t class_val;
 
     s = str;
     c = s->p1;
@@ -34,13 +31,13 @@ eb1:
 eb2:
     d++;
     class_val = char_class(a->ch);
-    if (class_val == 1) { /* rp - right parenthesis */
+    if (class_val == CHAR_CLASS_RPAREN) { /* rp - right parenthesis */
         if (b == 0)
             goto bad;
         b--;
         goto eb3;
     }
-    if (class_val == 2) { /* lp - left parenthesis */
+    if (class_val == CHAR_CLASS_LPAREN) { /* lp - left parenthesis */
         b++;
         goto eb1;
     }
@@ -100,7 +97,7 @@ node_t *search(node_t *arg, node_t *r)
 badvanc:
     // Build pattern matching state from pattern components
     a = a->p1;
-    if (a->typ == 0) {
+    if (a->typ == TOKEN_END) {
         // End of pattern - initialize search
         list->p1 = NULL;
         if (rfail == 1) {
@@ -169,7 +166,7 @@ retard:
     if (etc->p2) // Has length constraint - need to retry
         goto retard;
     // Try to extend current match
-    if (var->typ == 1) { // Balanced pattern
+    if (var->typ == TOKEN_UNANCHORED) { // Balanced pattern (value 1)
         if (bextend(str, last) == 0)
             goto retard;
         goto adv0;
@@ -240,8 +237,8 @@ adv1:
     etc     = var->p2;
     str->p1 = next;
     str->p2 = NULL;
-    c       = (int)(intptr_t)etc->p2; // Length constraint
-    if (var->typ == 1) {              // Balanced pattern
+    c       = (int)(intptr_t)etc->p2;   // Length constraint
+    if (var->typ == TOKEN_UNANCHORED) { // Balanced pattern (value 1)
         d = bextend(str, last);
         if (d == 0)
             goto retard;
@@ -286,7 +283,7 @@ fadv:
 f1:
     back = list->p2;
     var  = back->p2;
-    if (list->typ < 2) {
+    if (list->typ < TOKEN_ALTERNATION) {
         // Simple pattern - no assignment needed
         delete_string(var);
         goto fadv;

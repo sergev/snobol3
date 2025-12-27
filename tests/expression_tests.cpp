@@ -272,7 +272,7 @@ end     return
 
 TEST_F(ExpressionTest, PatternImmediate)
 {
-    std::string program = R"(
+    std::string program     = R"(
 start   x = "test"
         test = "hello"
         y = $x

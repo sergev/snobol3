@@ -30,34 +30,34 @@ protected:
 
 TEST(CharacterClassificationTest, Operators)
 {
-    EXPECT_EQ(char_class('+'), 4);  // Plus operator
-    EXPECT_EQ(char_class('-'), 5);  // Minus operator
-    EXPECT_EQ(char_class('*'), 6);  // Asterisk operator
-    EXPECT_EQ(char_class('/'), 7);  // Division operator
-    EXPECT_EQ(char_class('='), 10); // Equals sign
+    EXPECT_EQ(char_class('+'), CHAR_CLASS_PLUS);     // Plus operator
+    EXPECT_EQ(char_class('-'), CHAR_CLASS_MINUS);    // Minus operator
+    EXPECT_EQ(char_class('*'), CHAR_CLASS_ASTERISK); // Asterisk operator
+    EXPECT_EQ(char_class('/'), CHAR_CLASS_SLASH);    // Division operator
+    EXPECT_EQ(char_class('='), CHAR_CLASS_EQUALS);   // Equals sign
 }
 
 TEST(CharacterClassificationTest, Delimiters)
 {
-    EXPECT_EQ(char_class('('), 2);  // Left parenthesis
-    EXPECT_EQ(char_class(')'), 1);  // Right parenthesis
-    EXPECT_EQ(char_class('\''), 9); // Single quote
-    EXPECT_EQ(char_class('"'), 9);  // Double quote
-    EXPECT_EQ(char_class(','), 11); // Comma
-    EXPECT_EQ(char_class('$'), 8);  // Dollar sign
+    EXPECT_EQ(char_class('('), CHAR_CLASS_LPAREN);        // Left parenthesis
+    EXPECT_EQ(char_class(')'), CHAR_CLASS_RPAREN);        // Right parenthesis
+    EXPECT_EQ(char_class('\''), CHAR_CLASS_STRING_DELIM); // Single quote
+    EXPECT_EQ(char_class('"'), CHAR_CLASS_STRING_DELIM);  // Double quote
+    EXPECT_EQ(char_class(','), CHAR_CLASS_COMMA);         // Comma
+    EXPECT_EQ(char_class('$'), CHAR_CLASS_DOLLAR);        // Dollar sign
 }
 
 TEST(CharacterClassificationTest, Whitespace)
 {
-    EXPECT_EQ(char_class(' '), 3);  // Space
-    EXPECT_EQ(char_class('\t'), 3); // Tab
+    EXPECT_EQ(char_class(' '), CHAR_CLASS_WHITESPACE);  // Space
+    EXPECT_EQ(char_class('\t'), CHAR_CLASS_WHITESPACE); // Tab
 }
 
 TEST(CharacterClassificationTest, RegularCharacters)
 {
-    EXPECT_EQ(char_class('a'), 0); // Letter
-    EXPECT_EQ(char_class('0'), 0); // Digit
-    EXPECT_EQ(char_class('@'), 0); // Symbol
+    EXPECT_EQ(char_class('a'), CHAR_CLASS_OTHER); // Letter
+    EXPECT_EQ(char_class('0'), CHAR_CLASS_OTHER); // Digit
+    EXPECT_EQ(char_class('@'), CHAR_CLASS_OTHER); // Symbol
 }
 
 // ============================================================================

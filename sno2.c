@@ -16,67 +16,67 @@ node_t *compon(void)
     else
         next = 0;
     if (schar == NULL) {
-        (a = alloc())->typ = 0;
+        (a = alloc())->typ = TOKEN_END;
         return (a);
     }
     switch (char_class(schar->ch)) {
-    case 1: // Right parenthesis
-        schar->typ = 5;
+    case CHAR_CLASS_RPAREN: // Right parenthesis
+        schar->typ = TOKEN_RPAREN;
         return (schar);
 
-    case 2: // Left parenthesis
-        schar->typ = 16;
+    case CHAR_CLASS_LPAREN: // Left parenthesis
+        schar->typ = TOKEN_LPAREN;
         return (schar);
 
-    case 3: // Whitespace
+    case CHAR_CLASS_WHITESPACE: // Whitespace
         a = schar;
         for (;;) {
             schar = getc_char();
             if (schar == NULL) {
-                a->typ = 0;
+                a->typ = TOKEN_END;
                 return (a);
             }
-            if (char_class(schar->ch) != 3)
+            if (char_class(schar->ch) != CHAR_CLASS_WHITESPACE)
                 break;
             free_node(schar);
         }
         next   = 1;
-        a->typ = 7;
+        a->typ = TOKEN_WHITESPACE;
         return (a);
 
-    case 4: // Plus operator
-        schar->typ = 8;
+    case CHAR_CLASS_PLUS: // Plus operator
+        schar->typ = TOKEN_PLUS;
         return (schar);
 
-    case 5: // Minus operator
-        schar->typ = 9;
+    case CHAR_CLASS_MINUS: // Minus operator
+        schar->typ = TOKEN_MINUS;
         return (schar);
 
-    case 6: // Asterisk - could be multiplication or unanchored search
+    case CHAR_CLASS_ASTERISK: // Asterisk - could be multiplication or unanchored search
         a     = schar;
         schar = getc_char();
-        if (char_class(schar->ch) == 3)
-            a->typ = 10; // Multiplication (followed by space)
+        if (char_class(schar->ch) == CHAR_CLASS_WHITESPACE)
+            a->typ = TOKEN_MULT; // Multiplication (followed by space)
         else
-            a->typ = 1; // Unanchored search
+            a->typ = TOKEN_UNANCHORED; // Unanchored search
         next = 1;
         return (a);
 
-    case 7: // Division - could be pattern alternation
+    case CHAR_CLASS_SLASH: // Division - could be pattern alternation
         a     = schar;
         schar = getc_char();
-        if (char_class(schar->ch) == 3)
-            a->typ = 11; // Division (followed by space)
+        if (char_class(schar->ch) == CHAR_CLASS_WHITESPACE)
+            a->typ = TOKEN_DIV; // Division (followed by space)
         else
-            a->typ = 2; // Pattern alternation
+            a->typ = TOKEN_ALTERNATION; // Pattern alternation
         next = 1;
         return (a);
 
-    case 8: // Dollar sign (pattern immediate value)
-        schar->typ = 12;
+    case CHAR_CLASS_DOLLAR: // Dollar sign (pattern immediate value)
+        schar->typ = TOKEN_DOLLAR;
         return (schar);
 
-    case 9: // String literal delimiter
+    case CHAR_CLASS_STRING_DELIM: // String literal delimiter
         c = schar->ch;
         a = getc_char();
         if (a == NULL)
@@ -85,7 +85,7 @@ node_t *compon(void)
         if (a->ch == c) {
             // Empty string
             free_node(schar);
-            a->typ = 15;
+            a->typ = TOKEN_STRING;
             a->p1  = NULL;
             return (a);
         }
@@ -105,26 +105,29 @@ node_t *compon(void)
             a     = schar;
         }
         b->p2      = a;
-        schar->typ = 15;
+        schar->typ = TOKEN_STRING;
         schar->p1  = b;
         return (schar);
     lerr:
         writes("illegal literal string");
         return NULL; // Never reached, but needed for compilation
 
-    case 10: // Equals sign
-        schar->typ = 3;
+    case CHAR_CLASS_EQUALS: // Equals sign
+        schar->typ = TOKEN_EQUALS;
         return (schar);
 
-    case 11: // Comma
-        schar->typ = 4;
+    case CHAR_CLASS_COMMA: // Comma
+        schar->typ = TOKEN_COMMA;
         return (schar);
+
+    default: // CHAR_CLASS_OTHER - fall through to identifier/keyword handling
+        break;
     }
     // Identifier or keyword - collect characters until delimiter
     b     = alloc();
     b->p1 = a = schar;
     schar     = getc_char();
-    while (schar != NULL && !char_class(schar->ch)) {
+    while (schar != NULL && char_class(schar->ch) == CHAR_CLASS_OTHER) {
         a->p1 = schar;
         a     = schar;
         schar = getc_char();
@@ -134,7 +137,7 @@ node_t *compon(void)
     a     = look(b);
     delete_string(b);
     b      = alloc();
-    b->typ = 14; // Variable reference
+    b->typ = TOKEN_VARIABLE; // Variable reference
     b->p1  = a;
     return (b);
 }
@@ -146,7 +149,7 @@ node_t *nscomp(void)
 {
     node_t *c;
 
-    while ((c = compon())->typ == 7)
+    while ((c = compon())->typ == TOKEN_WHITESPACE)
         free_node(c);
     return (c);
 }
@@ -196,11 +199,11 @@ node_t *expr(node_t *start, int eof, node_t *e)
     // Initialize expression parser
     list       = alloc(); // Output list (postfix expression)
     e->p2      = list;
-    stack      = push(NULL); // Operator stack
-    stack->typ = eof;        // End-of-expression marker (lowest precedence)
-    operand    = 0;          // Flag: expecting operand (1) or operator (0)
-    space_ptr  = start;      // Deferred component (for concatenation)
-    space_flag = 0;          // Flag: space seen (implies concatenation)
+    stack      = push(NULL);        // Operator stack
+    stack->typ = (token_type_t)eof; // End-of-expression marker (lowest precedence)
+    operand    = 0;                 // Flag: expecting operand (1) or operator (0)
+    space_ptr  = start;             // Deferred component (for concatenation)
+    space_flag = 0;                 // Flag: space seen (implies concatenation)
 l1:
     if (space_ptr) {
         comp      = space_ptr;
@@ -211,33 +214,33 @@ l1:
 l3:
     op = comp->typ;
     switch (op) {
-    case 7:             // Whitespace - used for concatenation
-        space_flag = 1; /* Mark that we had a space */
+    case TOKEN_WHITESPACE: // Whitespace - used for concatenation
+        space_flag = 1;    /* Mark that we had a space */
         free_node(comp);
         comp = compon();
         goto l3;
 
-    case 10: // Multiplication or something else
+    case TOKEN_MULT: // Multiplication or something else
         if (space_flag == 0) {
-            comp->typ = 1; // Treat as multiplication else if no space
+            comp->typ = TOKEN_UNANCHORED; // Treat as multiplication else if no space
             goto l3;
         }
 
-    case 11: // Division or pattern alternation
+    case TOKEN_DIV: // Division or pattern alternation
         if (space_flag == 0) {
-            comp->typ = 2; // Treat as division if no space
+            comp->typ = TOKEN_ALTERNATION; // Treat as division if no space
             goto l3;
         }
 
-    case 8: // Addition
-    case 9: // Subtraction
+    case TOKEN_PLUS:  // Addition
+    case TOKEN_MINUS: // Subtraction
         if (operand == 0)
             writes("no operand preceding operator");
         operand = 0;
         goto l5;
 
-    case 14: // Variable
-    case 15: // String literal
+    case TOKEN_VARIABLE: // Variable
+    case TOKEN_STRING:   // String literal
         if (operand == 0) {
             operand = 1;
             goto l5;
@@ -246,7 +249,7 @@ l3:
             goto l7;
         goto l4; // Space means concatenation
 
-    case 12: // Pattern immediate value ($)
+    case TOKEN_DOLLAR: // Pattern immediate value ($)
         if (operand == 0)
             goto l5;
         if (space_flag)
@@ -254,26 +257,26 @@ l3:
     l7:
         writes("illegal juxtaposition of operands");
 
-    case 16: // Left parenthesis - function call or grouping
+    case TOKEN_LPAREN: // Left parenthesis - function call or grouping
         if (operand == 0)
             goto l5;
         if (space_flag)
             goto l4;
         b  = compon();
-        op = comp->typ = 13; // Function call
-        if (b->typ == 5) {
+        op = comp->typ = EXPR_CALL; // Function call
+        if (b->typ == TOKEN_RPAREN) {
             // Empty argument list
             comp->p1 = NULL;
             goto l10;
         }
         comp->p1 = a = alloc();
-        b            = expr(b, 6, a); // Parse first argument
-        while ((d = b->typ) == 4) {   // Comma - more arguments
+        b            = expr(b, 6, a);         // Parse first argument
+        while ((d = b->typ) == TOKEN_COMMA) { // Comma - more arguments
             a->p1 = b;
             a     = b;
             b     = expr(NULL, 6, a);
         }
-        if (d != 5) // Should end with right parenthesis
+        if (d != TOKEN_RPAREN) // Should end with right parenthesis
             writes("error in function");
         a->p1 = NULL;
     l10:
@@ -282,7 +285,7 @@ l3:
 
     l4: // Implicit concatenation (space between operands)
         space_ptr  = comp;
-        op         = 7;
+        op         = TOKEN_WHITESPACE;
         operand    = 0;
         space_flag = 0;
         goto l6;
@@ -297,9 +300,9 @@ l6:
     if (op > op1) {
         // Push operator onto stack
         stack = push(stack);
-        if (op == 16)
-            op = 6; // Treat left paren as low precedence
-        stack->typ = op;
+        if (op == TOKEN_LPAREN)
+            op = EXPR_SPECIAL; // Treat left paren as low precedence
+        stack->typ = (token_type_t)op;
         stack->p1  = comp;
         goto l1;
     }
@@ -307,17 +310,17 @@ l6:
     c     = stack->p1;
     stack = pop(stack);
     if (stack == NULL) {
-        list->typ = 0;
+        list->typ = TOKEN_END;
         return (comp);
     }
-    if (op1 == 6) {  // Left parenthesis marker
-        if (op != 5) // Should match right parenthesis
+    if (op1 == EXPR_SPECIAL) {  // Left parenthesis marker
+        if (op != TOKEN_RPAREN) // Should match right parenthesis
             writes("too many ('s");
         goto l1;
     }
-    if (op1 == 7) // Concatenation operator
+    if (op1 == TOKEN_WHITESPACE) // Concatenation operator
         c = alloc();
-    list->typ = op1;
+    list->typ = (token_type_t)op1;
     list->p2  = c->p1;
     list->p1  = c;
     list      = c;
@@ -349,25 +352,25 @@ l3:
     list         = a;
 l2:
     switch (comp->typ) {
-    case 7: // Whitespace - skip
+    case TOKEN_WHITESPACE: // Whitespace - skip
         free_node(comp);
         comp = compon();
         goto l2;
 
-    case 12: // Pattern immediate ($)
-    case 14: // Variable
-    case 15: // String literal
-    case 16: // Left parenthesis
+    case TOKEN_DOLLAR:   // Pattern immediate ($)
+    case TOKEN_VARIABLE: // Variable
+    case TOKEN_STRING:   // String literal
+    case TOKEN_LPAREN:   // Left parenthesis
         term      = NULL;
         comp      = expr(comp, 6, list); // Parse as expression
-        list->typ = 1;                   // Pattern component
+        list->typ = TOKEN_UNANCHORED;    // Pattern component
         goto l3;
 
-    case 1: // Multiplication operator - pattern alternation
+    case TOKEN_UNANCHORED: // Multiplication operator - pattern alternation
         free_node(comp);
         comp = compon();
         bal  = 0;
-        if (comp->typ == 16) {
+        if (comp->typ == TOKEN_LPAREN) {
             // Balanced pattern (parenthesized)
             bal = 1;
             free_node(comp);
@@ -375,30 +378,30 @@ l2:
         }
         a = alloc();
         b = comp->typ;
-        if (b == 2 || b == 5 || b == 10 || b == 1)
+        if (b == TOKEN_ALTERNATION || b == TOKEN_RPAREN || b == TOKEN_MULT || b == TOKEN_UNANCHORED)
             a->p1 = NULL; // No left side
         else {
             comp  = expr(comp, 11, a); // Parse left side
             a->p1 = a->p2;
         }
-        if (comp->typ != 2) {
+        if (comp->typ != TOKEN_ALTERNATION) {
             a->p2 = NULL; // No right side
         } else {
             free_node(comp);
             comp = expr(NULL, 6, a); // Parse right side
         }
         if (bal) {
-            if (comp->typ != 5) // Should end with right paren
+            if (comp->typ != TOKEN_RPAREN) // Should end with right paren
                 goto merr;
             free_node(comp);
             comp = compon();
         }
         b = comp->typ;
-        if (b != 1 && b != 10) // Should be alternation or equals
+        if (b != TOKEN_UNANCHORED && b != TOKEN_MULT) // Should be alternation or equals
             goto merr;
         list->p2  = a;
-        list->typ = 2; // Alternation pattern
-        a->typ    = bal;
+        list->typ = TOKEN_ALTERNATION; // Alternation pattern
+        a->typ    = (token_type_t)bal;
         free_node(comp);
         comp = compon();
         if (bal)
@@ -406,10 +409,14 @@ l2:
         else
             term = list; // Mark for potential concatenation
         goto l3;
+
+    default:
+        // Other token types not valid in pattern context
+        goto merr;
     }
     if (term)
-        term->typ = 3; // Mark term as concatenated
-    list->typ = 0;
+        term->typ = TOKEN_EQUALS; // Mark term as concatenated
+    list->typ = TOKEN_END;
     return (comp);
 
 merr:
@@ -439,13 +446,13 @@ node_t *compile(void)
     comp = compon();
     a    = comp->typ;
     // Check for optional label
-    if (a == 14) {
+    if (a == TOKEN_VARIABLE) {
         l = comp->p1;
         free_node(comp);
         comp = compon();
         a    = comp->typ;
     }
-    if (a != 7)
+    if (a != TOKEN_WHITESPACE)
         writes("no space beginning statement");
     free_node(comp);
     // Check for function definition
@@ -454,21 +461,21 @@ node_t *compile(void)
     // Parse expression (subject of statement)
     comp = expr(NULL, 11, r = alloc());
     a    = comp->typ;
-    if (a == 0) // End of statement
+    if (a == TOKEN_END) // End of statement
         goto asmble;
-    if (a == 2) // Comma - goto statement
+    if (a == TOKEN_ALTERNATION) // Comma - goto statement
         goto xfer;
-    if (a == 3) // Equals - assignment
+    if (a == TOKEN_EQUALS) // Equals - assignment
         goto assig;
     // Pattern matching statement
     m    = alloc();
     comp = match(comp, m);
     a    = comp->typ;
-    if (a == 0)
+    if (a == TOKEN_END)
         goto asmble;
-    if (a == 2)
+    if (a == TOKEN_ALTERNATION)
         goto xfer;
-    if (a == 3)
+    if (a == TOKEN_EQUALS)
         goto assig;
     writes("unrecognized component in match");
     return NULL;
@@ -478,9 +485,9 @@ assig:
     free_node(comp);
     comp = expr(NULL, 6, as = alloc());
     a    = comp->typ;
-    if (a == 0)
+    if (a == TOKEN_END)
         goto asmble;
-    if (a == 2)
+    if (a == TOKEN_ALTERNATION)
         goto xfer;
     writes("unrecognized component in assignment");
     return NULL;
@@ -490,14 +497,14 @@ xfer:
     free_node(comp);
     comp = compon();
     a    = comp->typ;
-    if (a == 16) // Left paren - both success and failure targets
+    if (a == TOKEN_LPAREN) // Left paren - both success and failure targets
         goto xboth;
-    if (a == 0) { // End of statement - no goto
+    if (a == TOKEN_END) { // End of statement - no goto
         if (xs != NULL || xf != NULL)
             goto asmble;
         goto xerr;
     }
-    if (a != 14) // Should be a label
+    if (a != TOKEN_VARIABLE) // Should be a label
         goto xerr;
     b = comp->p1;
     free_node(comp);
@@ -515,12 +522,12 @@ xboth:
     free_node(comp);
     xs   = alloc();
     xf   = alloc();
-    comp = expr(NULL, 6, xs); // Parse success target
-    if (comp->typ != 5)       // Should end with right paren
+    comp = expr(NULL, 6, xs);      // Parse success target
+    if (comp->typ != TOKEN_RPAREN) // Should end with right paren
         goto xerr;
     xf->p2 = xs->p2; // Share expression list
     comp   = compon();
-    if (comp->typ != 0)
+    if (comp->typ != TOKEN_END)
         goto xerr;
     goto asmble;
 
@@ -529,10 +536,10 @@ xsuc:
     if (xs)
         goto xerr;
     comp = compon();
-    if (comp->typ != 16)
+    if (comp->typ != TOKEN_LPAREN)
         goto xerr;
     comp = expr(NULL, 6, xs = alloc());
-    if (comp->typ != 5)
+    if (comp->typ != TOKEN_RPAREN)
         goto xerr;
     goto xfer;
 
@@ -541,10 +548,10 @@ xfail:
     if (xf)
         goto xerr;
     comp = compon();
-    if (comp->typ != 16)
+    if (comp->typ != TOKEN_LPAREN)
         goto xerr;
     comp = expr(NULL, 6, xf = alloc());
-    if (comp->typ != 5)
+    if (comp->typ != TOKEN_RPAREN)
         goto xerr;
     goto xfer;
 
@@ -554,7 +561,7 @@ asmble:
         if (l->typ)
             writes("name doubly defined");
         l->p2  = comp;
-        l->typ = 2; /* type label;*/
+        l->typ = EXPR_LABEL; /* type label;*/
     }
     comp->p2 = r; // Link to expression
     if (m) {
@@ -578,48 +585,48 @@ asmble:
         g->p2 = xf->p2; // Failure goto target (expression list)
         free_node(xf);
     }
-    r->p1     = g;  // Link goto structure to statement
-    comp->typ = t;  // Statement type: 0=simple, 1=match, 2=assign
-    comp->ch  = lc; // Store line number
+    r->p1     = g;               // Link goto structure to statement
+    comp->typ = (token_type_t)t; // Statement type: 0=simple, 1=match, 2=assign
+    comp->ch  = lc;              // Store line number
     return (comp);
 
 def:
     // Parse function definition: define name(params) body
     r = nscomp();
-    if (r->typ != 14) // Should be function name
+    if (r->typ != TOKEN_VARIABLE) // Should be function name
         goto derr;
     l = r->p1;
     if (l->typ)
         writes("name doubly defined");
-    l->typ = 5; /*type function;*/
+    l->typ = EXPR_FUNCTION; /*type function;*/
     {
         node_t *a_ptr = r;
         l->p2         = a_ptr;
         r             = nscomp();
         l             = r;
         a_ptr->p1     = l;
-        if (r->typ == 0) // No parameters
+        if (r->typ == TOKEN_END) // No parameters
             goto d4;
-        if (r->typ != 16) // Should start with left paren
+        if (r->typ != TOKEN_LPAREN) // Should start with left paren
             goto derr;
 
     d2:
         // Parse parameter list
         r = nscomp();
-        if (r->typ != 14) // Should be parameter name
+        if (r->typ != TOKEN_VARIABLE) // Should be parameter name
             goto derr;
         a_ptr->p2 = r;
-        r->typ    = 0;
+        r->typ    = EXPR_VAR_REF;
         a_ptr     = r;
         r         = nscomp();
-        if (r->typ == 4) { // Comma - more parameters
+        if (r->typ == TOKEN_COMMA) { // Comma - more parameters
             free_node(r);
             goto d2;
         }
-        if (r->typ != 5) // Should end with right paren
+        if (r->typ != TOKEN_RPAREN) // Should end with right paren
             goto derr;
         free_node(r);
-        if ((r = compon())->typ != 0) // Should be end of statement
+        if ((r = compon())->typ != TOKEN_END) // Should be end of statement
             goto derr;
         free_node(r);
 

@@ -22,6 +22,7 @@ int main(int argc, char *argv[])
         fin = 0;
     }
     fout = dup(1);
+
     // Initialize built-in symbols
     lookf     = init("f", 0);
     looks     = init("s", 0);
@@ -32,17 +33,19 @@ int main(int argc, char *argv[])
     lookfret  = init("freturn", 0);
     init("syspit", 3);
     init("syspot", 4);
+
     // Compile all statements until "end" is encountered
     // Link statements together in a list
     a = c = compile();
-    while (lookend->typ != 2) {
+    while (lookend->typ != EXPR_LABEL) {
         a->p1 = b = compile();
         a         = b;
     }
     cfail = 1; // Enable compilation failure mode
     a->p1 = 0; // Terminate statement list
+
     // Start execution from "start" label if defined, otherwise from first statement
-    if (lookstart->typ == 2)
+    if (lookstart->typ == EXPR_LABEL)
         c = lookstart->p2;
     while ((c = execute(c)) != NULL)
         ;

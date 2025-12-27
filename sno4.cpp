@@ -7,11 +7,10 @@
 //
 Node *SnobolContext::eval_operand(const Node &ptr)
 {
-    Node *a, *p;
-
-    p = const_cast<Node *>(&ptr);
-    a = p->p1;
-    if (p->typ == Token::EXPR_VAR_REF) {
+    Node *a;
+    Node &p = const_cast<Node &>(ptr);
+    a = p.p1;
+    if (p.typ == Token::EXPR_VAR_REF) {
         // Variable reference - get its value
         switch (a->typ) {
         case Token::EXPR_VAR_REF:       // Uninitialized variable
@@ -300,10 +299,9 @@ xboth:
 //
 void SnobolContext::assign(Node &adr, Node &val)
 {
-    Node *a, *addr, *value;
-
-    addr  = &adr;
-    value = &val;
+    Node *a;
+    Node &addr = adr;
+    Node &value = val;
     if (rfail == 1) {
         // Don't assign on failure
         delete_string(value);

@@ -505,11 +505,11 @@ void SnobolContext::dump1(Node *base)
 //
 void SnobolContext::writes(const char *s)
 {
-    Node *n1 = &cstr_to_node(s);
-    Node *n2 = &cstr_to_node("\t");
-    Node *n3 = dcat(*n2, *n1);
-    Node *n4 = &binstr(lc);
-    sysput(dcat(*n4, *n3));
+    Node &n1 = cstr_to_node(s);
+    Node &n2 = cstr_to_node("\t");
+    Node *n3 = dcat(n2, n1);
+    Node &n4 = binstr(lc);
+    sysput(dcat(n4, *n3));
     flush();
     if (cfail) {
         dump();

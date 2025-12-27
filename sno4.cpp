@@ -9,7 +9,7 @@ Node *SnobolContext::eval_operand(const Node &ptr)
 {
     Node *a;
     Node &p = const_cast<Node &>(ptr);
-    a = p.p1;
+    a       = p.p1;
     if (p.typ == Token::EXPR_VAR_REF) {
         // Variable reference - get its value
         switch (a->typ) {
@@ -297,34 +297,33 @@ xboth:
 // Assign a value to a variable or output location.
 // Handles variable assignment, output, and function parameter assignment.
 //
-void SnobolContext::assign(Node &adr, Node &val)
+void SnobolContext::assign(Node &addr, Node &value)
 {
     Node *a;
-    Node &addr = adr;
-    Node &value = val;
+
     if (rfail == 1) {
         // Don't assign on failure
-        delete_string(value);
+        delete_string(&value);
         return;
     }
-    switch (addr->typ) {
+    switch (addr.typ) {
     default:
         writes("attempt to make an illegal assignment");
         return;
     case Token::EXPR_VAR_REF: // Uninitialized variable
-        addr->typ = Token::EXPR_VALUE;
+        addr.typ = Token::EXPR_VALUE;
         // fall through
     case Token::EXPR_VALUE: // String variable
-        delete_string(addr->p2);
-        addr->p2 = value;
+        delete_string(addr.p2);
+        addr.p2 = &value;
         return;
     case Token::EXPR_SYSPOT: // Output (syspot)
-        sysput(value);
+        sysput(&value);
         return;
     case Token::EXPR_FUNCTION: // Function parameter
-        a = addr->p2->p1;
+        a = addr.p2->p1;
         delete_string(a->p2);
-        a->p2 = value;
+        a->p2 = &value;
         return;
     }
 }

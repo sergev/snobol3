@@ -1,6 +1,6 @@
-/*
- * Snobol III
- */
+//
+// Snobol III
+//
 #include "sno.h"
 
 //
@@ -15,7 +15,7 @@ void SnobolContext::mes(const char *s)
 // Initialize a symbol in the name table with a given type.
 // Creates a node from the string, looks it up (or creates it), and sets its type.
 //
-Node *SnobolContext::init(const char *s, token_type_t t)
+Node *SnobolContext::init(const char *s, Token t)
 {
     Node *a, *b;
 
@@ -160,7 +160,7 @@ Node *SnobolContext::alloc()
                 freespace_end     = freespace + 200;
                 freesize          = 200;
             } else {
-                /* Allocate new block and append */
+                // Allocate new block and append
                 Node *new_block = (Node *)malloc(alloc_size);
                 if (new_block == nullptr) {
                     flush();
@@ -236,7 +236,7 @@ Node *SnobolContext::look(Node *string)
     i->p1  = j;
     j->p1  = copy(string);
     j->p2  = nullptr;
-    j->typ = EXPR_VAR_REF;
+    j->typ = Token::EXPR_VAR_REF;
     return (j);
 }
 
@@ -315,7 +315,7 @@ int SnobolContext::strbin(Node *string)
     p    = s->p1;
     q    = s->p2;
     sign = 1;
-    if (char_class(p->ch) == CharClass::MINUS) { /* minus */
+    if (char_class(p->ch) == CharClass::MINUS) { // minus
         sign = -1;
         if (p == q)
             return (0);
@@ -483,12 +483,12 @@ void SnobolContext::dump1(Node *base)
 
     while (base) {
         b = base->p1;
-        c = binstr(b->typ);
+        c = binstr(static_cast<int>(b->typ));
         d = cstr_to_node("  ");
         e = dcat(c, d);
         sysput(cat(e, b->p1));
         delete_string(e);
-        if (b->typ == EXPR_VALUE) {
+        if (b->typ == Token::EXPR_VALUE) {
             c = cstr_to_node("   ");
             sysput(cat(c, b->p2));
             delete_string(c);

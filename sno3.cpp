@@ -31,13 +31,13 @@ eb1:
 eb2:
     d++;
     class_val = SnobolContext::char_class(a->ch);
-    if (class_val == CharClass::RPAREN) { /* rp - right parenthesis */
+    if (class_val == CharClass::RPAREN) { // rp - right parenthesis
         if (b == 0)
             goto bad;
         b--;
         goto eb3;
     }
-    if (class_val == CharClass::LPAREN) { /* lp - left parenthesis */
+    if (class_val == CharClass::LPAREN) { // lp - left parenthesis
         b++;
         goto eb1;
     }
@@ -86,7 +86,8 @@ Node *SnobolContext::search(Node *arg, Node *r)
 {
     Node *list, *back, *str, *etc, *next, *last, *base, *e;
     Node *a, *b, *var;
-    token_type_t c;
+    Token c;
+    Token d_token;
     int d;
     intptr_t len;
 
@@ -99,7 +100,7 @@ Node *SnobolContext::search(Node *arg, Node *r)
 badvanc:
     // Build pattern matching state from pattern components
     a = a->p1;
-    if (a->typ == TOKEN_END) {
+    if (a->typ == Token::TOKEN_END) {
         // End of pattern - initialize search
         list->p1 = nullptr;
         if (rfail == 1) {
@@ -125,7 +126,7 @@ badv1:
     b               = a->p2;
     c               = a->typ;
     list->typ       = c;
-    if (c < STMT_ASSIGN) {
+    if (static_cast<int>(c) < static_cast<int>(Token::STMT_ASSIGN)) {
         // Simple pattern component - evaluate and store
         back->p2 = eval(b, 1);
         goto badvanc;
@@ -168,7 +169,7 @@ retard:
     if (etc->p2) // Has length constraint - need to retry
         goto retard;
     // Try to extend current match
-    if (var->typ == TOKEN_UNANCHORED) { // Balanced pattern (value 1)
+    if (var->typ == Token::TOKEN_UNANCHORED) { // Balanced pattern (value 1)
         if (str->bextend(last) == 0)
             goto retard;
         goto adv0;
@@ -211,10 +212,10 @@ advanc:
     }
     list = a;
 adv1:
-    back = list->p2;
-    var  = back->p2;
-    d    = list->typ;
-    if (d < 2) {
+    back    = list->p2;
+    var     = back->p2;
+    d_token = list->typ;
+    if (static_cast<int>(d_token) < 2) {
         // Simple pattern - match string directly
         if (var == nullptr)
             goto advanc;
@@ -239,8 +240,8 @@ adv1:
     etc     = var->p2;
     str->p1 = next;
     str->p2 = nullptr;
-    len     = (intptr_t)etc->p2;        // Length constraint
-    if (var->typ == TOKEN_UNANCHORED) { // Balanced pattern (value 1)
+    len     = (intptr_t)etc->p2;               // Length constraint
+    if (var->typ == Token::TOKEN_UNANCHORED) { // Balanced pattern (value 1)
         d = str->bextend(last);
         if (d == 0)
             goto retard;
@@ -285,7 +286,7 @@ fadv:
 f1:
     back = list->p2;
     var  = back->p2;
-    if (list->typ < TOKEN_ALTERNATION) {
+    if (static_cast<int>(list->typ) < static_cast<int>(Token::TOKEN_ALTERNATION)) {
         // Simple pattern - no assignment needed
         delete_string(var);
         goto fadv;

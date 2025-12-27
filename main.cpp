@@ -27,20 +27,20 @@ int main(int argc, char *argv[])
     SnobolContext ctx(*input_stream, std::cout);
 
     // Initialize built-in symbols
-    ctx.lookf     = ctx.init("f", EXPR_VAR_REF);
-    ctx.looks     = ctx.init("s", EXPR_VAR_REF);
-    ctx.lookend   = ctx.init("end", EXPR_VAR_REF);
-    ctx.lookstart = ctx.init("start", EXPR_VAR_REF);
-    ctx.lookdef   = ctx.init("define", EXPR_VAR_REF);
-    ctx.lookret   = ctx.init("return", EXPR_VAR_REF);
-    ctx.lookfret  = ctx.init("freturn", EXPR_VAR_REF);
-    ctx.init("syspit", EXPR_SYSPIT);
-    ctx.init("syspot", EXPR_SYSPOT);
+    ctx.lookf     = ctx.init("f", Token::EXPR_VAR_REF);
+    ctx.looks     = ctx.init("s", Token::EXPR_VAR_REF);
+    ctx.lookend   = ctx.init("end", Token::EXPR_VAR_REF);
+    ctx.lookstart = ctx.init("start", Token::EXPR_VAR_REF);
+    ctx.lookdef   = ctx.init("define", Token::EXPR_VAR_REF);
+    ctx.lookret   = ctx.init("return", Token::EXPR_VAR_REF);
+    ctx.lookfret  = ctx.init("freturn", Token::EXPR_VAR_REF);
+    ctx.init("syspit", Token::EXPR_SYSPIT);
+    ctx.init("syspot", Token::EXPR_SYSPOT);
 
     // Compile all statements until "end" is encountered
     // Link statements together in a list
     a = c = ctx.compile();
-    while (ctx.lookend->typ != EXPR_LABEL) {
+    while (ctx.lookend->typ != Token::EXPR_LABEL) {
         a->p1 = b = ctx.compile();
         a         = b;
     }
@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
     a->p1     = nullptr; // Terminate statement list
 
     // Start execution from "start" label if defined, otherwise from first statement
-    if (ctx.lookstart->typ == EXPR_LABEL)
+    if (ctx.lookstart->typ == Token::EXPR_LABEL)
         c = ctx.lookstart->p2;
     while ((c = ctx.execute(c)) != nullptr)
         ;

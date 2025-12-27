@@ -31,7 +31,7 @@ enum class CharClass {
 // Uses EXPR_* prefix for runtime/evaluation operations
 // Uses STMT_* prefix for statement types
 //
-typedef enum {
+enum class Token {
     // Value 0: End marker / Variable reference / Simple statement
     TOKEN_END    = 0,
     EXPR_VAR_REF = 0,
@@ -91,7 +91,7 @@ typedef enum {
 
     // Value 16: Left parenthesis
     TOKEN_LPAREN = 16
-} token_type_t;
+};
 
 //
 // Node structure for Snobol III interpreter
@@ -99,7 +99,7 @@ typedef enum {
 struct Node {
     Node *p1;
     Node *p2;
-    token_type_t typ;
+    Token typ;
     char ch;
 
     int equal(const Node *other) const;
@@ -148,7 +148,7 @@ public:
 
     // Methods from sno1.c
     void mes(const char *s);
-    Node *init(const char *s, token_type_t t);
+    Node *init(const char *s, Token t);
     Node *syspit();
     void syspot(Node *string);
     Node *cstr_to_node(const char *s);
@@ -177,7 +177,7 @@ public:
     Node *nscomp();
     Node *push(Node *stack);
     Node *pop(Node *stack);
-    Node *expr(Node *start, token_type_t eof, Node *e);
+    Node *expr(Node *start, Token eof, Node *e);
     Node *match(Node *start, Node *m);
     Node *compile();
 
@@ -187,7 +187,7 @@ public:
     // Methods from sno4.c
     Node *eval_operand(Node *ptr);
     Node *eval(Node *e, int t);
-    Node *doop(int op, Node *arg1, Node *arg2);
+    Node *doop(Token op, Node *arg1, Node *arg2);
     Node *execute(Node *e);
     void assign(Node *adr, Node *val);
 

@@ -11,21 +11,21 @@ Node *SnobolContext::eval_operand(Node *ptr)
 
     p = ptr;
     a = p->p1;
-    if (p->typ == EXPR_VAR_REF) {
+    if (p->typ == Token::EXPR_VAR_REF) {
         // Variable reference - get its value
         switch (a->typ) {
-        case EXPR_VAR_REF:       // Uninitialized variable
-            a->typ = EXPR_VALUE; // Initialize to empty string
-            /* fall through */
-        case EXPR_VALUE: // String variable
+        case Token::EXPR_VAR_REF:       // Uninitialized variable
+            a->typ = Token::EXPR_VALUE; // Initialize to empty string
+            // fall through
+        case Token::EXPR_VALUE: // String variable
             goto l1;
-        case EXPR_SYSPIT: // System function syspit (input)
+        case Token::EXPR_SYSPIT: // System function syspit (input)
             flush();
             return (syspit());
-        case EXPR_FUNCTION: // Function - get function body
+        case Token::EXPR_FUNCTION: // Function - get function body
             a = a->p2->p1;
             goto l1;
-        case EXPR_SPECIAL: // Special value - free space count
+        case Token::EXPR_SPECIAL: // Special value - free space count
             return (binstr(nfree()));
         default:
             writes("attempt to take an illegal value");
@@ -46,7 +46,7 @@ Node *SnobolContext::eval(Node *e, int t)
 {
     Node *list, *a3, *a4, *a3base;
     Node *a1, *stack;
-    int op;
+    Token op;
     Node *a2;
 
     // Postfix expression evaluation using a stack
@@ -61,14 +61,14 @@ l1:
     op = list->typ;
     switch (op) {
     default:
-    case TOKEN_END: // End of expression
+    case Token::TOKEN_END: // End of expression
         if (t == 1) {
             // Return value mode
             a1 = eval_operand(stack);
             goto e1;
         }
         // Assignment mode - get variable reference
-        if (stack->typ == EXPR_VALUE)
+        if (stack->typ == Token::EXPR_VALUE)
             writes("attempt to store in a value");
         a1 = stack->p1;
     e1:
@@ -76,17 +76,17 @@ l1:
         if (stack)
             writes("phase error");
         return (a1);
-    case TOKEN_DOLLAR: // Pattern immediate value ($)
+    case Token::TOKEN_DOLLAR: // Pattern immediate value ($)
         a1        = eval_operand(stack);
         stack->p1 = look(a1); // Look up variable
         delete_string(a1);
-        stack->typ = EXPR_VAR_REF; // Mark as variable reference
+        stack->typ = Token::EXPR_VAR_REF; // Mark as variable reference
         goto advanc;
-    case EXPR_CALL: // Function call
-        if (stack->typ)
+    case Token::EXPR_CALL: // Function call
+        if (stack->typ != Token::TOKEN_END)
             writes("illegal function");
         a1 = stack->p1;
-        if (a1->typ != EXPR_FUNCTION)
+        if (a1->typ != Token::EXPR_FUNCTION)
             writes("illegal function");
         a1 = a1->p2;
         {
@@ -109,13 +109,13 @@ l1:
             a3->p1 = a4 = alloc();
             a3          = a4;
             a3->p2      = eval_operand(a1);  // Save old parameter value
-            assign(a1->p1, eval(a2->p2, 1)); /* recursive */
+            assign(a1->p1, eval(a2->p2, 1)); // recursive
             a1 = a1->p2;
             a2 = a2->p1;
             goto f1;
         f3:
             // Execute function body
-            op_ptr = execute(op_ptr); /* recursive */
+            op_ptr = execute(op_ptr); // recursive
             if (op_ptr)
                 goto f3;
             // Restore parameter values
@@ -124,7 +124,7 @@ l1:
                 Node *op_ptr2 = a1->p1;
                 a3            = a3base;
                 stack->p1     = op_ptr2->p2; // Get return value
-                stack->typ    = EXPR_VALUE;
+                stack->typ    = Token::EXPR_VALUE;
                 op_ptr2->p2   = a3->p2; // Restore return address
             f4:
                 // Restore each parameter
@@ -138,11 +138,11 @@ l1:
                 goto f4;
             }
         }
-    case TOKEN_DIV:        // Division
-    case TOKEN_MULT:       // Multiplication
-    case TOKEN_MINUS:      // Subtraction
-    case TOKEN_PLUS:       // Addition
-    case TOKEN_WHITESPACE: // Concatenation
+    case Token::TOKEN_DIV:        // Division
+    case Token::TOKEN_MULT:       // Multiplication
+    case Token::TOKEN_MINUS:      // Subtraction
+    case Token::TOKEN_PLUS:       // Addition
+    case Token::TOKEN_WHITESPACE: // Concatenation
         // Binary operator - evaluate both operands
         a1    = eval_operand(stack);
         stack = pop(stack);
@@ -151,22 +151,22 @@ l1:
         delete_string(a1);
         delete_string(a2);
         stack->p1  = a3;
-        stack->typ = EXPR_VALUE;
+        stack->typ = Token::EXPR_VALUE;
         goto advanc;
-    case TOKEN_STRING: // String literal
+    case Token::TOKEN_STRING: // String literal
         a1 = copy(list->p2);
         {
             stack      = push(stack);
             stack->p1  = a1;
-            stack->typ = EXPR_VALUE; // Mark as value
+            stack->typ = Token::EXPR_VALUE; // Mark as value
             goto advanc;
         }
-    case TOKEN_VARIABLE: // Variable reference
+    case Token::TOKEN_VARIABLE: // Variable reference
         a1 = list->p2;
         {
             stack      = push(stack);
             stack->p1  = a1;
-            stack->typ = EXPR_VAR_REF; // Mark as variable reference
+            stack->typ = Token::EXPR_VAR_REF; // Mark as variable reference
             goto advanc;
         }
         goto advanc;
@@ -178,21 +178,22 @@ l1:
 // Execute a binary operator on two string operands.
 // Converts strings to numbers for arithmetic operations.
 //
-Node *SnobolContext::doop(int op, Node *arg1, Node *arg2)
+Node *SnobolContext::doop(Token op, Node *arg1, Node *arg2)
 {
     switch (op) {
-    case TOKEN_DIV: // Division
+    case Token::TOKEN_DIV: // Division
         return (divide(arg1, arg2));
-    case TOKEN_MULT: // Multiplication
+    case Token::TOKEN_MULT: // Multiplication
         return (mult(arg1, arg2));
-    case TOKEN_PLUS: // Addition
+    case Token::TOKEN_PLUS: // Addition
         return (add(arg1, arg2));
-    case TOKEN_MINUS: // Subtraction
+    case Token::TOKEN_MINUS: // Subtraction
         return (sub(arg1, arg2));
-    case TOKEN_WHITESPACE: // Concatenation
+    case Token::TOKEN_WHITESPACE: // Concatenation
         return (cat(arg1, arg2));
+    default:
+        return (nullptr);
     }
-    return (nullptr);
 }
 
 //
@@ -208,11 +209,11 @@ Node *SnobolContext::execute(Node *e)
     r  = e->p2; // Statement data
     lc = e->ch; // Line number
     switch (e->typ) {
-    case STMT_SIMPLE: /*  r g - Simple statement: evaluate expression and goto */
+    case Token::STMT_SIMPLE: // r g - Simple statement: evaluate expression and goto
         a = r->p1;
         delete_string(eval(r->p2, 1));
         goto xsuc;
-    case STMT_MATCH:        /*  r m g - Pattern matching: match pattern against subject */
+    case Token::STMT_MATCH: // r m g - Pattern matching: match pattern against subject
         m = r->p1;          // Match pattern
         a = m->p1;          // Goto structure
         b = eval(r->p2, 1); // Evaluate subject
@@ -222,13 +223,13 @@ Node *SnobolContext::execute(Node *e)
             goto xfail;
         free_node(c);
         goto xsuc;
-    case STMT_ASSIGN:               /*  r a g - Assignment: assign value to variable */
+    case Token::STMT_ASSIGN:        // r a g - Assignment: assign value to variable
         ca = r->p1;                 // Assignment structure
         a  = ca->p1;                // Goto structure
         b  = eval(r->p2, 0);        // Get variable reference
         assign(b, eval(ca->p2, 1)); // Assign value
         goto xsuc;
-    case TOKEN_EQUALS:         /*  r m a g - Pattern matching with assignment (value 3) */
+    case Token::TOKEN_EQUALS:  // r m a g - Pattern matching with assignment (value 3)
         m  = r->p1;            // Match pattern
         ca = m->p1;            // Assignment structure
         a  = ca->p1;           // Goto structure
@@ -287,7 +288,7 @@ xboth:
         rfail = 1;
         return (nullptr);
     }
-    if (b->typ != EXPR_LABEL) // Should be a label
+    if (b->typ != Token::EXPR_LABEL) // Should be a label
         writes("attempt to transfer to non-label");
     return (b->p2); // Return label's statement
 }
@@ -311,17 +312,17 @@ void SnobolContext::assign(Node *adr, Node *val)
     default:
         writes("attempt to make an illegal assignment");
         return;
-    case EXPR_VAR_REF: // Uninitialized variable
-        addr->typ = EXPR_VALUE;
-        /* fall through */
-    case EXPR_VALUE: // String variable
+    case Token::EXPR_VAR_REF: // Uninitialized variable
+        addr->typ = Token::EXPR_VALUE;
+        // fall through
+    case Token::EXPR_VALUE: // String variable
         delete_string(addr->p2);
         addr->p2 = value;
         return;
-    case EXPR_SYSPOT: // Output (syspot)
+    case Token::EXPR_SYSPOT: // Output (syspot)
         sysput(value);
         return;
-    case EXPR_FUNCTION: // Function parameter
+    case Token::EXPR_FUNCTION: // Function parameter
         a = addr->p2->p1;
         delete_string(a->p2);
         a->p2 = value;

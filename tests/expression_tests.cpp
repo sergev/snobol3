@@ -25,8 +25,9 @@ protected:
 
 TEST_F(ExpressionTest, StringLiteral_SingleQuote)
 {
-    std::string program = R"(start    syspot = 'hello'
-end return
+    std::string program = R"(
+start   syspot = 'hello'
+end     return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -36,8 +37,9 @@ end return
 
 TEST_F(ExpressionTest, StringLiteral_DoubleQuote)
 {
-    std::string program = R"(start    syspot = "world"
-end return
+    std::string program = R"(
+start   syspot = "world"
+end     return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -47,8 +49,9 @@ end return
 
 TEST_F(ExpressionTest, StringLiteral_EmptyString)
 {
-    std::string program = R"(start    syspot = ""
-end return
+    std::string program = R"(
+start   syspot = ""
+end     return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -58,9 +61,10 @@ end return
 
 TEST_F(ExpressionTest, VariableReference)
 {
-    std::string program = R"(start    x = "test"
-    syspot = x
-end return
+    std::string program = R"(
+start   x = "test"
+        syspot = x
+end     return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -70,8 +74,9 @@ end return
 
 TEST_F(ExpressionTest, StringConcatenation_Whitespace)
 {
-    std::string program = R"(start    syspot = "hello" "world"
-end return
+    std::string program = R"(
+start   syspot = "hello" "world"
+end     return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -81,8 +86,9 @@ end return
 
 TEST_F(ExpressionTest, StringConcatenation_Multiple)
 {
-    std::string program = R"(start    syspot = "a" "b" "c"
-end return
+    std::string program = R"(
+start   syspot = "a" "b" "c"
+end     return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -92,11 +98,12 @@ end return
 
 TEST_F(ExpressionTest, Arithmetic_Addition)
 {
-    std::string program = R"(start    x = "10"
-    y = "20"
-    z = x + y
-    syspot = z
-end return
+    std::string program = R"(
+start   x = "10"
+        y = "20"
+        z = x + y
+        syspot = z
+end     return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -106,11 +113,12 @@ end return
 
 TEST_F(ExpressionTest, Arithmetic_Subtraction)
 {
-    std::string program = R"(start    x = "20"
-    y = "10"
-    z = x - y
-    syspot = z
-end return
+    std::string program = R"(
+start   x = "20"
+        y = "10"
+        z = x - y
+        syspot = z
+end     return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -120,11 +128,12 @@ end return
 
 TEST_F(ExpressionTest, Arithmetic_Multiplication)
 {
-    std::string program = R"(start    x = "6"
-    y = "7"
-    z = x * y
-    syspot = z
-end return
+    std::string program = R"(
+start   x = "6"
+        y = "7"
+        z = x * y
+        syspot = z
+end     return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -134,11 +143,12 @@ end return
 
 TEST_F(ExpressionTest, Arithmetic_Division)
 {
-    std::string program = R"(start    x = "20"
-    y = "4"
-    z = x / y
-    syspot = z
-end return
+    std::string program = R"(
+start   x = "20"
+        y = "4"
+        z = x / y
+        syspot = z
+end     return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -148,12 +158,13 @@ end return
 
 TEST_F(ExpressionTest, OperatorPrecedence_MultiplicationBeforeAddition)
 {
-    std::string program = R"(start    x = "2"
-    y = "3"
-    z = "4"
-    result = x + y * z
-    syspot = result
-end return
+    std::string program = R"(
+start   x = "2"
+        y = "3"
+        z = "4"
+        result = x + y * z
+        syspot = result
+end     return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -163,12 +174,13 @@ end return
 
 TEST_F(ExpressionTest, OperatorPrecedence_DivisionBeforeSubtraction)
 {
-    std::string program = R"(start    x = "20"
-    y = "4"
-    z = "2"
-    result = x - y / z
-    syspot = result
-end return
+    std::string program = R"(
+start   x = "20"
+        y = "4"
+        z = "2"
+        result = x - y / z
+        syspot = result
+end     return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -178,12 +190,13 @@ end return
 
 TEST_F(ExpressionTest, ParenthesizedExpression)
 {
-    std::string program = R"(start    x = "2"
-    y = "3"
-    z = "4"
-    result = (x + y) * z
-    syspot = result
-end return
+    std::string program = R"(
+start   x = "2"
+        y = "3"
+        z = "4"
+        result = (x + y) * z
+        syspot = result
+end     return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -193,11 +206,12 @@ end return
 
 TEST_F(ExpressionTest, MixedArithmeticAndString)
 {
-    std::string program = R"(start    x = "10"
-    y = "5"
-    z = x + y
-    syspot = "result: " z
-end return
+    std::string program = R"(
+start   x = "10"
+        y = "5"
+        z = x + y
+        syspot = "result: " z
+end     return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -207,11 +221,12 @@ end return
 
 TEST_F(ExpressionTest, NegativeNumbers)
 {
-    std::string program = R"(start    x = "-10"
-    y = "5"
-    z = x + y
-    syspot = z
-end return
+    std::string program = R"(
+start   x = "-10"
+        y = "5"
+        z = x + y
+        syspot = z
+end     return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -225,13 +240,14 @@ end return
 
 TEST_F(ExpressionTest, NestedArithmetic)
 {
-    std::string program = R"(start    a = "2"
-    b = "3"
-    c = "4"
-    d = "5"
-    result = a + b * c - d
-    syspot = result
-end return
+    std::string program = R"(
+start   a = "2"
+        b = "3"
+        c = "4"
+        d = "5"
+        result = a + b * c - d
+        syspot = result
+end     return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -241,11 +257,12 @@ end return
 
 TEST_F(ExpressionTest, ComplexStringConcatenation)
 {
-    std::string program = R"(start    a = "hello"
-    b = " "
-    c = "world"
-    syspot = a b c "!"
-end return
+    std::string program = R"(
+start   a = "hello"
+        b = " "
+        c = "world"
+        syspot = a b c "!"
+end     return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -255,26 +272,27 @@ end return
 
 TEST_F(ExpressionTest, PatternImmediate)
 {
-    std::string program = R"(start    x = "test"
-    y = $x
-    syspot = y
-end return
+    std::string program = R"(
+start   x = "test"
+        test = "hello"
+        y = $x
+        syspot = y
+end     return
 )";
-
     SnobolTestResult result = run_snobol_program(program);
-    // Pattern immediate returns a reference, but in assignment context it should work
-    // This test may need adjustment based on actual behavior
-    EXPECT_TRUE(result.success || !result.stderr_output.empty());
+    EXPECT_TRUE(result.success) << result.stderr_output;
+    EXPECT_EQ(result.stdout_output, "hello\n");
 }
 
 TEST_F(ExpressionTest, ExpressionEvaluationOrder)
 {
-    std::string program = R"(start    x = "1"
-    y = "2"
-    z = "3"
-    result = x + y * z
-    syspot = result
-end return
+    std::string program = R"(
+start   x = "1"
+        y = "2"
+        z = "3"
+        result = x + y * z
+        syspot = result
+end     return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -284,11 +302,12 @@ end return
 
 TEST_F(ExpressionTest, LargeNumbers)
 {
-    std::string program = R"(start    x = "1000"
-    y = "2000"
-    z = x + y
-    syspot = z
-end return
+    std::string program = R"(
+start   x = "1000"
+        y = "2000"
+        z = x + y
+        syspot = z
+end     return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
@@ -298,13 +317,14 @@ end return
 
 TEST_F(ExpressionTest, ZeroOperations)
 {
-    std::string program = R"(start    x = "0"
-    y = "10"
-    z1 = x + y
-    z2 = x * y
-    syspot = z1
-    syspot = z2
-end return
+    std::string program = R"(
+start   x = "0"
+        y = "10"
+        z1 = x + y
+        z2 = x * y
+        syspot = z1
+        syspot = z2
+end     return
 )";
 
     SnobolTestResult result = run_snobol_program(program);

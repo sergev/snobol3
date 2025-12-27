@@ -72,9 +72,10 @@ end         syspot = "done"
 TEST_F(PatternTest, PatternImmediate)
 {
     std::string program = R"(
-start       str = "hello"
+start       str = "hello world"
             pattern = "hello"
-            str $pattern        /s(found)f(notfound)
+            ref = "pattern"
+            str $ref            /s(found)f(notfound)
 found       syspot = "found"    /(end)
 notfound    syspot = "not found"
 end         syspot = "done"
@@ -137,7 +138,7 @@ TEST_F(PatternTest, SimpleAlternation_FirstMatch)
 {
     std::string program = R"(
 start       str = "apple"
-            str *"apple"*"banana"*      /s(found)f(notfound)
+            str *"apple"/"banana"*      /s(found)f(notfound)
 found       syspot = "found"            /(end)
 notfound    syspot = "not found"
 end         syspot = "done"
@@ -152,7 +153,7 @@ TEST_F(PatternTest, SimpleAlternation_SecondMatch)
 {
     std::string program = R"(
 start       str = "banana"
-            str *"apple"*"banana"*      /s(found)f(notfound)
+            str *"apple"/"banana"*      /s(found)f(notfound)
 found       syspot = "found"            /(end)
 notfound    syspot = "not found"
 end         syspot = "done"
@@ -167,7 +168,7 @@ TEST_F(PatternTest, SimpleAlternation_NoMatch)
 {
     std::string program = R"(
 start       str = "cherry"
-            str *"apple"*"banana"*      /s(found)f(notfound)
+            str *"apple"/"banana"*      /s(found)f(notfound)
 found       syspot = "found"            /(end)
 notfound    syspot = "not found"
 end         syspot = "done"
@@ -184,7 +185,7 @@ TEST_F(PatternTest, AlternationWithVariables)
 start       str = "test"
             p1 = "test"
             p2 = "other"
-            str *p1*p2*                 /s(found)f(notfound)
+            str *p1/p2*                 /s(found)f(notfound)
 found       syspot = "found"            /(end)
 notfound    syspot = "not found"
 end         syspot = "done"
@@ -203,7 +204,7 @@ TEST_F(PatternTest, BalancedAlternation)
 {
     std::string program = R"(
 start       str = "hello"
-            str *("hello"*"world")*     /s(found)f(notfound)
+            str *("hello"/"world")*     /s(found)f(notfound)
 found       syspot = "found"            /(end)
 notfound    syspot = "not found"
 end         syspot = "done"

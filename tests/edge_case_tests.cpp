@@ -373,12 +373,13 @@ TEST_F(EdgeCaseTest, PatternImmediateInExpression)
 {
     std::string program = R"(
 start   x = "test"
+        test = "hello"
         y = $x
         syspot = y
 end     return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
-    // Pattern immediate behavior may vary
-    EXPECT_TRUE(result.success || !result.stderr_output.empty());
+    EXPECT_TRUE(result.success) << result.stderr_output;
+    EXPECT_EQ(result.stdout_output, "hello\n");
 }

@@ -122,10 +122,10 @@ l1:
             a1 = stack->p1->p2;
             {
                 Node *op_ptr2 = a1->p1;
-                a3              = a3base;
-                stack->p1       = op_ptr2->p2; // Get return value
-                stack->typ      = EXPR_VALUE;
-                op_ptr2->p2     = a3->p2; // Restore return address
+                a3            = a3base;
+                stack->p1     = op_ptr2->p2; // Get return value
+                stack->typ    = EXPR_VALUE;
+                op_ptr2->p2   = a3->p2; // Restore return address
             f4:
                 // Restore each parameter
                 a4 = a3->p1;

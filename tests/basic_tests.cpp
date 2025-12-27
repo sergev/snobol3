@@ -56,34 +56,34 @@ protected:
 
 TEST(CharacterClassificationTest, Operators)
 {
-    EXPECT_EQ(SnobolContext::char_class('+'), CHAR_CLASS_PLUS);     // Plus operator
-    EXPECT_EQ(SnobolContext::char_class('-'), CHAR_CLASS_MINUS);    // Minus operator
-    EXPECT_EQ(SnobolContext::char_class('*'), CHAR_CLASS_ASTERISK); // Asterisk operator
-    EXPECT_EQ(SnobolContext::char_class('/'), CHAR_CLASS_SLASH);    // Division operator
-    EXPECT_EQ(SnobolContext::char_class('='), CHAR_CLASS_EQUALS);   // Equals sign
+    EXPECT_EQ(SnobolContext::char_class('+'), CharClass::PLUS);     // Plus operator
+    EXPECT_EQ(SnobolContext::char_class('-'), CharClass::MINUS);    // Minus operator
+    EXPECT_EQ(SnobolContext::char_class('*'), CharClass::ASTERISK); // Asterisk operator
+    EXPECT_EQ(SnobolContext::char_class('/'), CharClass::SLASH);    // Division operator
+    EXPECT_EQ(SnobolContext::char_class('='), CharClass::EQUALS);   // Equals sign
 }
 
 TEST(CharacterClassificationTest, Delimiters)
 {
-    EXPECT_EQ(SnobolContext::char_class('('), CHAR_CLASS_LPAREN);        // Left parenthesis
-    EXPECT_EQ(SnobolContext::char_class(')'), CHAR_CLASS_RPAREN);        // Right parenthesis
-    EXPECT_EQ(SnobolContext::char_class('\''), CHAR_CLASS_STRING_DELIM); // Single quote
-    EXPECT_EQ(SnobolContext::char_class('"'), CHAR_CLASS_STRING_DELIM);  // Double quote
-    EXPECT_EQ(SnobolContext::char_class(','), CHAR_CLASS_COMMA);         // Comma
-    EXPECT_EQ(SnobolContext::char_class('$'), CHAR_CLASS_DOLLAR);        // Dollar sign
+    EXPECT_EQ(SnobolContext::char_class('('), CharClass::LPAREN);        // Left parenthesis
+    EXPECT_EQ(SnobolContext::char_class(')'), CharClass::RPAREN);        // Right parenthesis
+    EXPECT_EQ(SnobolContext::char_class('\''), CharClass::STRING_DELIM); // Single quote
+    EXPECT_EQ(SnobolContext::char_class('"'), CharClass::STRING_DELIM);  // Double quote
+    EXPECT_EQ(SnobolContext::char_class(','), CharClass::COMMA);         // Comma
+    EXPECT_EQ(SnobolContext::char_class('$'), CharClass::DOLLAR);        // Dollar sign
 }
 
 TEST(CharacterClassificationTest, Whitespace)
 {
-    EXPECT_EQ(SnobolContext::char_class(' '), CHAR_CLASS_WHITESPACE);  // Space
-    EXPECT_EQ(SnobolContext::char_class('\t'), CHAR_CLASS_WHITESPACE); // Tab
+    EXPECT_EQ(SnobolContext::char_class(' '), CharClass::WHITESPACE);  // Space
+    EXPECT_EQ(SnobolContext::char_class('\t'), CharClass::WHITESPACE); // Tab
 }
 
 TEST(CharacterClassificationTest, RegularCharacters)
 {
-    EXPECT_EQ(SnobolContext::char_class('a'), CHAR_CLASS_OTHER); // Letter
-    EXPECT_EQ(SnobolContext::char_class('0'), CHAR_CLASS_OTHER); // Digit
-    EXPECT_EQ(SnobolContext::char_class('@'), CHAR_CLASS_OTHER); // Symbol
+    EXPECT_EQ(SnobolContext::char_class('a'), CharClass::OTHER); // Letter
+    EXPECT_EQ(SnobolContext::char_class('0'), CharClass::OTHER); // Digit
+    EXPECT_EQ(SnobolContext::char_class('@'), CharClass::OTHER); // Symbol
 }
 
 // ============================================================================
@@ -279,32 +279,32 @@ TEST_F(SnobolTest, Dcat_DestructiveConcatenation)
 
 TEST_F(SnobolTest, Strbin_PositiveNumber)
 {
-    Node *str = ctx.cstr_to_node("123");
-    int result  = ctx.strbin(str);
+    Node *str  = ctx.cstr_to_node("123");
+    int result = ctx.strbin(str);
     EXPECT_EQ(result, 123);
     ctx.delete_string(str);
 }
 
 TEST_F(SnobolTest, Strbin_NegativeNumber)
 {
-    Node *str = ctx.cstr_to_node("-456");
-    int result  = ctx.strbin(str);
+    Node *str  = ctx.cstr_to_node("-456");
+    int result = ctx.strbin(str);
     EXPECT_EQ(result, -456);
     ctx.delete_string(str);
 }
 
 TEST_F(SnobolTest, Strbin_Zero)
 {
-    Node *str = ctx.cstr_to_node("0");
-    int result  = ctx.strbin(str);
+    Node *str  = ctx.cstr_to_node("0");
+    int result = ctx.strbin(str);
     EXPECT_EQ(result, 0);
     ctx.delete_string(str);
 }
 
 TEST_F(SnobolTest, Strbin_LargeNumber)
 {
-    Node *str = ctx.cstr_to_node("999999");
-    int result  = ctx.strbin(str);
+    Node *str  = ctx.cstr_to_node("999999");
+    int result = ctx.strbin(str);
     EXPECT_EQ(result, 999999);
     ctx.delete_string(str);
 }
@@ -351,7 +351,7 @@ TEST_F(SnobolTest, RoundTripConversion)
 {
     int values[] = { 0, 1, -1, 123, -456, 9999, -9999 };
     for (int val : values) {
-        Node *str   = ctx.binstr(val);
+        Node *str     = ctx.binstr(val);
         int converted = ctx.strbin(str);
         EXPECT_EQ(converted, val) << "Round-trip failed for value " << val;
         ctx.delete_string(str);

@@ -19,15 +19,15 @@ Node *SnobolContext::compon()
         return (a);
     }
     switch (char_class(schar->ch)) {
-    case CHAR_CLASS_RPAREN: // Right parenthesis
+    case CharClass::RPAREN: // Right parenthesis
         schar->typ = TOKEN_RPAREN;
         return (schar);
 
-    case CHAR_CLASS_LPAREN: // Left parenthesis
+    case CharClass::LPAREN: // Left parenthesis
         schar->typ = TOKEN_LPAREN;
         return (schar);
 
-    case CHAR_CLASS_WHITESPACE: // Whitespace
+    case CharClass::WHITESPACE: // Whitespace
         a = schar;
         for (;;) {
             schar = getc_char();
@@ -35,7 +35,7 @@ Node *SnobolContext::compon()
                 a->typ = TOKEN_END;
                 return (a);
             }
-            if (char_class(schar->ch) != CHAR_CLASS_WHITESPACE)
+            if (char_class(schar->ch) != CharClass::WHITESPACE)
                 break;
             free_node(schar);
         }
@@ -43,39 +43,39 @@ Node *SnobolContext::compon()
         a->typ      = TOKEN_WHITESPACE;
         return (a);
 
-    case CHAR_CLASS_PLUS: // Plus operator
+    case CharClass::PLUS: // Plus operator
         schar->typ = TOKEN_PLUS;
         return (schar);
 
-    case CHAR_CLASS_MINUS: // Minus operator
+    case CharClass::MINUS: // Minus operator
         schar->typ = TOKEN_MINUS;
         return (schar);
 
-    case CHAR_CLASS_ASTERISK: // Asterisk - could be multiplication or unanchored search
+    case CharClass::ASTERISK: // Asterisk - could be multiplication or unanchored search
         a     = schar;
         schar = getc_char();
-        if (char_class(schar->ch) == CHAR_CLASS_WHITESPACE)
+        if (char_class(schar->ch) == CharClass::WHITESPACE)
             a->typ = TOKEN_MULT; // Multiplication (followed by space)
         else
             a->typ = TOKEN_UNANCHORED; // Unanchored search
         compon_next = 1;
         return (a);
 
-    case CHAR_CLASS_SLASH: // Division - could be pattern alternation
+    case CharClass::SLASH: // Division - could be pattern alternation
         a     = schar;
         schar = getc_char();
-        if (char_class(schar->ch) == CHAR_CLASS_WHITESPACE)
+        if (char_class(schar->ch) == CharClass::WHITESPACE)
             a->typ = TOKEN_DIV; // Division (followed by space)
         else
             a->typ = TOKEN_ALTERNATION; // Pattern alternation
         compon_next = 1;
         return (a);
 
-    case CHAR_CLASS_DOLLAR: // Dollar sign (pattern immediate value)
+    case CharClass::DOLLAR: // Dollar sign (pattern immediate value)
         schar->typ = TOKEN_DOLLAR;
         return (schar);
 
-    case CHAR_CLASS_STRING_DELIM: // String literal delimiter
+    case CharClass::STRING_DELIM: // String literal delimiter
         c = schar->ch;
         a = getc_char();
         if (a == nullptr)
@@ -111,22 +111,22 @@ Node *SnobolContext::compon()
         writes("illegal literal string");
         return nullptr; // Never reached, but needed for compilation
 
-    case CHAR_CLASS_EQUALS: // Equals sign
+    case CharClass::EQUALS: // Equals sign
         schar->typ = TOKEN_EQUALS;
         return (schar);
 
-    case CHAR_CLASS_COMMA: // Comma
+    case CharClass::COMMA: // Comma
         schar->typ = TOKEN_COMMA;
         return (schar);
 
-    default: // CHAR_CLASS_OTHER - fall through to identifier/keyword handling
+    default: // CharClass::OTHER - fall through to identifier/keyword handling
         break;
     }
     // Identifier or keyword - collect characters until delimiter
     b     = alloc();
     b->p1 = a = schar;
     schar     = getc_char();
-    while (schar != nullptr && char_class(schar->ch) == CHAR_CLASS_OTHER) {
+    while (schar != nullptr && char_class(schar->ch) == CharClass::OTHER) {
         a->p1 = schar;
         a     = schar;
         schar = getc_char();
@@ -612,10 +612,10 @@ def:
     l->typ = EXPR_FUNCTION; /*type function;*/
     {
         Node *a_ptr = r;
-        l->p2         = a_ptr;
-        r             = nscomp();
-        l             = r;
-        a_ptr->p1     = l;
+        l->p2       = a_ptr;
+        r           = nscomp();
+        l           = r;
+        a_ptr->p1   = l;
         if (r->typ == TOKEN_END) // No parameters
             goto d4;
         if (r->typ != TOKEN_LPAREN) // Should start with left paren

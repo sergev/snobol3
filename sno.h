@@ -10,20 +10,20 @@
 //
 // Character class enumeration for lexical analysis
 //
-typedef enum {
-    CHAR_CLASS_OTHER        = 0,  // Default/unclassified character
-    CHAR_CLASS_RPAREN       = 1,  // Right parenthesis ')'
-    CHAR_CLASS_LPAREN       = 2,  // Left parenthesis '('
-    CHAR_CLASS_WHITESPACE   = 3,  // Whitespace (space, tab)
-    CHAR_CLASS_PLUS         = 4,  // Plus operator '+'
-    CHAR_CLASS_MINUS        = 5,  // Minus operator '-'
-    CHAR_CLASS_ASTERISK     = 6,  // Asterisk operator '*'
-    CHAR_CLASS_SLASH        = 7,  // Division operator '/'
-    CHAR_CLASS_DOLLAR       = 8,  // Dollar sign '$'
-    CHAR_CLASS_STRING_DELIM = 9,  // String delimiter '"' or '\''
-    CHAR_CLASS_EQUALS       = 10, // Equals sign '='
-    CHAR_CLASS_COMMA        = 11  // Comma ','
-} char_class_t;
+enum class CharClass {
+    OTHER        = 0,  // Default/unclassified character
+    RPAREN       = 1,  // Right parenthesis ')'
+    LPAREN       = 2,  // Left parenthesis '('
+    WHITESPACE   = 3,  // Whitespace (space, tab)
+    PLUS         = 4,  // Plus operator '+'
+    MINUS        = 5,  // Minus operator '-'
+    ASTERISK     = 6,  // Asterisk operator '*'
+    SLASH        = 7,  // Division operator '/'
+    DOLLAR       = 8,  // Dollar sign '$'
+    STRING_DELIM = 9,  // String delimiter '"' or '\''
+    EQUALS       = 10, // Equals sign '='
+    COMMA        = 11  // Comma ','
+};
 
 //
 // Token type enumeration for node types
@@ -143,8 +143,8 @@ public:
     int lc{};
     Node *schar{};
     Node *current_line{}; // Current input line being processed
-    int line_flag{};        // Flag for end of line
-    int compon_next{};      // Flag for compon() to reuse current character
+    int line_flag{};      // Flag for end of line
+    int compon_next{};    // Flag for compon() to reuse current character
 
     // Methods from sno1.c
     void mes(const char *s);
@@ -192,7 +192,7 @@ public:
     void assign(Node *adr, Node *val);
 
     // Standalone functions (no context parameter)
-    static char_class_t char_class(int c);
+    static CharClass char_class(int c);
 
 private:
     // Private helper methods

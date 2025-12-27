@@ -105,35 +105,35 @@ Node *SnobolContext::cstr_to_node(const char *s)
 // Classify a character for lexical analysis.
 // Returns a numeric code representing the character's syntactic role.
 //
-char_class_t SnobolContext::char_class(int c)
+CharClass SnobolContext::char_class(int c)
 {
     switch (c) {
     case ')':
-        return (CHAR_CLASS_RPAREN); // Right parenthesis
+        return (CharClass::RPAREN); // Right parenthesis
     case '(':
-        return (CHAR_CLASS_LPAREN); // Left parenthesis
+        return (CharClass::LPAREN); // Left parenthesis
     case '\t':
     case ' ':
-        return (CHAR_CLASS_WHITESPACE); // Whitespace
+        return (CharClass::WHITESPACE); // Whitespace
     case '+':
-        return (CHAR_CLASS_PLUS); // Plus operator
+        return (CharClass::PLUS); // Plus operator
     case '-':
-        return (CHAR_CLASS_MINUS); // Minus operator
+        return (CharClass::MINUS); // Minus operator
     case '*':
-        return (CHAR_CLASS_ASTERISK); // Asterisk operator
+        return (CharClass::ASTERISK); // Asterisk operator
     case '/':
-        return (CHAR_CLASS_SLASH); // Division operator
+        return (CharClass::SLASH); // Division operator
     case '$':
-        return (CHAR_CLASS_DOLLAR); // Dollar sign
+        return (CharClass::DOLLAR); // Dollar sign
     case '"':
     case '\'':
-        return (CHAR_CLASS_STRING_DELIM); // String delimiter
+        return (CharClass::STRING_DELIM); // String delimiter
     case '=':
-        return (CHAR_CLASS_EQUALS); // Equals sign
+        return (CharClass::EQUALS); // Equals sign
     case ',':
-        return (CHAR_CLASS_COMMA); // Comma
+        return (CharClass::COMMA); // Comma
     }
-    return (CHAR_CLASS_OTHER); // Other character
+    return (CharClass::OTHER); // Other character
 }
 
 //
@@ -315,7 +315,7 @@ int SnobolContext::strbin(Node *string)
     p    = s->p1;
     q    = s->p2;
     sign = 1;
-    if (char_class(p->ch) == CHAR_CLASS_MINUS) { /* minus */
+    if (char_class(p->ch) == CharClass::MINUS) { /* minus */
         sign = -1;
         if (p == q)
             return (0);

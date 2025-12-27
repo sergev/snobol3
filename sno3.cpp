@@ -11,7 +11,7 @@ int Node::bextend(const Node *last)
     int b;
     Node *c;
     int d;
-    char_class_t class_val;
+    CharClass class_val;
 
     s = this;
     c = s->p1;
@@ -31,13 +31,13 @@ eb1:
 eb2:
     d++;
     class_val = SnobolContext::char_class(a->ch);
-    if (class_val == CHAR_CLASS_RPAREN) { /* rp - right parenthesis */
+    if (class_val == CharClass::RPAREN) { /* rp - right parenthesis */
         if (b == 0)
             goto bad;
         b--;
         goto eb3;
     }
-    if (class_val == CHAR_CLASS_LPAREN) { /* lp - left parenthesis */
+    if (class_val == CharClass::LPAREN) { /* lp - left parenthesis */
         b++;
         goto eb1;
     }
@@ -147,7 +147,7 @@ badv1:
     if (e == nullptr)
         etc->p2 = nullptr; // No right side
     else {
-        e       = eval(e, 1);                          // Evaluate right pattern (length)
+        e       = eval(e, 1);                        // Evaluate right pattern (length)
         etc->p2 = (Node *)(long)(intptr_t)strbin(e); // Store as integer
         delete_string(e);
     }

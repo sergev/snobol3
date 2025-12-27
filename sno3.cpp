@@ -82,7 +82,7 @@ bad:
 // Implements backtracking pattern matching algorithm for Snobol patterns.
 // Returns a match result node on success, NULL on failure.
 //
-Node *SnobolContext::search(Node *arg, Node *r)
+Node *SnobolContext::search(const Node &arg, Node *r)
 {
     Node *list, *back, *str, *etc, *next, *last, *base, *e;
     Node *a, *b, *var;
@@ -92,7 +92,7 @@ Node *SnobolContext::search(Node *arg, Node *r)
     intptr_t len;
 
     // Initialize pattern matching state
-    a    = arg->p2;        // Start of pattern component list
+    a    = arg.p2;         // Start of pattern component list
     list = base = alloc(); // Base of matching state list
     last        = nullptr; // End of subject string (set later)
     next        = nullptr; // Next position to match from
@@ -128,7 +128,7 @@ badv1:
     list->typ       = c;
     if (static_cast<int>(c) < static_cast<int>(Token::STMT_ASSIGN)) {
         // Simple pattern component - evaluate and store
-        back->p2 = eval(b, 1);
+        back->p2 = eval(*b, 1);
         goto badvanc;
     }
     // Complex pattern component - set up match state
@@ -143,12 +143,12 @@ badv1:
     if (e == nullptr)
         etc->p1 = nullptr; // No left side
     else
-        etc->p1 = eval(e, 0); // Evaluate left pattern
+        etc->p1 = eval(*e, 0); // Evaluate left pattern
     e = b->p2;
     if (e == nullptr)
         etc->p2 = nullptr; // No right side
     else {
-        e       = eval(e, 1);                        // Evaluate right pattern (length)
+        e       = eval(*e, 1);                       // Evaluate right pattern (length)
         etc->p2 = (Node *)(long)(intptr_t)strbin(e); // Store as integer
         delete_string(e);
     }
@@ -277,9 +277,9 @@ fail:
     list = base;
     goto f1;
 fadv:
-    free_node(back);
+    free_node(*back);
     b = list->p1;
-    free_node(list);
+    free_node(*list);
     if (b == nullptr)
         return (a);
     list = b;
@@ -297,14 +297,14 @@ f1:
     if (a != nullptr && etc->p1 != nullptr) {
         // Assign matched substring to variable
         if (str->p2 == nullptr) {
-            free_node(str);
+            free_node(*str);
             str = nullptr;
         }
-        assign(etc->p1, copy(str));
+        assign(*etc->p1, *copy(str));
     }
     if (str)
-        free_node(str);
-    free_node(etc);
-    free_node(var);
+        free_node(*str);
+    free_node(*etc);
+    free_node(*var);
     goto fadv;
 }

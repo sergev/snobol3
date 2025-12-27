@@ -20,7 +20,7 @@ Node *SnobolContext::init(const char *s, Token t)
     Node *a, *b;
 
     a = cstr_to_node(s);
-    b = look(a);
+    b = look(*a);
     delete_string(a);
     b->typ = t;
     return (b);
@@ -185,10 +185,10 @@ Node *SnobolContext::alloc()
 //
 // Free a node by adding it to the free list for reuse.
 //
-void SnobolContext::free_node(Node *pointer)
+void SnobolContext::free_node(Node &pointer)
 {
-    pointer->p1 = freelist;
-    freelist    = pointer;
+    pointer.p1 = freelist;
+    freelist   = &pointer;
 }
 
 //
@@ -212,7 +212,7 @@ int SnobolContext::nfree()
 // Look up a symbol in the name table, creating it if it doesn't exist.
 // Returns a pointer to the symbol's value node.
 //
-Node *SnobolContext::look(Node *string)
+Node *SnobolContext::look(const Node &string)
 {
     Node *i, *j, *k;
 
@@ -221,7 +221,7 @@ Node *SnobolContext::look(Node *string)
     // Search existing symbols
     while (i) {
         j = i->p1;
-        if (j->p1->equal(string) == 0)
+        if (j->p1->equal(&string) == 0)
             return (j);
         i = (k = i)->p2;
     }
@@ -234,7 +234,7 @@ Node *SnobolContext::look(Node *string)
         namelist = i;
     j      = alloc();
     i->p1  = j;
-    j->p1  = copy(string);
+    j->p1  = copy(&string);
     j->p2  = nullptr;
     j->typ = Token::EXPR_VAR_REF;
     return (j);
@@ -244,19 +244,20 @@ Node *SnobolContext::look(Node *string)
 // Create a copy of a string node.
 // Allocates new nodes and copies all characters from the source string.
 //
-Node *SnobolContext::copy(Node *string)
+Node *SnobolContext::copy(const Node *string)
 {
-    Node *j, *l, *m;
+    Node *l, *m;
     Node *i, *k;
+    const Node *j_src;
 
     if (string == nullptr)
         return (nullptr);
     i = l = alloc();
-    j     = string;
-    k     = string->p2;
-    while (j != k) {
+    j_src = string;
+    k     = const_cast<Node *>(string->p2);
+    while (j_src != k) {
         m     = alloc();
-        m->ch = (j = j->p1)->ch;
+        m->ch = (j_src = j_src->p1)->ch;
         l->p1 = m;
         l     = m;
     }
@@ -303,10 +304,10 @@ int Node::equal(const Node *string2) const
 // Convert a string node representing a number to an integer.
 // Handles negative numbers and validates digit characters.
 //
-int SnobolContext::strbin(Node *string)
+int SnobolContext::strbin(const Node *string)
 {
     int n, m, sign;
-    Node *p, *q, *s;
+    const Node *p, *q, *s;
 
     s = string;
     n = 0;
@@ -372,40 +373,40 @@ loop:
 //
 // Add two numeric strings and return the result as a string.
 //
-Node *SnobolContext::add(Node *string1, Node *string2)
+Node *SnobolContext::add(const Node &string1, const Node &string2)
 {
-    return (binstr(strbin(string1) + strbin(string2)));
+    return (binstr(strbin(&string1) + strbin(&string2)));
 }
 
 //
 // Subtract two numeric strings and return the result as a string.
 //
-Node *SnobolContext::sub(Node *string1, Node *string2)
+Node *SnobolContext::sub(const Node &string1, const Node &string2)
 {
-    return (binstr(strbin(string1) - strbin(string2)));
+    return (binstr(strbin(&string1) - strbin(&string2)));
 }
 
 //
 // Multiply two numeric strings and return the result as a string.
 //
-Node *SnobolContext::mult(Node *string1, Node *string2)
+Node *SnobolContext::mult(const Node &string1, const Node &string2)
 {
-    return (binstr(strbin(string1) * strbin(string2)));
+    return (binstr(strbin(&string1) * strbin(&string2)));
 }
 
 //
 // Divide two numeric strings and return the result as a string.
 //
-Node *SnobolContext::divide(Node *string1, Node *string2)
+Node *SnobolContext::divide(const Node &string1, const Node &string2)
 {
-    return (binstr(strbin(string1) / strbin(string2)));
+    return (binstr(strbin(&string1) / strbin(&string2)));
 }
 
 //
 // Concatenate two strings, creating new copies.
 // Returns a new string node containing the concatenation.
 //
-Node *SnobolContext::cat(Node *string1, Node *string2)
+Node *SnobolContext::cat(const Node *string1, const Node *string2)
 {
     Node *a, *b;
 
@@ -417,7 +418,7 @@ Node *SnobolContext::cat(Node *string1, Node *string2)
     b         = copy(string2);
     a->p2->p1 = b->p1;
     a->p2     = b->p2;
-    free_node(b);
+    free_node(*b);
     return (a);
 }
 
@@ -425,13 +426,13 @@ Node *SnobolContext::cat(Node *string1, Node *string2)
 // Concatenate two strings and delete the original strings (destructive concatenation).
 // Used when the original strings are no longer needed.
 //
-Node *SnobolContext::dcat(Node *a, Node *b)
+Node *SnobolContext::dcat(Node &a, Node &b)
 {
     Node *c;
 
-    c = cat(a, b);
-    delete_string(a);
-    delete_string(b);
+    c = cat(&a, &b);
+    delete_string(&a);
+    delete_string(&b);
     return (c);
 }
 
@@ -449,10 +450,10 @@ void SnobolContext::delete_string(Node *string)
     b = string->p2;
     while (a != b) {
         c = a->p1;
-        free_node(a);
+        free_node(*a);
         a = c;
     }
-    free_node(a);
+    free_node(*a);
 }
 
 //
@@ -485,7 +486,7 @@ void SnobolContext::dump1(Node *base)
         b = base->p1;
         c = binstr(static_cast<int>(b->typ));
         d = cstr_to_node("  ");
-        e = dcat(c, d);
+        e = dcat(*c, *d);
         sysput(cat(e, b->p1));
         delete_string(e);
         if (b->typ == Token::EXPR_VALUE) {
@@ -503,7 +504,11 @@ void SnobolContext::dump1(Node *base)
 //
 void SnobolContext::writes(const char *s)
 {
-    sysput(dcat(binstr(lc), dcat(cstr_to_node("\t"), cstr_to_node(s))));
+    Node *n1 = cstr_to_node(s);
+    Node *n2 = cstr_to_node("\t");
+    Node *n3 = dcat(*n2, *n1);
+    Node *n4 = binstr(lc);
+    sysput(dcat(*n4, *n3));
     flush();
     if (cfail) {
         dump();
@@ -543,7 +548,7 @@ Node *SnobolContext::getc_char()
     }
     a = current_line->p1;
     if (a == current_line->p2) {
-        free_node(current_line);
+        free_node(*current_line);
         line_flag++;
     } else
         current_line->p1 = a->p1;

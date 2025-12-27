@@ -265,7 +265,7 @@ TEST_F(SnobolTest, Dcat_DestructiveConcatenation)
     Node *str1 = ctx.cstr_to_node("foo");
     Node *str2 = ctx.cstr_to_node("bar");
 
-    Node *result = ctx.dcat(str1, str2);
+    Node *result = ctx.dcat(*str1, *str2);
     ASSERT_NE(result, nullptr);
     EXPECT_TRUE(node_equals_cstr(result, "foobar"));
 
@@ -367,7 +367,7 @@ TEST_F(SnobolTest, Add_PositiveNumbers)
     Node *str1 = ctx.cstr_to_node("10");
     Node *str2 = ctx.cstr_to_node("20");
 
-    Node *result = ctx.add(str1, str2);
+    Node *result = ctx.add(*str1, *str2);
     ASSERT_NE(result, nullptr);
     EXPECT_TRUE(node_equals_cstr(result, "30"));
 
@@ -381,7 +381,7 @@ TEST_F(SnobolTest, Add_NegativeNumbers)
     Node *str1 = ctx.cstr_to_node("-10");
     Node *str2 = ctx.cstr_to_node("-20");
 
-    Node *result = ctx.add(str1, str2);
+    Node *result = ctx.add(*str1, *str2);
     ASSERT_NE(result, nullptr);
     EXPECT_TRUE(node_equals_cstr(result, "-30"));
 
@@ -395,7 +395,7 @@ TEST_F(SnobolTest, Add_MixedSigns)
     Node *str1 = ctx.cstr_to_node("10");
     Node *str2 = ctx.cstr_to_node("-5");
 
-    Node *result = ctx.add(str1, str2);
+    Node *result = ctx.add(*str1, *str2);
     ASSERT_NE(result, nullptr);
     EXPECT_TRUE(node_equals_cstr(result, "5"));
 
@@ -409,7 +409,7 @@ TEST_F(SnobolTest, Add_WithZero)
     Node *str1 = ctx.cstr_to_node("42");
     Node *str2 = ctx.cstr_to_node("0");
 
-    Node *result = ctx.add(str1, str2);
+    Node *result = ctx.add(*str1, *str2);
     ASSERT_NE(result, nullptr);
     EXPECT_TRUE(node_equals_cstr(result, "42"));
 
@@ -423,7 +423,7 @@ TEST_F(SnobolTest, Sub_PositiveNumbers)
     Node *str1 = ctx.cstr_to_node("20");
     Node *str2 = ctx.cstr_to_node("10");
 
-    Node *result = ctx.sub(str1, str2);
+    Node *result = ctx.sub(*str1, *str2);
     ASSERT_NE(result, nullptr);
     EXPECT_TRUE(node_equals_cstr(result, "10"));
 
@@ -437,7 +437,7 @@ TEST_F(SnobolTest, Sub_NegativeResult)
     Node *str1 = ctx.cstr_to_node("10");
     Node *str2 = ctx.cstr_to_node("20");
 
-    Node *result = ctx.sub(str1, str2);
+    Node *result = ctx.sub(*str1, *str2);
     ASSERT_NE(result, nullptr);
     EXPECT_TRUE(node_equals_cstr(result, "-10"));
 
@@ -451,7 +451,7 @@ TEST_F(SnobolTest, Sub_NegativeNumbers)
     Node *str1 = ctx.cstr_to_node("-10");
     Node *str2 = ctx.cstr_to_node("-20");
 
-    Node *result = ctx.sub(str1, str2);
+    Node *result = ctx.sub(*str1, *str2);
     ASSERT_NE(result, nullptr);
     EXPECT_TRUE(node_equals_cstr(result, "10"));
 
@@ -465,7 +465,7 @@ TEST_F(SnobolTest, Mult_PositiveNumbers)
     Node *str1 = ctx.cstr_to_node("6");
     Node *str2 = ctx.cstr_to_node("7");
 
-    Node *result = ctx.mult(str1, str2);
+    Node *result = ctx.mult(*str1, *str2);
     ASSERT_NE(result, nullptr);
     EXPECT_TRUE(node_equals_cstr(result, "42"));
 
@@ -479,7 +479,7 @@ TEST_F(SnobolTest, Mult_WithZero)
     Node *str1 = ctx.cstr_to_node("42");
     Node *str2 = ctx.cstr_to_node("0");
 
-    Node *result = ctx.mult(str1, str2);
+    Node *result = ctx.mult(*str1, *str2);
     ASSERT_NE(result, nullptr);
     EXPECT_TRUE(node_equals_cstr(result, "0"));
 
@@ -493,7 +493,7 @@ TEST_F(SnobolTest, Mult_NegativeNumbers)
     Node *str1 = ctx.cstr_to_node("-6");
     Node *str2 = ctx.cstr_to_node("7");
 
-    Node *result = ctx.mult(str1, str2);
+    Node *result = ctx.mult(*str1, *str2);
     ASSERT_NE(result, nullptr);
     EXPECT_TRUE(node_equals_cstr(result, "-42"));
 
@@ -507,7 +507,7 @@ TEST_F(SnobolTest, Divide_PositiveNumbers)
     Node *str1 = ctx.cstr_to_node("20");
     Node *str2 = ctx.cstr_to_node("4");
 
-    Node *result = ctx.divide(str1, str2);
+    Node *result = ctx.divide(*str1, *str2);
     ASSERT_NE(result, nullptr);
     EXPECT_TRUE(node_equals_cstr(result, "5"));
 
@@ -521,7 +521,7 @@ TEST_F(SnobolTest, Divide_NegativeNumbers)
     Node *str1 = ctx.cstr_to_node("-20");
     Node *str2 = ctx.cstr_to_node("4");
 
-    Node *result = ctx.divide(str1, str2);
+    Node *result = ctx.divide(*str1, *str2);
     ASSERT_NE(result, nullptr);
     EXPECT_TRUE(node_equals_cstr(result, "-5"));
 
@@ -535,7 +535,7 @@ TEST_F(SnobolTest, Divide_Truncation)
     Node *str1 = ctx.cstr_to_node("7");
     Node *str2 = ctx.cstr_to_node("3");
 
-    Node *result = ctx.divide(str1, str2);
+    Node *result = ctx.divide(*str1, *str2);
     ASSERT_NE(result, nullptr);
     EXPECT_TRUE(node_equals_cstr(result, "2")); // Integer division
 
@@ -566,7 +566,7 @@ TEST_F(SnobolTest, Look_FindsExistingSymbol)
 {
     Node *sym1 = ctx.init("lookup_test", Token::EXPR_SYSPIT);
     Node *str  = ctx.cstr_to_node("lookup_test");
-    Node *sym2 = ctx.look(str);
+    Node *sym2 = ctx.look(*str);
 
     // Should return the same symbol
     EXPECT_EQ(sym1, sym2);
@@ -577,7 +577,7 @@ TEST_F(SnobolTest, Look_FindsExistingSymbol)
 TEST_F(SnobolTest, Look_CreatesNewSymbol)
 {
     Node *str = ctx.cstr_to_node("new_symbol");
-    Node *sym = ctx.look(str);
+    Node *sym = ctx.look(*str);
 
     ASSERT_NE(sym, nullptr);
     EXPECT_EQ(sym->typ, Token::EXPR_VAR_REF); // Default type
@@ -590,8 +590,8 @@ TEST_F(SnobolTest, Look_SameNameReturnsSameSymbol)
     Node *str1 = ctx.cstr_to_node("same_name");
     Node *str2 = ctx.cstr_to_node("same_name");
 
-    Node *sym1 = ctx.look(str1);
-    Node *sym2 = ctx.look(str2);
+    Node *sym1 = ctx.look(*str1);
+    Node *sym2 = ctx.look(*str2);
 
     // Should return the same symbol
     EXPECT_EQ(sym1, sym2);

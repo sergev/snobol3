@@ -5,11 +5,11 @@
 // Handles variable references, function calls, and special values.
 // Returns the value as a string node.
 //
-Node *SnobolContext::eval_operand(Node *ptr)
+Node *SnobolContext::eval_operand(const Node &ptr)
 {
     Node *a, *p;
 
-    p = ptr;
+    p = const_cast<Node *>(&ptr);
     a = p->p1;
     if (p->typ == Token::EXPR_VAR_REF) {
         // Variable reference - get its value
@@ -42,7 +42,7 @@ Node *SnobolContext::eval_operand(Node *ptr)
 // Processes operators and operands from the compiled expression.
 // Returns the result as a string node.
 //
-Node *SnobolContext::eval(Node *e, int t)
+Node *SnobolContext::eval(const Node &e, int t)
 {
     Node *list, *a3, *a4, *a3base;
     Node *a1, *stack;
@@ -52,8 +52,8 @@ Node *SnobolContext::eval(Node *e, int t)
     // Postfix expression evaluation using a stack
     if (rfail == 1)
         return (nullptr);
-    stack = nullptr; // Evaluation stack: holds operands and operators
-    list  = e;       // Current position in expression list
+    stack = nullptr;                // Evaluation stack: holds operands and operators
+    list  = const_cast<Node *>(&e); // Current position in expression list
     goto l1;
 advanc:
     list = list->p1;
@@ -64,7 +64,7 @@ l1:
     case Token::TOKEN_END: // End of expression
         if (t == 1) {
             // Return value mode
-            a1 = eval_operand(stack);
+            a1 = eval_operand(*stack);
             goto e1;
         }
         // Assignment mode - get variable reference
@@ -77,8 +77,8 @@ l1:
             writes("phase error");
         return (a1);
     case Token::TOKEN_DOLLAR: // Pattern immediate value ($)
-        a1        = eval_operand(stack);
-        stack->p1 = look(a1); // Look up variable
+        a1        = eval_operand(*stack);
+        stack->p1 = look(*a1); // Look up variable
         delete_string(a1);
         stack->typ = Token::EXPR_VAR_REF; // Mark as variable reference
         goto advanc;
@@ -108,14 +108,14 @@ l1:
             // Bind parameter to argument value
             a3->p1 = a4 = alloc();
             a3          = a4;
-            a3->p2      = eval_operand(a1);  // Save old parameter value
-            assign(a1->p1, eval(a2->p2, 1)); // recursive
+            a3->p2      = eval_operand(*a1);    // Save old parameter value
+            assign(*a1->p1, *eval(*a2->p2, 1)); // recursive
             a1 = a1->p2;
             a2 = a2->p1;
             goto f1;
         f3:
             // Execute function body
-            op_ptr = execute(op_ptr); // recursive
+            op_ptr = execute(*op_ptr); // recursive
             if (op_ptr)
                 goto f3;
             // Restore parameter values
@@ -129,12 +129,12 @@ l1:
             f4:
                 // Restore each parameter
                 a4 = a3->p1;
-                free_node(a3);
+                free_node(*a3);
                 a3 = a4;
                 a1 = a1->p2;
                 if (a1 == nullptr)
                     goto advanc;
-                assign(a1->p1, a3->p2);
+                assign(*a1->p1, *a3->p2);
                 goto f4;
             }
         }
@@ -144,10 +144,10 @@ l1:
     case Token::TOKEN_PLUS:       // Addition
     case Token::TOKEN_WHITESPACE: // Concatenation
         // Binary operator - evaluate both operands
-        a1    = eval_operand(stack);
+        a1    = eval_operand(*stack);
         stack = pop(stack);
-        a2    = eval_operand(stack);
-        a3    = doop(op, a2, a1);
+        a2    = eval_operand(*stack);
+        a3    = doop(op, *a2, *a1);
         delete_string(a1);
         delete_string(a2);
         stack->p1  = a3;
@@ -178,7 +178,7 @@ l1:
 // Execute a binary operator on two string operands.
 // Converts strings to numbers for arithmetic operations.
 //
-Node *SnobolContext::doop(Token op, Node *arg1, Node *arg2)
+Node *SnobolContext::doop(Token op, const Node &arg1, const Node &arg2)
 {
     switch (op) {
     case Token::TOKEN_DIV: // Division
@@ -190,7 +190,7 @@ Node *SnobolContext::doop(Token op, Node *arg1, Node *arg2)
     case Token::TOKEN_MINUS: // Subtraction
         return (sub(arg1, arg2));
     case Token::TOKEN_WHITESPACE: // Concatenation
-        return (cat(arg1, arg2));
+        return (cat(&arg1, &arg2));
     default:
         return (nullptr);
     }
@@ -201,62 +201,62 @@ Node *SnobolContext::doop(Token op, Node *arg1, Node *arg2)
 // Handles simple statements, pattern matching, assignments, and goto operations.
 // Returns the next statement to execute, or NULL to stop.
 //
-Node *SnobolContext::execute(Node *e)
+Node *SnobolContext::execute(const Node &e)
 {
     Node *r, *b, *c;
     Node *m, *ca, *d, *a;
 
-    r  = e->p2; // Statement data
-    lc = e->ch; // Line number
-    switch (e->typ) {
+    r  = e.p2; // Statement data
+    lc = e.ch; // Line number
+    switch (e.typ) {
     case Token::STMT_SIMPLE: // r g - Simple statement: evaluate expression and goto
         a = r->p1;
-        delete_string(eval(r->p2, 1));
+        delete_string(eval(*r->p2, 1));
         goto xsuc;
-    case Token::STMT_MATCH: // r m g - Pattern matching: match pattern against subject
-        m = r->p1;          // Match pattern
-        a = m->p1;          // Goto structure
-        b = eval(r->p2, 1); // Evaluate subject
-        c = search(m, b);   // Search for pattern
+    case Token::STMT_MATCH:  // r m g - Pattern matching: match pattern against subject
+        m = r->p1;           // Match pattern
+        a = m->p1;           // Goto structure
+        b = eval(*r->p2, 1); // Evaluate subject
+        c = search(*m, b);   // Search for pattern
         delete_string(b);
         if (c == nullptr)
             goto xfail;
-        free_node(c);
+        free_node(*c);
         goto xsuc;
-    case Token::STMT_ASSIGN:        // r a g - Assignment: assign value to variable
-        ca = r->p1;                 // Assignment structure
-        a  = ca->p1;                // Goto structure
-        b  = eval(r->p2, 0);        // Get variable reference
-        assign(b, eval(ca->p2, 1)); // Assign value
+    case Token::STMT_ASSIGN:           // r a g - Assignment: assign value to variable
+        ca = r->p1;                    // Assignment structure
+        a  = ca->p1;                   // Goto structure
+        b  = eval(*r->p2, 0);          // Get variable reference
+        assign(*b, *eval(*ca->p2, 1)); // Assign value
         goto xsuc;
-    case Token::TOKEN_EQUALS:  // r m a g - Pattern matching with assignment (value 3)
-        m  = r->p1;            // Match pattern
-        ca = m->p1;            // Assignment structure
-        a  = ca->p1;           // Goto structure
-        b  = eval(r->p2, 0);   // Get variable reference
-        d  = search(m, b->p2); // Search pattern in variable's value
+    case Token::TOKEN_EQUALS:   // r m a g - Pattern matching with assignment (value 3)
+        m  = r->p1;             // Match pattern
+        ca = m->p1;             // Assignment structure
+        a  = ca->p1;            // Goto structure
+        b  = eval(*r->p2, 0);   // Get variable reference
+        d  = search(*m, b->p2); // Search pattern in variable's value
         if (d == nullptr)
             goto xfail;
-        c = eval(ca->p2, 1); // Evaluate replacement value
+        c = eval(*ca->p2, 1); // Evaluate replacement value
         if (d->p1 == nullptr) {
             // Match at end - append
-            free_node(d);
-            assign(b, cat(c, b->p2));
+            free_node(*d);
+            assign(*b, *cat(c, b->p2));
             delete_string(c);
             goto xsuc;
         }
         if (d->p2 == b->p2->p2) {
             // Match entire string - replace
-            assign(b, c);
-            free_node(d);
+            assign(*b, *c);
+            free_node(*d);
             goto xsuc;
         }
         // Match in middle - replace matched portion
         (r = alloc())->p1 = d->p2->p1;
         r->p2             = b->p2->p2;
-        assign(b, cat(c, r));
-        free_node(d);
-        free_node(r);
+        assign(*b, *cat(c, r));
+        free_node(*d);
+        free_node(*r);
         delete_string(c);
         goto xsuc;
 
@@ -278,10 +278,10 @@ xfail:
 xboth:
     if (b == nullptr) {
         // No goto - continue to next statement
-        return (e->p1);
+        return (e.p1);
     }
     // Evaluate goto target
-    b = eval(b, 0);
+    b = eval(*b, 0);
     if (b == lookret) // Return statement
         return (nullptr);
     if (b == lookfret) { // Failure return
@@ -297,12 +297,12 @@ xboth:
 // Assign a value to a variable or output location.
 // Handles variable assignment, output, and function parameter assignment.
 //
-void SnobolContext::assign(Node *adr, Node *val)
+void SnobolContext::assign(Node &adr, Node &val)
 {
     Node *a, *addr, *value;
 
-    addr  = adr;
-    value = val;
+    addr  = &adr;
+    value = &val;
     if (rfail == 1) {
         // Don't assign on failure
         delete_string(value);

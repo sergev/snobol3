@@ -153,18 +153,18 @@ public:
     void syspot(Node *string);
     Node *cstr_to_node(const char *s);
     Node *alloc();
-    void free_node(Node *pointer);
+    void free_node(Node &pointer);
     int nfree();
-    Node *look(Node *string);
-    Node *copy(Node *string);
-    int strbin(Node *string);
+    Node *look(const Node &string);
+    Node *copy(const Node *string);
+    int strbin(const Node *string);
     Node *binstr(int binary);
-    Node *add(Node *string1, Node *string2);
-    Node *sub(Node *string1, Node *string2);
-    Node *mult(Node *string1, Node *string2);
-    Node *divide(Node *string1, Node *string2);
-    Node *cat(Node *string1, Node *string2);
-    Node *dcat(Node *a, Node *b);
+    Node *add(const Node &string1, const Node &string2);
+    Node *sub(const Node &string1, const Node &string2);
+    Node *mult(const Node &string1, const Node &string2);
+    Node *divide(const Node &string1, const Node &string2);
+    Node *cat(const Node *string1, const Node *string2);
+    Node *dcat(Node &a, Node &b); // Deletes a and b, so non-const
     void delete_string(Node *string);
     void sysput(Node *string);
     void dump();
@@ -175,28 +175,28 @@ public:
     // Methods from sno2.c
     Node *compon();
     Node *nscomp();
-    Node *push(Node *stack);
-    Node *pop(Node *stack);
-    Node *expr(Node *start, Token eof, Node *e);
-    Node *match(Node *start, Node *m);
+    Node *push(Node *stack); // Can be null, must stay as pointer
+    Node *pop(Node *stack);  // Can be null, must stay as pointer
+    Node *expr(Node *start, Token eof, Node &e);
+    Node *match(Node *start, Node &m);
     Node *compile();
 
     // Methods from sno3.c
-    Node *search(Node *arg, Node *r);
+    Node *search(const Node &arg, Node *r);
 
     // Methods from sno4.c
-    Node *eval_operand(Node *ptr);
-    Node *eval(Node *e, int t);
-    Node *doop(Token op, Node *arg1, Node *arg2);
-    Node *execute(Node *e);
-    void assign(Node *adr, Node *val);
+    Node *eval_operand(const Node &ptr);
+    Node *eval(const Node &e, int t);
+    Node *doop(Token op, const Node &arg1, const Node &arg2);
+    Node *execute(const Node &e);
+    void assign(Node &adr, Node &val); // val is deleted, so non-const
 
     // Standalone functions (no context parameter)
     static CharClass char_class(int c);
 
 private:
     // Private helper methods
-    void dump1(Node *base);
+    void dump1(Node *base); // base can be null, must stay as pointer
 };
 
 #endif // SNO_H

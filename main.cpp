@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
     // Start execution from "start" label if defined, otherwise from first statement
     if (ctx.lookstart->typ == Token::EXPR_LABEL)
         c = ctx.lookstart->p2;
-    while ((c = ctx.execute(c)) != nullptr)
+    while ((c = ctx.execute(*c)) != nullptr)
         ;
     ctx.flush();
     return 0;

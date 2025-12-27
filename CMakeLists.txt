@@ -1,24 +1,24 @@
 cmake_minimum_required(VERSION 3.10)
-project(sno C CXX)
+project(sno CXX)
 
-set(CMAKE_C_STANDARD 11)
-set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Enable all warnings
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wpedantic")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic")
 # Treat warnings as errors
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
 
 # Build library
 add_library(snobol STATIC
-    sno1.c
-    sno2.c
-    sno3.c
-    sno4.c
+    sno1.cpp
+    sno2.cpp
+    sno3.cpp
+    sno4.cpp
 )
 
 # Create executable
-add_executable(sno main.c)
+add_executable(sno main.cpp)
 target_link_libraries(sno snobol)
 
 # Set output name

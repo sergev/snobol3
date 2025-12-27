@@ -1,15 +1,16 @@
 #ifndef TEST_HELPERS_H
 #define TEST_HELPERS_H
 
-#include <string>
-#include <vector>
-#include <fstream>
-#include <sstream>
+#include <fcntl.h>
+#include <sys/wait.h>
+#include <unistd.h>
+
 #include <cstdio>
 #include <cstdlib>
-#include <unistd.h>
-#include <sys/wait.h>
-#include <fcntl.h>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <vector>
 
 // Forward declaration
 struct node;
@@ -25,7 +26,6 @@ struct SnobolTestResult {
 
 // Run a Snobol program from a string with optional input
 // Returns the output captured from stdout
-SnobolTestResult run_snobol_program(const std::string& program, const std::string& input = "");
+SnobolTestResult run_snobol_program(const std::string &program, const std::string &input = "");
 
 #endif // TEST_HELPERS_H
-

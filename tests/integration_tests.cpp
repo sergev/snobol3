@@ -1,10 +1,7 @@
 #include <gtest/gtest.h>
 
-#include "test_helpers.h"
-
-extern "C" {
 #include "sno.h"
-}
+#include "test_helpers.h"
 
 class IntegrationTest : public ::testing::Test {
 protected:

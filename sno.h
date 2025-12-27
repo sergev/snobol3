@@ -1,12 +1,11 @@
 #ifndef SNO_H
 #define SNO_H
 
-#include <fcntl.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
+#include <fstream>
+#include <iostream>
 
 //
 // Character class enumeration for lexical analysis
@@ -105,10 +104,18 @@ typedef struct node {
 } node_t;
 
 //
-// Snobol interpreter context structure
+// Snobol interpreter context class
 // Holds all global state previously stored in global variables
 //
-typedef struct snobol_context {
+class SnobolContext {
+public:
+    // Constructor - references must be initialized in initializer list
+    SnobolContext(std::istream &input, std::ostream &output);
+
+    // I/O streams (references - cannot be reassigned)
+    std::istream &fin;
+    std::ostream &fout;
+
     // Memory management
     int freesize;
     node_t *freespace;
@@ -131,69 +138,64 @@ typedef struct snobol_context {
     int rfail;
     int lc;
     node_t *schar;
+    node_t *current_line; // Current input line being processed
+    int line_flag;        // Flag for end of line
+    int compon_next;      // Flag for compon() to reuse current character
 
-    // I/O
-    int fin;
-    int fout;
-} snobol_context_t;
+    // Methods from sno1.c
+    void mes(const char *s);
+    node_t *init(const char *s, int t);
+    node_t *syspit();
+    void syspot(node_t *string);
+    node_t *cstr_to_node(const char *s);
+    node_t *alloc();
+    void free_node(node_t *pointer);
+    int nfree();
+    node_t *look(node_t *string);
+    node_t *copy(node_t *string);
+    int strbin(node_t *string);
+    node_t *binstr(int binary);
+    node_t *add(node_t *string1, node_t *string2);
+    node_t *sub(node_t *string1, node_t *string2);
+    node_t *mult(node_t *string1, node_t *string2);
+    node_t *divide(node_t *string1, node_t *string2);
+    node_t *cat(node_t *string1, node_t *string2);
+    node_t *dcat(node_t *a, node_t *b);
+    void delete_string(node_t *string);
+    void sysput(node_t *string);
+    void dump();
+    void writes(const char *s);
+    node_t *getc_char();
+    void flush();
 
-//
-// Function prototypes from sno1.c
-//
-snobol_context_t *snobol_context_create(void);
-void mes(snobol_context_t *ctx, const char *s);
-node_t *init(snobol_context_t *ctx, const char *s, int t);
-node_t *syspit(snobol_context_t *ctx);
-void syspot(snobol_context_t *ctx, node_t *string);
-node_t *cstr_to_node(snobol_context_t *ctx, const char *s);
+    // Methods from sno2.c
+    node_t *compon();
+    node_t *nscomp();
+    node_t *push(node_t *stack);
+    node_t *pop(node_t *stack);
+    node_t *expr(node_t *start, int eof, node_t *e);
+    node_t *match(node_t *start, node_t *m);
+    node_t *compile();
+
+    // Methods from sno3.c
+    node_t *search(node_t *arg, node_t *r);
+
+    // Methods from sno4.c
+    node_t *eval_operand(node_t *ptr);
+    node_t *eval(node_t *e, int t);
+    node_t *doop(int op, node_t *arg1, node_t *arg2);
+    node_t *execute(node_t *e);
+    void assign(node_t *adr, node_t *val);
+
+private:
+    // Private helper methods
+    void dump1(node_t *base);
+};
+
+// Standalone functions (no context parameter)
 char_class_t char_class(int c);
-node_t *alloc(snobol_context_t *ctx);
-void free_node(snobol_context_t *ctx, node_t *pointer);
-int nfree(snobol_context_t *ctx);
-node_t *look(snobol_context_t *ctx, node_t *string);
-node_t *copy(snobol_context_t *ctx, node_t *string);
 int equal(node_t *string1, node_t *string2);
-int strbin(snobol_context_t *ctx, node_t *string);
-node_t *binstr(snobol_context_t *ctx, int binary);
-node_t *add(snobol_context_t *ctx, node_t *string1, node_t *string2);
-node_t *sub(snobol_context_t *ctx, node_t *string1, node_t *string2);
-node_t *mult(snobol_context_t *ctx, node_t *string1, node_t *string2);
-node_t *divide(snobol_context_t *ctx, node_t *string1, node_t *string2);
-node_t *cat(snobol_context_t *ctx, node_t *string1, node_t *string2);
-node_t *dcat(snobol_context_t *ctx, node_t *a, node_t *b);
-void delete_string(snobol_context_t *ctx, node_t *string);
-void sysput(snobol_context_t *ctx, node_t *string);
-void dump(snobol_context_t *ctx);
-void dump1(snobol_context_t *ctx, node_t *base);
-void writes(snobol_context_t *ctx, const char *s);
-node_t *getc_char(snobol_context_t *ctx);
-void flush(void);
-
-//
-// Function prototypes from sno2.c
-//
-node_t *compon(snobol_context_t *ctx);
-node_t *nscomp(snobol_context_t *ctx);
-node_t *push(snobol_context_t *ctx, node_t *stack);
-node_t *pop(snobol_context_t *ctx, node_t *stack);
-node_t *expr(snobol_context_t *ctx, node_t *start, int eof, node_t *e);
-node_t *match(snobol_context_t *ctx, node_t *start, node_t *m);
-node_t *compile(snobol_context_t *ctx);
-
-//
-// Function prototypes from sno3.c
-//
 int bextend(node_t *str, node_t *last);
 int ubextend(node_t *str, node_t *last);
-node_t *search(snobol_context_t *ctx, node_t *arg, node_t *r);
-
-//
-// Function prototypes from sno4.c
-//
-node_t *eval_operand(snobol_context_t *ctx, node_t *ptr);
-node_t *eval(snobol_context_t *ctx, node_t *e, int t);
-node_t *doop(snobol_context_t *ctx, int op, node_t *arg1, node_t *arg2);
-node_t *execute(snobol_context_t *ctx, node_t *e);
-void assign(snobol_context_t *ctx, node_t *adr, node_t *val);
 
 #endif // SNO_H

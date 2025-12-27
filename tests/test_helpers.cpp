@@ -5,10 +5,6 @@
 #include <iostream>
 #include <sstream>
 
-extern "C" {
-#include "sno.h"
-}
-
 // Run a Snobol program by executing the sno binary
 SnobolTestResult run_snobol_program(const std::string &program, const std::string &input)
 {

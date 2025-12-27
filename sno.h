@@ -117,11 +117,11 @@ public:
     std::ostream &fout;
 
     // Memory management
-    int freesize{};
-    Node *freespace{};
-    Node *freespace_current{};
-    Node *freespace_end{};
+    static const unsigned BLOCK_SIZE = 200;
+    using NodeBlock = std::array<Node, BLOCK_SIZE>;
+    std::vector<std::unique_ptr<NodeBlock>> mem_pool;
     Node *freelist{};
+    int freesize{};
 
     // Symbol table
     Node *namelist{};

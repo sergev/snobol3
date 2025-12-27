@@ -145,38 +145,17 @@ CharClass SnobolContext::char_class(int c)
 Node &SnobolContext::alloc()
 {
     Node *f;
-    size_t alloc_size;
 
     if (freelist == nullptr) {
-        if (freespace_current == nullptr || freespace_current >= freespace_end) {
-            alloc_size = 200 * sizeof(Node);
-            if (freespace == nullptr) {
-                freespace = (Node *)malloc(alloc_size);
-                if (freespace == nullptr) {
-                    flush();
-                    fout << "Out of free space\n";
-                    std::exit(1);
-                }
-                freespace_current = freespace;
-                freespace_end     = freespace + 200;
-                freesize          = 200;
-            } else {
-                // Allocate new block and append
-                Node *new_block = (Node *)malloc(alloc_size);
-                if (new_block == nullptr) {
-                    flush();
-                    fout << "Out of free space\n";
-                    std::exit(1);
-                }
-                freespace_current = new_block;
-                freespace_end     = new_block + 200;
-                freesize          = 200;
-            }
+        // Allocate another node block and add it to the free list.
+        mem_pool.push_back(std::make_unique<NodeBlock>());
+        auto &block = *mem_pool.back();
+        for (auto &item : block) {
+            free_node(item);
         }
-        f = freespace_current++;
-        freesize--;
-        return *f;
+        freesize = BLOCK_SIZE;
     }
+
     // Reuse node from free list
     f        = freelist;
     freelist = freelist->p1;

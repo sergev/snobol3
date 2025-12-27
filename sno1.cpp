@@ -1,18 +1,7 @@
 /*
- *   Snobol III
+ * Snobol III
  */
 #include "sno.h"
-
-//
-// Constructor - initialize all fields including stream references
-//
-SnobolContext::SnobolContext(std::istream &input, std::ostream &output)
-    : fin(input), fout(output), freesize(0), freespace(nullptr), freespace_current(nullptr),
-      freespace_end(nullptr), freelist(nullptr), namelist(nullptr), lookf(nullptr), looks(nullptr),
-      lookend(nullptr), lookstart(nullptr), lookdef(nullptr), lookret(nullptr), lookfret(nullptr),
-      cfail(0), rfail(0), lc(0), schar(nullptr), current_line(nullptr), line_flag(0), compon_next(0)
-{
-}
 
 //
 // Print a message string to output.
@@ -26,9 +15,9 @@ void SnobolContext::mes(const char *s)
 // Initialize a symbol in the name table with a given type.
 // Creates a node from the string, looks it up (or creates it), and sets its type.
 //
-node_t *SnobolContext::init(const char *s, token_type_t t)
+Node *SnobolContext::init(const char *s, token_type_t t)
 {
-    node_t *a, *b;
+    Node *a, *b;
 
     a = cstr_to_node(s);
     b = look(a);
@@ -41,9 +30,9 @@ node_t *SnobolContext::init(const char *s, token_type_t t)
 // System function to read a line from input (syspit).
 // Reads characters until newline or EOF, returns a string node or NULL on failure.
 //
-node_t *SnobolContext::syspit()
+Node *SnobolContext::syspit()
 {
-    node_t *b, *c, *d;
+    Node *b, *c, *d;
     int a;
 
     a = fin.get();
@@ -76,9 +65,9 @@ node_t *SnobolContext::syspit()
 // System function to write a string to output (syspot).
 // Outputs the string followed by a newline character.
 //
-void SnobolContext::syspot(node_t *string)
+void SnobolContext::syspot(Node *string)
 {
-    node_t *a, *b, *s;
+    Node *a, *b, *s;
 
     s = string;
     if (s != nullptr) {
@@ -96,10 +85,10 @@ void SnobolContext::syspot(node_t *string)
 // Convert a C string to a Snobol string node.
 // Creates a linked list of nodes representing the string characters.
 //
-node_t *SnobolContext::cstr_to_node(const char *s)
+Node *SnobolContext::cstr_to_node(const char *s)
 {
     int c;
-    node_t *e, *f, *d;
+    Node *e, *f, *d;
 
     // Build linked list: d is head, f tracks tail, e is new node
     d = f = alloc();
@@ -116,7 +105,7 @@ node_t *SnobolContext::cstr_to_node(const char *s)
 // Classify a character for lexical analysis.
 // Returns a numeric code representing the character's syntactic role.
 //
-char_class_t char_class(int c)
+char_class_t SnobolContext::char_class(int c)
 {
     switch (c) {
     case ')':
@@ -152,16 +141,16 @@ char_class_t char_class(int c)
 // Uses a free list if available, otherwise allocates from the current memory block.
 // Allocates a new block of 200 nodes when the current block is exhausted.
 //
-node_t *SnobolContext::alloc()
+Node *SnobolContext::alloc()
 {
-    node_t *f;
+    Node *f;
     size_t alloc_size;
 
     if (freelist == nullptr) {
         if (freespace_current == nullptr || freespace_current >= freespace_end) {
-            alloc_size = 200 * sizeof(node_t);
+            alloc_size = 200 * sizeof(Node);
             if (freespace == nullptr) {
-                freespace = (node_t *)malloc(alloc_size);
+                freespace = (Node *)malloc(alloc_size);
                 if (freespace == nullptr) {
                     flush();
                     fout << "Out of free space\n";
@@ -172,7 +161,7 @@ node_t *SnobolContext::alloc()
                 freesize          = 200;
             } else {
                 /* Allocate new block and append */
-                node_t *new_block = (node_t *)malloc(alloc_size);
+                Node *new_block = (Node *)malloc(alloc_size);
                 if (new_block == nullptr) {
                     flush();
                     fout << "Out of free space\n";
@@ -196,7 +185,7 @@ node_t *SnobolContext::alloc()
 //
 // Free a node by adding it to the free list for reuse.
 //
-void SnobolContext::free_node(node_t *pointer)
+void SnobolContext::free_node(Node *pointer)
 {
     pointer->p1 = freelist;
     freelist    = pointer;
@@ -208,7 +197,7 @@ void SnobolContext::free_node(node_t *pointer)
 int SnobolContext::nfree()
 {
     int i;
-    node_t *a;
+    Node *a;
 
     i = freesize;
     a = freelist;
@@ -223,16 +212,16 @@ int SnobolContext::nfree()
 // Look up a symbol in the name table, creating it if it doesn't exist.
 // Returns a pointer to the symbol's value node.
 //
-node_t *SnobolContext::look(node_t *string)
+Node *SnobolContext::look(Node *string)
 {
-    node_t *i, *j, *k;
+    Node *i, *j, *k;
 
     k = nullptr;
     i = namelist;
     // Search existing symbols
     while (i) {
         j = i->p1;
-        if (equal(j->p1, string) == 0)
+        if (j->p1->equal(string) == 0)
             return (j);
         i = (k = i)->p2;
     }
@@ -255,10 +244,10 @@ node_t *SnobolContext::look(node_t *string)
 // Create a copy of a string node.
 // Allocates new nodes and copies all characters from the source string.
 //
-node_t *SnobolContext::copy(node_t *string)
+Node *SnobolContext::copy(Node *string)
 {
-    node_t *j, *l, *m;
-    node_t *i, *k;
+    Node *j, *l, *m;
+    Node *i, *k;
 
     if (string == nullptr)
         return (nullptr);
@@ -279,22 +268,18 @@ node_t *SnobolContext::copy(node_t *string)
 // Compare two strings lexicographically.
 // Returns 0 if equal, 1 if string1 > string2, -1 if string1 < string2.
 //
-int equal(node_t *string1, node_t *string2)
+int Node::equal(const Node *string2) const
 {
-    node_t *i, *j, *k;
-    node_t *l;
+    const Node *i, *j, *k;
+    const Node *l;
     int n, m;
 
-    if (string1 == nullptr) {
-        if (string2 == nullptr)
-            return (0);
-        return (-1);
-    }
     if (string2 == nullptr)
         return (1);
+
     // Compare character by character
-    i = string1;
-    j = string1->p2; // End marker for string1
+    i = this;
+    j = this->p2; // End marker for string1
     k = string2;
     l = string2->p2; // End marker for string2
     for (;;) {
@@ -318,10 +303,10 @@ int equal(node_t *string1, node_t *string2)
 // Convert a string node representing a number to an integer.
 // Handles negative numbers and validates digit characters.
 //
-int SnobolContext::strbin(node_t *string)
+int SnobolContext::strbin(Node *string)
 {
     int n, m, sign;
-    node_t *p, *q, *s;
+    Node *p, *q, *s;
 
     s = string;
     n = 0;
@@ -351,10 +336,10 @@ loop:
 // Convert an integer to a string node.
 // Builds the string representation digit by digit, handling negative numbers.
 //
-node_t *SnobolContext::binstr(int binary)
+Node *SnobolContext::binstr(int binary)
 {
     int n, sign;
-    node_t *m, *p, *q;
+    Node *m, *p, *q;
 
     n    = binary;
     p    = alloc();
@@ -387,7 +372,7 @@ loop:
 //
 // Add two numeric strings and return the result as a string.
 //
-node_t *SnobolContext::add(node_t *string1, node_t *string2)
+Node *SnobolContext::add(Node *string1, Node *string2)
 {
     return (binstr(strbin(string1) + strbin(string2)));
 }
@@ -395,7 +380,7 @@ node_t *SnobolContext::add(node_t *string1, node_t *string2)
 //
 // Subtract two numeric strings and return the result as a string.
 //
-node_t *SnobolContext::sub(node_t *string1, node_t *string2)
+Node *SnobolContext::sub(Node *string1, Node *string2)
 {
     return (binstr(strbin(string1) - strbin(string2)));
 }
@@ -403,7 +388,7 @@ node_t *SnobolContext::sub(node_t *string1, node_t *string2)
 //
 // Multiply two numeric strings and return the result as a string.
 //
-node_t *SnobolContext::mult(node_t *string1, node_t *string2)
+Node *SnobolContext::mult(Node *string1, Node *string2)
 {
     return (binstr(strbin(string1) * strbin(string2)));
 }
@@ -411,7 +396,7 @@ node_t *SnobolContext::mult(node_t *string1, node_t *string2)
 //
 // Divide two numeric strings and return the result as a string.
 //
-node_t *SnobolContext::divide(node_t *string1, node_t *string2)
+Node *SnobolContext::divide(Node *string1, Node *string2)
 {
     return (binstr(strbin(string1) / strbin(string2)));
 }
@@ -420,9 +405,9 @@ node_t *SnobolContext::divide(node_t *string1, node_t *string2)
 // Concatenate two strings, creating new copies.
 // Returns a new string node containing the concatenation.
 //
-node_t *SnobolContext::cat(node_t *string1, node_t *string2)
+Node *SnobolContext::cat(Node *string1, Node *string2)
 {
-    node_t *a, *b;
+    Node *a, *b;
 
     if (string1 == nullptr)
         return (copy(string2));
@@ -440,9 +425,9 @@ node_t *SnobolContext::cat(node_t *string1, node_t *string2)
 // Concatenate two strings and delete the original strings (destructive concatenation).
 // Used when the original strings are no longer needed.
 //
-node_t *SnobolContext::dcat(node_t *a, node_t *b)
+Node *SnobolContext::dcat(Node *a, Node *b)
 {
-    node_t *c;
+    Node *c;
 
     c = cat(a, b);
     delete_string(a);
@@ -454,9 +439,9 @@ node_t *SnobolContext::dcat(node_t *a, node_t *b)
 // Delete a string by freeing all its component nodes.
 // Traverses the linked list and returns each node to the free list.
 //
-void SnobolContext::delete_string(node_t *string)
+void SnobolContext::delete_string(Node *string)
 {
-    node_t *a, *b, *c;
+    Node *a, *b, *c;
 
     if (string == nullptr)
         return;
@@ -473,7 +458,7 @@ void SnobolContext::delete_string(node_t *string)
 //
 // Output a string and then delete it (system put with cleanup).
 //
-void SnobolContext::sysput(node_t *string)
+void SnobolContext::sysput(Node *string)
 {
     syspot(string);
     delete_string(string);
@@ -491,10 +476,10 @@ void SnobolContext::dump()
 // Recursively dump symbol table entries starting from a base node.
 // Outputs symbol names, types, and values for debugging purposes.
 //
-void SnobolContext::dump1(node_t *base)
+void SnobolContext::dump1(Node *base)
 {
-    node_t *b, *c, *e;
-    node_t *d;
+    Node *b, *c, *e;
+    Node *d;
 
     while (base) {
         b = base->p1;
@@ -539,9 +524,9 @@ void SnobolContext::writes(const char *s)
 // Reads a new line when the current one is exhausted.
 // Returns NULL at end of line (after all characters have been consumed).
 //
-node_t *SnobolContext::getc_char()
+Node *SnobolContext::getc_char()
 {
-    node_t *a;
+    Node *a;
 
     while (current_line == nullptr) {
         current_line = syspit();

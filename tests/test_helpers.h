@@ -12,10 +12,6 @@
 #include <string>
 #include <vector>
 
-// Forward declaration
-struct node;
-typedef struct node node_t;
-
 // Structure to hold test results
 struct SnobolTestResult {
     std::string stdout_output;

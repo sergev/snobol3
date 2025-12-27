@@ -5,15 +5,15 @@
 // Extends the match position forward while maintaining balanced parentheses.
 // Returns the number of characters matched, or 0 on failure.
 //
-int bextend(node_t *str, node_t *last)
+int Node::bextend(const Node *last)
 {
-    node_t *a, *s;
+    Node *a, *s;
     int b;
-    node_t *c;
+    Node *c;
     int d;
     char_class_t class_val;
 
-    s = str;
+    s = this;
     c = s->p1;
     if (c == nullptr)
         goto bad;
@@ -30,7 +30,7 @@ eb1:
     a = a->p1;
 eb2:
     d++;
-    class_val = char_class(a->ch);
+    class_val = SnobolContext::char_class(a->ch);
     if (class_val == CHAR_CLASS_RPAREN) { /* rp - right parenthesis */
         if (b == 0)
             goto bad;
@@ -56,11 +56,11 @@ bad:
 // Advances the match position by one character.
 // Returns 1 on success, 0 on failure.
 //
-int ubextend(node_t *str, node_t *last)
+int Node::ubextend(const Node *last)
 {
-    node_t *a, *b, *s;
+    Node *a, *b, *s;
 
-    s = str;
+    s = this;
     a = s->p1;
     if (a == nullptr)
         goto bad;
@@ -82,10 +82,10 @@ bad:
 // Implements backtracking pattern matching algorithm for Snobol patterns.
 // Returns a match result node on success, NULL on failure.
 //
-node_t *SnobolContext::search(node_t *arg, node_t *r)
+Node *SnobolContext::search(Node *arg, Node *r)
 {
-    node_t *list, *back, *str, *etc, *next, *last, *base, *e;
-    node_t *a, *b, *var;
+    Node *list, *back, *str, *etc, *next, *last, *base, *e;
+    Node *a, *b, *var;
     token_type_t c;
     int d;
     intptr_t len;
@@ -148,7 +148,7 @@ badv1:
         etc->p2 = nullptr; // No right side
     else {
         e       = eval(e, 1);                          // Evaluate right pattern (length)
-        etc->p2 = (node_t *)(long)(intptr_t)strbin(e); // Store as integer
+        etc->p2 = (Node *)(long)(intptr_t)strbin(e); // Store as integer
         delete_string(e);
     }
     goto badvanc;
@@ -169,11 +169,11 @@ retard:
         goto retard;
     // Try to extend current match
     if (var->typ == TOKEN_UNANCHORED) { // Balanced pattern (value 1)
-        if (bextend(str, last) == 0)
+        if (str->bextend(last) == 0)
             goto retard;
         goto adv0;
     }
-    if (ubextend(str, last) == 0) // Unbalanced pattern
+    if (str->ubextend(last) == 0) // Unbalanced pattern
         goto retard;
 adv0:
     // Advance to next position
@@ -241,7 +241,7 @@ adv1:
     str->p2 = nullptr;
     len     = (intptr_t)etc->p2;        // Length constraint
     if (var->typ == TOKEN_UNANCHORED) { // Balanced pattern (value 1)
-        d = bextend(str, last);
+        d = str->bextend(last);
         if (d == 0)
             goto retard;
         if (len == 0) // No length constraint
@@ -253,7 +253,7 @@ adv1:
                 goto adv0;
             if (len < 0)
                 goto retard;
-            d = bextend(str, last);
+            d = str->bextend(last);
             if (d == 0)
                 goto retard;
         }
@@ -267,7 +267,7 @@ adv1:
     }
     // Match with specific length
     while (len--)
-        if (ubextend(str, last) == 0)
+        if (str->ubextend(last) == 0)
             goto retard;
     goto adv0;
 

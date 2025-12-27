@@ -9,7 +9,7 @@
 //
 int main(int argc, char *argv[])
 {
-    node_t *a, *b, *c;
+    Node *a, *b, *c;
     std::unique_ptr<std::ifstream> file_input;
     std::istream *input_stream = &std::cin;
 

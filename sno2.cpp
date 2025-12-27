@@ -5,9 +5,9 @@
 // Returns a node representing the token with appropriate type code.
 // Handles operators, literals, identifiers, and special characters.
 //
-node_t *SnobolContext::compon()
+Node *SnobolContext::compon()
 {
-    node_t *a, *b;
+    Node *a, *b;
     int c;
 
     if (compon_next == 0)
@@ -144,9 +144,9 @@ node_t *SnobolContext::compon()
 //
 // Get the next non-space component (skip whitespace tokens).
 //
-node_t *SnobolContext::nscomp()
+Node *SnobolContext::nscomp()
 {
-    node_t *c;
+    Node *c;
 
     while ((c = compon())->typ == TOKEN_WHITESPACE)
         free_node(c);
@@ -157,9 +157,9 @@ node_t *SnobolContext::nscomp()
 // Push an element onto a stack (implemented as a linked list).
 // Returns the new top of stack.
 //
-node_t *SnobolContext::push(node_t *stack)
+Node *SnobolContext::push(Node *stack)
 {
-    node_t *a;
+    Node *a;
 
     (a = alloc())->p2 = stack;
     return (a);
@@ -169,9 +169,9 @@ node_t *SnobolContext::push(node_t *stack)
 // Pop an element from a stack.
 // Returns the new top of stack after removing the top element.
 //
-node_t *SnobolContext::pop(node_t *stack)
+Node *SnobolContext::pop(Node *stack)
 {
-    node_t *a, *s;
+    Node *a, *s;
 
     s = stack;
     if (s == nullptr)
@@ -186,14 +186,14 @@ node_t *SnobolContext::pop(node_t *stack)
 // Handles infix operators, function calls, and parentheses.
 // Returns the compiled expression tree.
 //
-node_t *SnobolContext::expr(node_t *start, token_type_t eof, node_t *e)
+Node *SnobolContext::expr(Node *start, token_type_t eof, Node *e)
 {
-    node_t *stack, *list, *comp;
+    Node *stack, *list, *comp;
     int operand;
     token_type_t op, op1;
-    node_t *space_ptr;
+    Node *space_ptr;
     int space_flag;
-    node_t *a, *b, *c;
+    Node *a, *b, *c;
     int d;
 
     // Initialize expression parser
@@ -334,10 +334,10 @@ l6:
 // Handles pattern components, alternation, and grouping.
 // Returns the compiled pattern structure.
 //
-node_t *SnobolContext::match(node_t *start, node_t *m)
+Node *SnobolContext::match(Node *start, Node *m)
 {
-    node_t *list, *comp, *term;
-    node_t *a;
+    Node *list, *comp, *term;
+    Node *a;
     int b;
     token_type_t bal;
 
@@ -440,12 +440,12 @@ merr:
 // Handles labels, assignments, pattern matching, goto statements, and function definitions.
 // Returns a compiled statement node.
 //
-node_t *SnobolContext::compile()
+Node *SnobolContext::compile()
 {
-    node_t *b, *comp;
-    node_t *r, *l, *xs, *xf, *g;
+    Node *b, *comp;
+    Node *r, *l, *xs, *xf, *g;
     int a;
-    node_t *m, *as;
+    Node *m, *as;
     token_type_t t;
 
     m    = nullptr;     // Match pattern
@@ -611,7 +611,7 @@ def:
         writes("name doubly defined");
     l->typ = EXPR_FUNCTION; /*type function;*/
     {
-        node_t *a_ptr = r;
+        Node *a_ptr = r;
         l->p2         = a_ptr;
         r             = nscomp();
         l             = r;

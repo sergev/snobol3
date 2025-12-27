@@ -5,9 +5,9 @@
 // Handles variable references, function calls, and special values.
 // Returns the value as a string node.
 //
-node_t *SnobolContext::eval_operand(node_t *ptr)
+Node *SnobolContext::eval_operand(Node *ptr)
 {
-    node_t *a, *p;
+    Node *a, *p;
 
     p = ptr;
     a = p->p1;
@@ -42,12 +42,12 @@ node_t *SnobolContext::eval_operand(node_t *ptr)
 // Processes operators and operands from the compiled expression.
 // Returns the result as a string node.
 //
-node_t *SnobolContext::eval(node_t *e, int t)
+Node *SnobolContext::eval(Node *e, int t)
 {
-    node_t *list, *a3, *a4, *a3base;
-    node_t *a1, *stack;
+    Node *list, *a3, *a4, *a3base;
+    Node *a1, *stack;
     int op;
-    node_t *a2;
+    Node *a2;
 
     // Postfix expression evaluation using a stack
     if (rfail == 1)
@@ -90,7 +90,7 @@ l1:
             writes("illegal function");
         a1 = a1->p2;
         {
-            node_t *op_ptr = a1->p1; // Function body
+            Node *op_ptr = a1->p1; // Function body
             a3base = a3 = alloc();
             a3->p2      = op_ptr->p2; // Save return address
             op_ptr->p2  = nullptr;
@@ -121,7 +121,7 @@ l1:
             // Restore parameter values
             a1 = stack->p1->p2;
             {
-                node_t *op_ptr2 = a1->p1;
+                Node *op_ptr2 = a1->p1;
                 a3              = a3base;
                 stack->p1       = op_ptr2->p2; // Get return value
                 stack->typ      = EXPR_VALUE;
@@ -178,7 +178,7 @@ l1:
 // Execute a binary operator on two string operands.
 // Converts strings to numbers for arithmetic operations.
 //
-node_t *SnobolContext::doop(int op, node_t *arg1, node_t *arg2)
+Node *SnobolContext::doop(int op, Node *arg1, Node *arg2)
 {
     switch (op) {
     case TOKEN_DIV: // Division
@@ -200,10 +200,10 @@ node_t *SnobolContext::doop(int op, node_t *arg1, node_t *arg2)
 // Handles simple statements, pattern matching, assignments, and goto operations.
 // Returns the next statement to execute, or NULL to stop.
 //
-node_t *SnobolContext::execute(node_t *e)
+Node *SnobolContext::execute(Node *e)
 {
-    node_t *r, *b, *c;
-    node_t *m, *ca, *d, *a;
+    Node *r, *b, *c;
+    Node *m, *ca, *d, *a;
 
     r  = e->p2; // Statement data
     lc = e->ch; // Line number
@@ -296,9 +296,9 @@ xboth:
 // Assign a value to a variable or output location.
 // Handles variable assignment, output, and function parameter assignment.
 //
-void SnobolContext::assign(node_t *adr, node_t *val)
+void SnobolContext::assign(Node *adr, Node *val)
 {
-    node_t *a, *addr, *value;
+    Node *a, *addr, *value;
 
     addr  = adr;
     value = val;

@@ -96,12 +96,16 @@ typedef enum {
 //
 // Node structure for Snobol III interpreter
 //
-typedef struct node {
-    struct node *p1;
-    struct node *p2;
+struct Node {
+    Node *p1;
+    Node *p2;
     token_type_t typ;
     char ch;
-} node_t;
+
+    int equal(const Node *other) const;
+    int bextend(const Node *last);
+    int ubextend(const Node *last);
+};
 
 //
 // Snobol interpreter context class
@@ -110,92 +114,89 @@ typedef struct node {
 class SnobolContext {
 public:
     // Constructor - references must be initialized in initializer list
-    SnobolContext(std::istream &input, std::ostream &output);
+    SnobolContext(std::istream &input, std::ostream &output) : fin(input), fout(output) {}
 
     // I/O streams (references - cannot be reassigned)
     std::istream &fin;
     std::ostream &fout;
 
     // Memory management
-    int freesize;
-    node_t *freespace;
-    node_t *freespace_current;
-    node_t *freespace_end;
-    node_t *freelist;
+    int freesize{};
+    Node *freespace{};
+    Node *freespace_current{};
+    Node *freespace_end{};
+    Node *freelist{};
 
     // Symbol table
-    node_t *namelist;
-    node_t *lookf;
-    node_t *looks;
-    node_t *lookend;
-    node_t *lookstart;
-    node_t *lookdef;
-    node_t *lookret;
-    node_t *lookfret;
+    Node *namelist{};
+    Node *lookf{};
+    Node *looks{};
+    Node *lookend{};
+    Node *lookstart{};
+    Node *lookdef{};
+    Node *lookret{};
+    Node *lookfret{};
 
     // Execution state
-    int cfail;
-    int rfail;
-    int lc;
-    node_t *schar;
-    node_t *current_line; // Current input line being processed
-    int line_flag;        // Flag for end of line
-    int compon_next;      // Flag for compon() to reuse current character
+    int cfail{};
+    int rfail{};
+    int lc{};
+    Node *schar{};
+    Node *current_line{}; // Current input line being processed
+    int line_flag{};        // Flag for end of line
+    int compon_next{};      // Flag for compon() to reuse current character
 
     // Methods from sno1.c
     void mes(const char *s);
-    node_t *init(const char *s, token_type_t t);
-    node_t *syspit();
-    void syspot(node_t *string);
-    node_t *cstr_to_node(const char *s);
-    node_t *alloc();
-    void free_node(node_t *pointer);
+    Node *init(const char *s, token_type_t t);
+    Node *syspit();
+    void syspot(Node *string);
+    Node *cstr_to_node(const char *s);
+    Node *alloc();
+    void free_node(Node *pointer);
     int nfree();
-    node_t *look(node_t *string);
-    node_t *copy(node_t *string);
-    int strbin(node_t *string);
-    node_t *binstr(int binary);
-    node_t *add(node_t *string1, node_t *string2);
-    node_t *sub(node_t *string1, node_t *string2);
-    node_t *mult(node_t *string1, node_t *string2);
-    node_t *divide(node_t *string1, node_t *string2);
-    node_t *cat(node_t *string1, node_t *string2);
-    node_t *dcat(node_t *a, node_t *b);
-    void delete_string(node_t *string);
-    void sysput(node_t *string);
+    Node *look(Node *string);
+    Node *copy(Node *string);
+    int strbin(Node *string);
+    Node *binstr(int binary);
+    Node *add(Node *string1, Node *string2);
+    Node *sub(Node *string1, Node *string2);
+    Node *mult(Node *string1, Node *string2);
+    Node *divide(Node *string1, Node *string2);
+    Node *cat(Node *string1, Node *string2);
+    Node *dcat(Node *a, Node *b);
+    void delete_string(Node *string);
+    void sysput(Node *string);
     void dump();
     void writes(const char *s);
-    node_t *getc_char();
+    Node *getc_char();
     void flush();
 
     // Methods from sno2.c
-    node_t *compon();
-    node_t *nscomp();
-    node_t *push(node_t *stack);
-    node_t *pop(node_t *stack);
-    node_t *expr(node_t *start, token_type_t eof, node_t *e);
-    node_t *match(node_t *start, node_t *m);
-    node_t *compile();
+    Node *compon();
+    Node *nscomp();
+    Node *push(Node *stack);
+    Node *pop(Node *stack);
+    Node *expr(Node *start, token_type_t eof, Node *e);
+    Node *match(Node *start, Node *m);
+    Node *compile();
 
     // Methods from sno3.c
-    node_t *search(node_t *arg, node_t *r);
+    Node *search(Node *arg, Node *r);
 
     // Methods from sno4.c
-    node_t *eval_operand(node_t *ptr);
-    node_t *eval(node_t *e, int t);
-    node_t *doop(int op, node_t *arg1, node_t *arg2);
-    node_t *execute(node_t *e);
-    void assign(node_t *adr, node_t *val);
+    Node *eval_operand(Node *ptr);
+    Node *eval(Node *e, int t);
+    Node *doop(int op, Node *arg1, Node *arg2);
+    Node *execute(Node *e);
+    void assign(Node *adr, Node *val);
+
+    // Standalone functions (no context parameter)
+    static char_class_t char_class(int c);
 
 private:
     // Private helper methods
-    void dump1(node_t *base);
+    void dump1(Node *base);
 };
-
-// Standalone functions (no context parameter)
-char_class_t char_class(int c);
-int equal(node_t *string1, node_t *string2);
-int bextend(node_t *str, node_t *last);
-int ubextend(node_t *str, node_t *last);
 
 #endif // SNO_H

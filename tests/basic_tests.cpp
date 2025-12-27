@@ -21,15 +21,15 @@ protected:
         // Context is already initialized in constructor
     }
 
-    // Helper method to convert node_t string to std::string
-    std::string node_to_string(node_t *str)
+    // Helper method to convert Node string to std::string
+    std::string Nodeo_string(Node *str)
     {
         if (str == nullptr) {
             return "";
         }
         std::string result;
-        node_t *a = str;
-        node_t *b = str->p2;
+        Node *a = str;
+        Node *b = str->p2;
         while (a != b) {
             a = a->p1;
             result += a->ch;
@@ -37,8 +37,8 @@ protected:
         return result;
     }
 
-    // Helper method to compare node_t string with C string
-    bool node_equals_cstr(node_t *str, const char *cstr)
+    // Helper method to compare Node string with C string
+    bool node_equals_cstr(Node *str, const char *cstr)
     {
         if (str == nullptr && cstr == nullptr) {
             return true;
@@ -46,7 +46,7 @@ protected:
         if (str == nullptr || cstr == nullptr) {
             return false;
         }
-        return node_to_string(str) == cstr;
+        return Nodeo_string(str) == cstr;
     }
 };
 
@@ -56,34 +56,34 @@ protected:
 
 TEST(CharacterClassificationTest, Operators)
 {
-    EXPECT_EQ(char_class('+'), CHAR_CLASS_PLUS);     // Plus operator
-    EXPECT_EQ(char_class('-'), CHAR_CLASS_MINUS);    // Minus operator
-    EXPECT_EQ(char_class('*'), CHAR_CLASS_ASTERISK); // Asterisk operator
-    EXPECT_EQ(char_class('/'), CHAR_CLASS_SLASH);    // Division operator
-    EXPECT_EQ(char_class('='), CHAR_CLASS_EQUALS);   // Equals sign
+    EXPECT_EQ(SnobolContext::char_class('+'), CHAR_CLASS_PLUS);     // Plus operator
+    EXPECT_EQ(SnobolContext::char_class('-'), CHAR_CLASS_MINUS);    // Minus operator
+    EXPECT_EQ(SnobolContext::char_class('*'), CHAR_CLASS_ASTERISK); // Asterisk operator
+    EXPECT_EQ(SnobolContext::char_class('/'), CHAR_CLASS_SLASH);    // Division operator
+    EXPECT_EQ(SnobolContext::char_class('='), CHAR_CLASS_EQUALS);   // Equals sign
 }
 
 TEST(CharacterClassificationTest, Delimiters)
 {
-    EXPECT_EQ(char_class('('), CHAR_CLASS_LPAREN);        // Left parenthesis
-    EXPECT_EQ(char_class(')'), CHAR_CLASS_RPAREN);        // Right parenthesis
-    EXPECT_EQ(char_class('\''), CHAR_CLASS_STRING_DELIM); // Single quote
-    EXPECT_EQ(char_class('"'), CHAR_CLASS_STRING_DELIM);  // Double quote
-    EXPECT_EQ(char_class(','), CHAR_CLASS_COMMA);         // Comma
-    EXPECT_EQ(char_class('$'), CHAR_CLASS_DOLLAR);        // Dollar sign
+    EXPECT_EQ(SnobolContext::char_class('('), CHAR_CLASS_LPAREN);        // Left parenthesis
+    EXPECT_EQ(SnobolContext::char_class(')'), CHAR_CLASS_RPAREN);        // Right parenthesis
+    EXPECT_EQ(SnobolContext::char_class('\''), CHAR_CLASS_STRING_DELIM); // Single quote
+    EXPECT_EQ(SnobolContext::char_class('"'), CHAR_CLASS_STRING_DELIM);  // Double quote
+    EXPECT_EQ(SnobolContext::char_class(','), CHAR_CLASS_COMMA);         // Comma
+    EXPECT_EQ(SnobolContext::char_class('$'), CHAR_CLASS_DOLLAR);        // Dollar sign
 }
 
 TEST(CharacterClassificationTest, Whitespace)
 {
-    EXPECT_EQ(char_class(' '), CHAR_CLASS_WHITESPACE);  // Space
-    EXPECT_EQ(char_class('\t'), CHAR_CLASS_WHITESPACE); // Tab
+    EXPECT_EQ(SnobolContext::char_class(' '), CHAR_CLASS_WHITESPACE);  // Space
+    EXPECT_EQ(SnobolContext::char_class('\t'), CHAR_CLASS_WHITESPACE); // Tab
 }
 
 TEST(CharacterClassificationTest, RegularCharacters)
 {
-    EXPECT_EQ(char_class('a'), CHAR_CLASS_OTHER); // Letter
-    EXPECT_EQ(char_class('0'), CHAR_CLASS_OTHER); // Digit
-    EXPECT_EQ(char_class('@'), CHAR_CLASS_OTHER); // Symbol
+    EXPECT_EQ(SnobolContext::char_class('a'), CHAR_CLASS_OTHER); // Letter
+    EXPECT_EQ(SnobolContext::char_class('0'), CHAR_CLASS_OTHER); // Digit
+    EXPECT_EQ(SnobolContext::char_class('@'), CHAR_CLASS_OTHER); // Symbol
 }
 
 // ============================================================================
@@ -92,7 +92,7 @@ TEST(CharacterClassificationTest, RegularCharacters)
 
 TEST_F(SnobolTest, CstrToNode_SimpleString)
 {
-    node_t *str = ctx.cstr_to_node("hello");
+    Node *str = ctx.cstr_to_node("hello");
     ASSERT_NE(str, nullptr);
     EXPECT_TRUE(node_equals_cstr(str, "hello"));
     ctx.delete_string(str);
@@ -100,7 +100,7 @@ TEST_F(SnobolTest, CstrToNode_SimpleString)
 
 TEST_F(SnobolTest, CstrToNode_SingleChar)
 {
-    node_t *str = ctx.cstr_to_node("a");
+    Node *str = ctx.cstr_to_node("a");
     ASSERT_NE(str, nullptr);
     EXPECT_TRUE(node_equals_cstr(str, "a"));
     ctx.delete_string(str);
@@ -108,7 +108,7 @@ TEST_F(SnobolTest, CstrToNode_SingleChar)
 
 TEST_F(SnobolTest, CstrToNode_NumberString)
 {
-    node_t *str = ctx.cstr_to_node("12345");
+    Node *str = ctx.cstr_to_node("12345");
     ASSERT_NE(str, nullptr);
     EXPECT_TRUE(node_equals_cstr(str, "12345"));
     ctx.delete_string(str);
@@ -116,8 +116,8 @@ TEST_F(SnobolTest, CstrToNode_NumberString)
 
 TEST_F(SnobolTest, Copy_SimpleString)
 {
-    node_t *orig   = ctx.cstr_to_node("test");
-    node_t *copied = ctx.copy(orig);
+    Node *orig   = ctx.cstr_to_node("test");
+    Node *copied = ctx.copy(orig);
 
     ASSERT_NE(orig, nullptr);
     ASSERT_NE(copied, nullptr);
@@ -131,14 +131,14 @@ TEST_F(SnobolTest, Copy_SimpleString)
 
 TEST_F(SnobolTest, Copy_NullString)
 {
-    node_t *copied = ctx.copy(nullptr);
+    Node *copied = ctx.copy(nullptr);
     EXPECT_EQ(copied, nullptr);
 }
 
 TEST_F(SnobolTest, Copy_ModifyOriginalDoesNotAffectCopy)
 {
-    node_t *orig   = ctx.cstr_to_node("original");
-    node_t *copied = ctx.copy(orig);
+    Node *orig   = ctx.cstr_to_node("original");
+    Node *copied = ctx.copy(orig);
 
     // Delete original
     ctx.delete_string(orig);
@@ -151,10 +151,10 @@ TEST_F(SnobolTest, Copy_ModifyOriginalDoesNotAffectCopy)
 
 TEST_F(SnobolTest, Equal_IdenticalStrings)
 {
-    node_t *str1 = ctx.cstr_to_node("hello");
-    node_t *str2 = ctx.cstr_to_node("hello");
+    Node *str1 = ctx.cstr_to_node("hello");
+    Node *str2 = ctx.cstr_to_node("hello");
 
-    EXPECT_EQ(equal(str1, str2), 0);
+    EXPECT_EQ(str1->equal(str2), 0);
 
     ctx.delete_string(str1);
     ctx.delete_string(str2);
@@ -162,10 +162,10 @@ TEST_F(SnobolTest, Equal_IdenticalStrings)
 
 TEST_F(SnobolTest, Equal_DifferentStrings)
 {
-    node_t *str1 = ctx.cstr_to_node("abc");
-    node_t *str2 = ctx.cstr_to_node("def");
+    Node *str1 = ctx.cstr_to_node("abc");
+    Node *str2 = ctx.cstr_to_node("def");
 
-    EXPECT_NE(equal(str1, str2), 0);
+    EXPECT_NE(str1->equal(str2), 0);
 
     ctx.delete_string(str1);
     ctx.delete_string(str2);
@@ -173,10 +173,10 @@ TEST_F(SnobolTest, Equal_DifferentStrings)
 
 TEST_F(SnobolTest, Equal_FirstStringGreater)
 {
-    node_t *str1 = ctx.cstr_to_node("def");
-    node_t *str2 = ctx.cstr_to_node("abc");
+    Node *str1 = ctx.cstr_to_node("def");
+    Node *str2 = ctx.cstr_to_node("abc");
 
-    EXPECT_EQ(equal(str1, str2), 1); // str1 > str2
+    EXPECT_EQ(str1->equal(str2), 1); // str1 > str2
 
     ctx.delete_string(str1);
     ctx.delete_string(str2);
@@ -184,10 +184,10 @@ TEST_F(SnobolTest, Equal_FirstStringGreater)
 
 TEST_F(SnobolTest, Equal_FirstStringLess)
 {
-    node_t *str1 = ctx.cstr_to_node("abc");
-    node_t *str2 = ctx.cstr_to_node("def");
+    Node *str1 = ctx.cstr_to_node("abc");
+    Node *str2 = ctx.cstr_to_node("def");
 
-    EXPECT_EQ(equal(str1, str2), -1); // str1 < str2
+    EXPECT_EQ(str1->equal(str2), -1); // str1 < str2
 
     ctx.delete_string(str1);
     ctx.delete_string(str2);
@@ -195,10 +195,10 @@ TEST_F(SnobolTest, Equal_FirstStringLess)
 
 TEST_F(SnobolTest, Equal_DifferentLengths)
 {
-    node_t *str1 = ctx.cstr_to_node("abc");
-    node_t *str2 = ctx.cstr_to_node("abcd");
+    Node *str1 = ctx.cstr_to_node("abc");
+    Node *str2 = ctx.cstr_to_node("abcd");
 
-    EXPECT_EQ(equal(str1, str2), -1); // str1 < str2 (shorter)
+    EXPECT_EQ(str1->equal(str2), -1); // str1 < str2 (shorter)
 
     ctx.delete_string(str1);
     ctx.delete_string(str2);
@@ -206,21 +206,18 @@ TEST_F(SnobolTest, Equal_DifferentLengths)
 
 TEST_F(SnobolTest, Equal_NullStrings)
 {
-    EXPECT_EQ(equal(nullptr, nullptr), 0);
-
-    node_t *str = ctx.cstr_to_node("test");
-    EXPECT_EQ(equal(nullptr, str), -1);
-    EXPECT_EQ(equal(str, nullptr), 1);
+    Node *str = ctx.cstr_to_node("test");
+    EXPECT_EQ(str->equal(nullptr), 1);
 
     ctx.delete_string(str);
 }
 
 TEST_F(SnobolTest, Cat_SimpleConcatenation)
 {
-    node_t *str1 = ctx.cstr_to_node("hello");
-    node_t *str2 = ctx.cstr_to_node("world");
+    Node *str1 = ctx.cstr_to_node("hello");
+    Node *str2 = ctx.cstr_to_node("world");
 
-    node_t *result = ctx.cat(str1, str2);
+    Node *result = ctx.cat(str1, str2);
     ASSERT_NE(result, nullptr);
     EXPECT_TRUE(node_equals_cstr(result, "helloworld"));
 
@@ -235,8 +232,8 @@ TEST_F(SnobolTest, Cat_SimpleConcatenation)
 
 TEST_F(SnobolTest, Cat_FirstNull)
 {
-    node_t *str2   = ctx.cstr_to_node("world");
-    node_t *result = ctx.cat(nullptr, str2);
+    Node *str2   = ctx.cstr_to_node("world");
+    Node *result = ctx.cat(nullptr, str2);
 
     ASSERT_NE(result, nullptr);
     EXPECT_TRUE(node_equals_cstr(result, "world"));
@@ -247,8 +244,8 @@ TEST_F(SnobolTest, Cat_FirstNull)
 
 TEST_F(SnobolTest, Cat_SecondNull)
 {
-    node_t *str1   = ctx.cstr_to_node("hello");
-    node_t *result = ctx.cat(str1, nullptr);
+    Node *str1   = ctx.cstr_to_node("hello");
+    Node *result = ctx.cat(str1, nullptr);
 
     ASSERT_NE(result, nullptr);
     EXPECT_TRUE(node_equals_cstr(result, "hello"));
@@ -259,16 +256,16 @@ TEST_F(SnobolTest, Cat_SecondNull)
 
 TEST_F(SnobolTest, Cat_BothNull)
 {
-    node_t *result = ctx.cat(nullptr, nullptr);
+    Node *result = ctx.cat(nullptr, nullptr);
     EXPECT_EQ(result, nullptr);
 }
 
 TEST_F(SnobolTest, Dcat_DestructiveConcatenation)
 {
-    node_t *str1 = ctx.cstr_to_node("foo");
-    node_t *str2 = ctx.cstr_to_node("bar");
+    Node *str1 = ctx.cstr_to_node("foo");
+    Node *str2 = ctx.cstr_to_node("bar");
 
-    node_t *result = ctx.dcat(str1, str2);
+    Node *result = ctx.dcat(str1, str2);
     ASSERT_NE(result, nullptr);
     EXPECT_TRUE(node_equals_cstr(result, "foobar"));
 
@@ -282,7 +279,7 @@ TEST_F(SnobolTest, Dcat_DestructiveConcatenation)
 
 TEST_F(SnobolTest, Strbin_PositiveNumber)
 {
-    node_t *str = ctx.cstr_to_node("123");
+    Node *str = ctx.cstr_to_node("123");
     int result  = ctx.strbin(str);
     EXPECT_EQ(result, 123);
     ctx.delete_string(str);
@@ -290,7 +287,7 @@ TEST_F(SnobolTest, Strbin_PositiveNumber)
 
 TEST_F(SnobolTest, Strbin_NegativeNumber)
 {
-    node_t *str = ctx.cstr_to_node("-456");
+    Node *str = ctx.cstr_to_node("-456");
     int result  = ctx.strbin(str);
     EXPECT_EQ(result, -456);
     ctx.delete_string(str);
@@ -298,7 +295,7 @@ TEST_F(SnobolTest, Strbin_NegativeNumber)
 
 TEST_F(SnobolTest, Strbin_Zero)
 {
-    node_t *str = ctx.cstr_to_node("0");
+    Node *str = ctx.cstr_to_node("0");
     int result  = ctx.strbin(str);
     EXPECT_EQ(result, 0);
     ctx.delete_string(str);
@@ -306,7 +303,7 @@ TEST_F(SnobolTest, Strbin_Zero)
 
 TEST_F(SnobolTest, Strbin_LargeNumber)
 {
-    node_t *str = ctx.cstr_to_node("999999");
+    Node *str = ctx.cstr_to_node("999999");
     int result  = ctx.strbin(str);
     EXPECT_EQ(result, 999999);
     ctx.delete_string(str);
@@ -320,7 +317,7 @@ TEST_F(SnobolTest, Strbin_NullString)
 
 TEST_F(SnobolTest, Binstr_PositiveNumber)
 {
-    node_t *str = ctx.binstr(123);
+    Node *str = ctx.binstr(123);
     ASSERT_NE(str, nullptr);
     EXPECT_TRUE(node_equals_cstr(str, "123"));
     ctx.delete_string(str);
@@ -328,7 +325,7 @@ TEST_F(SnobolTest, Binstr_PositiveNumber)
 
 TEST_F(SnobolTest, Binstr_NegativeNumber)
 {
-    node_t *str = ctx.binstr(-456);
+    Node *str = ctx.binstr(-456);
     ASSERT_NE(str, nullptr);
     EXPECT_TRUE(node_equals_cstr(str, "-456"));
     ctx.delete_string(str);
@@ -336,7 +333,7 @@ TEST_F(SnobolTest, Binstr_NegativeNumber)
 
 TEST_F(SnobolTest, Binstr_Zero)
 {
-    node_t *str = ctx.binstr(0);
+    Node *str = ctx.binstr(0);
     ASSERT_NE(str, nullptr);
     EXPECT_TRUE(node_equals_cstr(str, "0"));
     ctx.delete_string(str);
@@ -344,7 +341,7 @@ TEST_F(SnobolTest, Binstr_Zero)
 
 TEST_F(SnobolTest, Binstr_LargeNumber)
 {
-    node_t *str = ctx.binstr(999999);
+    Node *str = ctx.binstr(999999);
     ASSERT_NE(str, nullptr);
     EXPECT_TRUE(node_equals_cstr(str, "999999"));
     ctx.delete_string(str);
@@ -354,7 +351,7 @@ TEST_F(SnobolTest, RoundTripConversion)
 {
     int values[] = { 0, 1, -1, 123, -456, 9999, -9999 };
     for (int val : values) {
-        node_t *str   = ctx.binstr(val);
+        Node *str   = ctx.binstr(val);
         int converted = ctx.strbin(str);
         EXPECT_EQ(converted, val) << "Round-trip failed for value " << val;
         ctx.delete_string(str);
@@ -367,10 +364,10 @@ TEST_F(SnobolTest, RoundTripConversion)
 
 TEST_F(SnobolTest, Add_PositiveNumbers)
 {
-    node_t *str1 = ctx.cstr_to_node("10");
-    node_t *str2 = ctx.cstr_to_node("20");
+    Node *str1 = ctx.cstr_to_node("10");
+    Node *str2 = ctx.cstr_to_node("20");
 
-    node_t *result = ctx.add(str1, str2);
+    Node *result = ctx.add(str1, str2);
     ASSERT_NE(result, nullptr);
     EXPECT_TRUE(node_equals_cstr(result, "30"));
 
@@ -381,10 +378,10 @@ TEST_F(SnobolTest, Add_PositiveNumbers)
 
 TEST_F(SnobolTest, Add_NegativeNumbers)
 {
-    node_t *str1 = ctx.cstr_to_node("-10");
-    node_t *str2 = ctx.cstr_to_node("-20");
+    Node *str1 = ctx.cstr_to_node("-10");
+    Node *str2 = ctx.cstr_to_node("-20");
 
-    node_t *result = ctx.add(str1, str2);
+    Node *result = ctx.add(str1, str2);
     ASSERT_NE(result, nullptr);
     EXPECT_TRUE(node_equals_cstr(result, "-30"));
 
@@ -395,10 +392,10 @@ TEST_F(SnobolTest, Add_NegativeNumbers)
 
 TEST_F(SnobolTest, Add_MixedSigns)
 {
-    node_t *str1 = ctx.cstr_to_node("10");
-    node_t *str2 = ctx.cstr_to_node("-5");
+    Node *str1 = ctx.cstr_to_node("10");
+    Node *str2 = ctx.cstr_to_node("-5");
 
-    node_t *result = ctx.add(str1, str2);
+    Node *result = ctx.add(str1, str2);
     ASSERT_NE(result, nullptr);
     EXPECT_TRUE(node_equals_cstr(result, "5"));
 
@@ -409,10 +406,10 @@ TEST_F(SnobolTest, Add_MixedSigns)
 
 TEST_F(SnobolTest, Add_WithZero)
 {
-    node_t *str1 = ctx.cstr_to_node("42");
-    node_t *str2 = ctx.cstr_to_node("0");
+    Node *str1 = ctx.cstr_to_node("42");
+    Node *str2 = ctx.cstr_to_node("0");
 
-    node_t *result = ctx.add(str1, str2);
+    Node *result = ctx.add(str1, str2);
     ASSERT_NE(result, nullptr);
     EXPECT_TRUE(node_equals_cstr(result, "42"));
 
@@ -423,10 +420,10 @@ TEST_F(SnobolTest, Add_WithZero)
 
 TEST_F(SnobolTest, Sub_PositiveNumbers)
 {
-    node_t *str1 = ctx.cstr_to_node("20");
-    node_t *str2 = ctx.cstr_to_node("10");
+    Node *str1 = ctx.cstr_to_node("20");
+    Node *str2 = ctx.cstr_to_node("10");
 
-    node_t *result = ctx.sub(str1, str2);
+    Node *result = ctx.sub(str1, str2);
     ASSERT_NE(result, nullptr);
     EXPECT_TRUE(node_equals_cstr(result, "10"));
 
@@ -437,10 +434,10 @@ TEST_F(SnobolTest, Sub_PositiveNumbers)
 
 TEST_F(SnobolTest, Sub_NegativeResult)
 {
-    node_t *str1 = ctx.cstr_to_node("10");
-    node_t *str2 = ctx.cstr_to_node("20");
+    Node *str1 = ctx.cstr_to_node("10");
+    Node *str2 = ctx.cstr_to_node("20");
 
-    node_t *result = ctx.sub(str1, str2);
+    Node *result = ctx.sub(str1, str2);
     ASSERT_NE(result, nullptr);
     EXPECT_TRUE(node_equals_cstr(result, "-10"));
 
@@ -451,10 +448,10 @@ TEST_F(SnobolTest, Sub_NegativeResult)
 
 TEST_F(SnobolTest, Sub_NegativeNumbers)
 {
-    node_t *str1 = ctx.cstr_to_node("-10");
-    node_t *str2 = ctx.cstr_to_node("-20");
+    Node *str1 = ctx.cstr_to_node("-10");
+    Node *str2 = ctx.cstr_to_node("-20");
 
-    node_t *result = ctx.sub(str1, str2);
+    Node *result = ctx.sub(str1, str2);
     ASSERT_NE(result, nullptr);
     EXPECT_TRUE(node_equals_cstr(result, "10"));
 
@@ -465,10 +462,10 @@ TEST_F(SnobolTest, Sub_NegativeNumbers)
 
 TEST_F(SnobolTest, Mult_PositiveNumbers)
 {
-    node_t *str1 = ctx.cstr_to_node("6");
-    node_t *str2 = ctx.cstr_to_node("7");
+    Node *str1 = ctx.cstr_to_node("6");
+    Node *str2 = ctx.cstr_to_node("7");
 
-    node_t *result = ctx.mult(str1, str2);
+    Node *result = ctx.mult(str1, str2);
     ASSERT_NE(result, nullptr);
     EXPECT_TRUE(node_equals_cstr(result, "42"));
 
@@ -479,10 +476,10 @@ TEST_F(SnobolTest, Mult_PositiveNumbers)
 
 TEST_F(SnobolTest, Mult_WithZero)
 {
-    node_t *str1 = ctx.cstr_to_node("42");
-    node_t *str2 = ctx.cstr_to_node("0");
+    Node *str1 = ctx.cstr_to_node("42");
+    Node *str2 = ctx.cstr_to_node("0");
 
-    node_t *result = ctx.mult(str1, str2);
+    Node *result = ctx.mult(str1, str2);
     ASSERT_NE(result, nullptr);
     EXPECT_TRUE(node_equals_cstr(result, "0"));
 
@@ -493,10 +490,10 @@ TEST_F(SnobolTest, Mult_WithZero)
 
 TEST_F(SnobolTest, Mult_NegativeNumbers)
 {
-    node_t *str1 = ctx.cstr_to_node("-6");
-    node_t *str2 = ctx.cstr_to_node("7");
+    Node *str1 = ctx.cstr_to_node("-6");
+    Node *str2 = ctx.cstr_to_node("7");
 
-    node_t *result = ctx.mult(str1, str2);
+    Node *result = ctx.mult(str1, str2);
     ASSERT_NE(result, nullptr);
     EXPECT_TRUE(node_equals_cstr(result, "-42"));
 
@@ -507,10 +504,10 @@ TEST_F(SnobolTest, Mult_NegativeNumbers)
 
 TEST_F(SnobolTest, Divide_PositiveNumbers)
 {
-    node_t *str1 = ctx.cstr_to_node("20");
-    node_t *str2 = ctx.cstr_to_node("4");
+    Node *str1 = ctx.cstr_to_node("20");
+    Node *str2 = ctx.cstr_to_node("4");
 
-    node_t *result = ctx.divide(str1, str2);
+    Node *result = ctx.divide(str1, str2);
     ASSERT_NE(result, nullptr);
     EXPECT_TRUE(node_equals_cstr(result, "5"));
 
@@ -521,10 +518,10 @@ TEST_F(SnobolTest, Divide_PositiveNumbers)
 
 TEST_F(SnobolTest, Divide_NegativeNumbers)
 {
-    node_t *str1 = ctx.cstr_to_node("-20");
-    node_t *str2 = ctx.cstr_to_node("4");
+    Node *str1 = ctx.cstr_to_node("-20");
+    Node *str2 = ctx.cstr_to_node("4");
 
-    node_t *result = ctx.divide(str1, str2);
+    Node *result = ctx.divide(str1, str2);
     ASSERT_NE(result, nullptr);
     EXPECT_TRUE(node_equals_cstr(result, "-5"));
 
@@ -535,10 +532,10 @@ TEST_F(SnobolTest, Divide_NegativeNumbers)
 
 TEST_F(SnobolTest, Divide_Truncation)
 {
-    node_t *str1 = ctx.cstr_to_node("7");
-    node_t *str2 = ctx.cstr_to_node("3");
+    Node *str1 = ctx.cstr_to_node("7");
+    Node *str2 = ctx.cstr_to_node("3");
 
-    node_t *result = ctx.divide(str1, str2);
+    Node *result = ctx.divide(str1, str2);
     ASSERT_NE(result, nullptr);
     EXPECT_TRUE(node_equals_cstr(result, "2")); // Integer division
 
@@ -553,23 +550,23 @@ TEST_F(SnobolTest, Divide_Truncation)
 
 TEST_F(SnobolTest, Init_CreatesSymbol)
 {
-    node_t *sym = ctx.init("testvar", EXPR_VAR_REF);
+    Node *sym = ctx.init("testvar", EXPR_VAR_REF);
     ASSERT_NE(sym, nullptr);
     EXPECT_EQ(sym->typ, 0);
 }
 
 TEST_F(SnobolTest, Init_SetsType)
 {
-    node_t *sym = ctx.init("mytype", EXPR_FUNCTION);
+    Node *sym = ctx.init("mytype", EXPR_FUNCTION);
     ASSERT_NE(sym, nullptr);
     EXPECT_EQ(sym->typ, EXPR_FUNCTION);
 }
 
 TEST_F(SnobolTest, Look_FindsExistingSymbol)
 {
-    node_t *sym1 = ctx.init("lookup_test", EXPR_SYSPIT);
-    node_t *str  = ctx.cstr_to_node("lookup_test");
-    node_t *sym2 = ctx.look(str);
+    Node *sym1 = ctx.init("lookup_test", EXPR_SYSPIT);
+    Node *str  = ctx.cstr_to_node("lookup_test");
+    Node *sym2 = ctx.look(str);
 
     // Should return the same symbol
     EXPECT_EQ(sym1, sym2);
@@ -579,8 +576,8 @@ TEST_F(SnobolTest, Look_FindsExistingSymbol)
 
 TEST_F(SnobolTest, Look_CreatesNewSymbol)
 {
-    node_t *str = ctx.cstr_to_node("new_symbol");
-    node_t *sym = ctx.look(str);
+    Node *str = ctx.cstr_to_node("new_symbol");
+    Node *sym = ctx.look(str);
 
     ASSERT_NE(sym, nullptr);
     EXPECT_EQ(sym->typ, 0); // Default type
@@ -590,11 +587,11 @@ TEST_F(SnobolTest, Look_CreatesNewSymbol)
 
 TEST_F(SnobolTest, Look_SameNameReturnsSameSymbol)
 {
-    node_t *str1 = ctx.cstr_to_node("same_name");
-    node_t *str2 = ctx.cstr_to_node("same_name");
+    Node *str1 = ctx.cstr_to_node("same_name");
+    Node *str2 = ctx.cstr_to_node("same_name");
 
-    node_t *sym1 = ctx.look(str1);
-    node_t *sym2 = ctx.look(str2);
+    Node *sym1 = ctx.look(str1);
+    Node *sym2 = ctx.look(str2);
 
     // Should return the same symbol
     EXPECT_EQ(sym1, sym2);

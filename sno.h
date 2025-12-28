@@ -31,25 +31,21 @@ enum class CharClass {
 // Uses STMT_* prefix for statement types
 //
 enum class Token {
-    // Value 0: End marker / Variable reference / Simple statement
+    // Value 0: End marker / Variable reference
     TOKEN_END    = 0,
     EXPR_VAR_REF = 0,
-    STMT_SIMPLE  = 0,
 
-    // Value 1: Unanchored search / Value / Pattern matching statement
+    // Value 1: Unanchored search / Value
     TOKEN_UNANCHORED = 1,
     EXPR_VALUE       = 1,
-    STMT_MATCH       = 1,
 
-    // Value 2: Pattern alternation / Label / Assignment statement
+    // Value 2: Pattern alternation / Label
     TOKEN_ALTERNATION = 2,
     EXPR_LABEL        = 2,
-    STMT_ASSIGN       = 2,
 
-    // Value 3: Equals / System input function / Pattern replacement
+    // Value 3: Equals / System input function
     TOKEN_EQUALS = 3,
     EXPR_SYSPIT  = 3,
-    STMT_REPLACE = 3,
 
     // Value 4: Comma / System output
     TOKEN_COMMA = 4,
@@ -90,7 +86,13 @@ enum class Token {
     TOKEN_STRING = 15,
 
     // Value 16: Left parenthesis
-    TOKEN_LPAREN = 16
+    TOKEN_LPAREN = 16,
+
+    // Program statements
+    STMT_SIMPLE  = 100, // Expression evaluation statement
+    STMT_MATCH   = 101, // Pattern matching statement
+    STMT_ASSIGN  = 102, // Assignment statement
+    STMT_REPLACE = 103, // Pattern replacement
 };
 
 //

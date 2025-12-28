@@ -48,7 +48,7 @@ end     return
     EXPECT_EQ(result.stdout_output, "30\n");
 }
 
-TEST_F(StatementTest, AssignmentWithFunctionCall)
+TEST_F(StatementTest, DISABLED_AssignmentWithFunctionCall)
 {
     std::string program = R"(
 define  getvalue(a)

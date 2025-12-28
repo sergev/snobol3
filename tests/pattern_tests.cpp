@@ -83,11 +83,11 @@ end         syspot = "done"
     EXPECT_EQ(result.stdout_output, "found\ndone\n");
 }
 
-TEST_F(PatternTest, DISABLED_PatternConcatenation)
+TEST_F(PatternTest, PatternConcatenation)
 {
     std::string program = R"(
 start       str = "hello world"
-            str "hello" "world"     /s(found)f(notfound)
+            str "hello" " world"    /s(found)f(notfound)
 found       syspot = "found"        /(end)
 notfound    syspot = "not found"
 end         syspot = "done"

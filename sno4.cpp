@@ -83,14 +83,6 @@ l1:
         stack->typ = Token::EXPR_VAR_REF; // Mark as variable reference
         goto advanc;
     case Token::EXPR_CALL: // Function call
-        // Debug: print EXPR_CALL node in eval
-        std::cerr << "\n=== DEBUG: EXPR_CALL node in eval() ===\n";
-        std::cerr << "list->typ = EXPR_CALL\n";
-        std::cerr << "list->p1 = ";
-        if (list->p1) list->p1->debug_print(std::cerr, 0, 3); else std::cerr << "NULL\n";
-        std::cerr << "list->p2 = ";
-        if (list->p2) list->p2->debug_print(std::cerr, 0, 3); else std::cerr << "NULL\n";
-        std::cerr << "======================================\n\n";
         if (stack->typ != Token::EXPR_VAR_REF)
             writes("illegal function");
         a1 = stack->p1;
@@ -131,7 +123,14 @@ l1:
             if (op_ptr)
                 goto f3;
             // Restore parameter values
-            a1 = stack->p1->p2;
+            // Get a_ptr: stack->p1 is function name, need to get back to a_ptr
+            // stack->p1 is TOKEN_VARIABLE node, stack->p1->p1 is symbol (EXPR_FUNCTION)
+            // symbol->p2 is a_ptr
+            a1 = stack->p1;
+            if (a1->typ == Token::TOKEN_VARIABLE) {
+                a1 = a1->p1; // Get symbol
+            }
+            a1 = a1->p2; // Get a_ptr
             {
                 Node *op_ptr2 = a1->p1;
                 a3            = a3base;

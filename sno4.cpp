@@ -267,9 +267,7 @@ Node *SnobolContext::execute(const Node &e)
             assign(*b, *c);
             free_node(*d);
             delete_string(c);
-            goto xsuc;
-        }
-        {
+        } else {
             // Build result: [before] + [replacement] + [after]
             Node* result = c;
             // Add part before match if match doesn't start at beginning
@@ -291,8 +289,8 @@ Node *SnobolContext::execute(const Node &e)
             assign(*b, *result);
             free_node(*d);
             delete_string(c);
-            goto xsuc;
         }
+        goto xsuc;
 
     default:
         // Invalid statement type

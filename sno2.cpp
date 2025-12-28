@@ -436,7 +436,7 @@ l2:
         goto merr;
     }
     if (term)
-        term->typ = Token::TOKEN_EQUALS; // Mark term as concatenated
+        term->typ = Token::STMT_REPLACE; // Mark term as pattern replacement
     list->typ = Token::TOKEN_END;
     return *comp;
 
@@ -487,7 +487,7 @@ Node *SnobolContext::compile()
     a    = comp->typ;
     if (a == Token::TOKEN_END) // End of statement
         goto asmble;
-    if (a == Token::TOKEN_ALTERNATION) // Comma - goto statement
+    if (a == Token::TOKEN_ALTERNATION) // Slash - goto statement
         goto xfer;
     if (a == Token::TOKEN_EQUALS) // Equals - assignment
         goto assig;
@@ -614,7 +614,7 @@ asmble:
         free_node(*xf);
     }
     r->p1     = g;  // Link goto structure to statement
-    comp->typ = t;  // Statement type: 0=simple, 1=match, 2=assign
+    comp->typ = t;  // Statement type: 0=simple, 1=match, 2=assign, 3=replace
     comp->ch  = lc; // Store line number
     return (comp);
 

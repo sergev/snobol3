@@ -228,7 +228,7 @@ Node *SnobolContext::execute(const Node &e)
         b  = eval(*r->p2, 0);          // Get variable reference
         assign(*b, *eval(*ca->p2, 1)); // Assign value
         goto xsuc;
-    case Token::TOKEN_EQUALS:   // r m a g - Pattern matching with assignment (value 3)
+    case Token::STMT_REPLACE:   // r m a g - Pattern replacement
         m  = r->p1;             // Match pattern
         ca = m->p1;             // Assignment structure
         a  = ca->p1;            // Goto structure

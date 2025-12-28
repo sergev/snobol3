@@ -98,7 +98,7 @@ end         syspot = "done"
     EXPECT_EQ(result.stdout_output, "found\ndone\n");
 }
 
-TEST_F(PatternTest, DISABLED_PatternReplacement)
+TEST_F(PatternTest, PatternReplacement)
 {
     std::string program = R"(
 start   str = "hello world"

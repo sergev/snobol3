@@ -46,9 +46,10 @@ enum class Token {
     EXPR_LABEL        = 2,
     STMT_ASSIGN       = 2,
 
-    // Value 3: Equals / System input function
+    // Value 3: Equals / System input function / Pattern replacement
     TOKEN_EQUALS = 3,
     EXPR_SYSPIT  = 3,
+    STMT_REPLACE = 3,
 
     // Value 4: Comma / System output
     TOKEN_COMMA = 4,

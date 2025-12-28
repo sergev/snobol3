@@ -1,4 +1,6 @@
 #include "sno.h"
+#include <fstream>
+#include <ctime>
 
 //
 // Evaluate an operand from the evaluation stack.
@@ -229,14 +231,64 @@ Node *SnobolContext::execute(const Node &e)
         assign(*b, *eval(*ca->p2, 1)); // Assign value
         goto xsuc;
     case Token::STMT_REPLACE:   // r m a g - Pattern replacement
+        // #region agent log
+        {
+            std::ofstream log_file("/Users/vak/Project/Cursor/snobol3/.cursor/debug.log", std::ios::app);
+            if (log_file.is_open()) {
+                auto now = std::time(nullptr);
+                log_file << "{\"id\":\"log_exec_" << now << "\",\"timestamp\":" << (now * 1000) << ",\"location\":\"sno4.cpp:231\",\"message\":\"Executing STMT_REPLACE\",\"data\":{\"rIsNull\":" << (r == nullptr ? 1 : 0) << ",\"rP1IsNull\":" << (r && r->p1 == nullptr ? 1 : 0) << "},\"sessionId\":\"debug-session\",\"runId\":\"post-fix\"}\n";
+                log_file.close();
+            }
+        }
+        // #endregion agent log
         m  = r->p1;             // Match pattern
+        // #region agent log
+        {
+            std::ofstream log_file("/Users/vak/Project/Cursor/snobol3/.cursor/debug.log", std::ios::app);
+            if (log_file.is_open()) {
+                auto now = std::time(nullptr);
+                log_file << "{\"id\":\"log_exec_" << now << "\",\"timestamp\":" << (now * 1000) << ",\"location\":\"sno4.cpp:233\",\"message\":\"Got match pattern\",\"data\":{\"mIsNull\":" << (m == nullptr ? 1 : 0) << ",\"mP1IsNull\":" << (m && m->p1 == nullptr ? 1 : 0) << "},\"sessionId\":\"debug-session\",\"runId\":\"post-fix\"}\n";
+                log_file.close();
+            }
+        }
+        // #endregion agent log
         ca = m->p1;             // Assignment structure
         a  = ca->p1;            // Goto structure
         b  = eval(*r->p2, 0);   // Get variable reference
+        // #region agent log
+        {
+            std::ofstream log_file("/Users/vak/Project/Cursor/snobol3/.cursor/debug.log", std::ios::app);
+            if (log_file.is_open()) {
+                auto now = std::time(nullptr);
+                log_file << "{\"id\":\"log_exec_" << now << "\",\"timestamp\":" << (now * 1000) << ",\"location\":\"sno4.cpp:235\",\"message\":\"Got variable reference\",\"data\":{\"bIsNull\":" << (b == nullptr ? 1 : 0) << ",\"bP2IsNull\":" << (b && b->p2 == nullptr ? 1 : 0) << "},\"sessionId\":\"debug-session\",\"runId\":\"post-fix\"}\n";
+                log_file.close();
+            }
+        }
+        // #endregion agent log
         d  = search(*m, b->p2); // Search pattern in variable's value
+        // #region agent log
+        {
+            std::ofstream log_file("/Users/vak/Project/Cursor/snobol3/.cursor/debug.log", std::ios::app);
+            if (log_file.is_open()) {
+                auto now = std::time(nullptr);
+                log_file << "{\"id\":\"log_exec_" << now << "\",\"timestamp\":" << (now * 1000) << ",\"location\":\"sno4.cpp:236\",\"message\":\"Pattern search result\",\"data\":{\"dIsNull\":" << (d == nullptr ? 1 : 0) << "},\"sessionId\":\"debug-session\",\"runId\":\"post-fix\"}\n";
+                log_file.close();
+            }
+        }
+        // #endregion agent log
         if (d == nullptr)
             goto xfail;
         c = eval(*ca->p2, 1); // Evaluate replacement value
+        // #region agent log
+        {
+            std::ofstream log_file("/Users/vak/Project/Cursor/snobol3/.cursor/debug.log", std::ios::app);
+            if (log_file.is_open()) {
+                auto now = std::time(nullptr);
+                log_file << "{\"id\":\"log_exec_" << now << "\",\"timestamp\":" << (now * 1000) << ",\"location\":\"sno4.cpp:239\",\"message\":\"Evaluated replacement value\",\"data\":{\"cIsNull\":" << (c == nullptr ? 1 : 0) << "},\"sessionId\":\"debug-session\",\"runId\":\"post-fix\"}\n";
+                log_file.close();
+            }
+        }
+        // #endregion agent log
         if (d->p1 == nullptr) {
             // Match at end - append
             free_node(*d);

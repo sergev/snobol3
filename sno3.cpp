@@ -1,4 +1,6 @@
 #include "sno.h"
+#include <fstream>
+#include <ctime>
 
 //
 // Extend a balanced pattern match (handles nested parentheses).
@@ -90,6 +92,25 @@ Node *SnobolContext::search(const Node &arg, Node *r)
     Token d_token;
     int d{}, len;
 
+    // #region agent log
+    {
+        std::ofstream log_file("/Users/vak/Project/Cursor/snobol3/.cursor/debug.log", std::ios::app);
+        if (log_file.is_open()) {
+            auto now = std::time(nullptr);
+            log_file << "{\"id\":\"log_search_" << now << "\",\"timestamp\":" << (now * 1000) << ",\"location\":\"sno3.cpp:85\",\"message\":\"search() called\",\"data\":{\"argP2IsNull\":" << (arg.p2 == nullptr ? 1 : 0) << ",\"rIsNull\":" << (r == nullptr ? 1 : 0) << "},\"sessionId\":\"debug-session\",\"runId\":\"post-fix\"}\n";
+            if (arg.p2) {
+                int componentCount = 0;
+                Node* comp = arg.p2;
+                while (comp && comp->typ != Token::TOKEN_END) {
+                    componentCount++;
+                    comp = comp->p1;
+                }
+                log_file << "{\"id\":\"log_search_" << now << "_2\",\"timestamp\":" << (now * 1000) << ",\"location\":\"sno3.cpp:85\",\"message\":\"Pattern component count\",\"data\":{\"componentCount\":" << componentCount << "},\"sessionId\":\"debug-session\",\"runId\":\"post-fix\"}\n";
+            }
+            log_file.close();
+        }
+    }
+    // #endregion agent log
     // Initialize pattern matching state
     a    = arg.p2;          // Start of pattern component list
     list = base = &alloc(); // Base of matching state list
@@ -99,6 +120,16 @@ Node *SnobolContext::search(const Node &arg, Node *r)
 badvanc:
     // Build pattern matching state from pattern components
     a = a->p1;
+    // #region agent log
+    {
+        std::ofstream log_file("/Users/vak/Project/Cursor/snobol3/.cursor/debug.log", std::ios::app);
+        if (log_file.is_open()) {
+            auto now = std::time(nullptr);
+            log_file << "{\"id\":\"log_search_" << now << "_3\",\"timestamp\":" << (now * 1000) << ",\"location\":\"sno3.cpp:102\",\"message\":\"Processing pattern component\",\"data\":{\"aIsNull\":" << (a == nullptr ? 1 : 0) << ",\"aTyp\":" << (a ? static_cast<int>(a->typ) : -1) << "},\"sessionId\":\"debug-session\",\"runId\":\"post-fix\"}\n";
+            log_file.close();
+        }
+    }
+    // #endregion agent log
     if (a->typ == Token::TOKEN_END) {
         // End of pattern - initialize search
         list->p1 = nullptr;
@@ -113,6 +144,16 @@ badvanc:
             next = r->p1; // Start of subject string
             last = r->p2; // End of subject string
         }
+        // #region agent log
+        {
+            std::ofstream log_file("/Users/vak/Project/Cursor/snobol3/.cursor/debug.log", std::ios::app);
+            if (log_file.is_open()) {
+                auto now = std::time(nullptr);
+                log_file << "{\"id\":\"log_search_" << now << "_4\",\"timestamp\":" << (now * 1000) << ",\"location\":\"sno3.cpp:116\",\"message\":\"Initializing search\",\"data\":{\"nextIsNull\":" << (next == nullptr ? 1 : 0) << ",\"lastIsNull\":" << (last == nullptr ? 1 : 0) << "},\"sessionId\":\"debug-session\",\"runId\":\"post-fix\"}\n";
+                log_file.close();
+            }
+        }
+        // #endregion agent log
         goto adv1;
     }
     b        = &alloc();
@@ -120,11 +161,31 @@ badvanc:
     list     = b;
 badv1:
     // Set up backtracking structure for this pattern component
+    // #region agent log
+    {
+        std::ofstream log_file("/Users/vak/Project/Cursor/snobol3/.cursor/debug.log", std::ios::app);
+        if (log_file.is_open()) {
+            auto now = std::time(nullptr);
+            log_file << "{\"id\":\"log_search_" << now << "_badv1\",\"timestamp\":" << (now * 1000) << ",\"location\":\"sno3.cpp:badv1\",\"message\":\"Setting up pattern component\",\"data\":{\"aIsNull\":" << (a == nullptr ? 1 : 0) << ",\"aTyp\":" << (a ? static_cast<int>(a->typ) : -1) << ",\"aP2IsNull\":" << (a && a->p2 == nullptr ? 1 : 0) << "},\"sessionId\":\"debug-session\",\"runId\":\"post-fix\"}\n";
+            log_file.close();
+        }
+    }
+    // #endregion agent log
     list->p2 = back = &alloc();
     back->p1        = last;
     b               = a->p2;
     c               = a->typ;
     list->typ       = c;
+    // #region agent log
+    {
+        std::ofstream log_file("/Users/vak/Project/Cursor/snobol3/.cursor/debug.log", std::ios::app);
+        if (log_file.is_open()) {
+            auto now = std::time(nullptr);
+            log_file << "{\"id\":\"log_search_" << now << "_5\",\"timestamp\":" << (now * 1000) << ",\"location\":\"sno3.cpp:127\",\"message\":\"Pattern component type\",\"data\":{\"c\":" << static_cast<int>(c) << ",\"isSimple\":" << (static_cast<int>(c) < static_cast<int>(Token::STMT_ASSIGN) ? 1 : 0) << "},\"sessionId\":\"debug-session\",\"runId\":\"post-fix\"}\n";
+            log_file.close();
+        }
+    }
+    // #endregion agent log
     if (static_cast<int>(c) < static_cast<int>(Token::STMT_ASSIGN)) {
         // Simple pattern component - evaluate and store
         back->p2 = eval(*b, 1);
@@ -189,6 +250,16 @@ advanc:
     if (a == nullptr) {
         // End of pattern - check if match succeeded
         a = &alloc();
+        // #region agent log
+        {
+            std::ofstream log_file("/Users/vak/Project/Cursor/snobol3/.cursor/debug.log", std::ios::app);
+            if (log_file.is_open()) {
+                auto now = std::time(nullptr);
+                log_file << "{\"id\":\"log_search_" << now << "_6\",\"timestamp\":" << (now * 1000) << ",\"location\":\"sno3.cpp:189\",\"message\":\"End of pattern reached\",\"data\":{\"rIsNull\":" << (r == nullptr ? 1 : 0) << ",\"nextIsNull\":" << (next == nullptr ? 1 : 0) << "},\"sessionId\":\"debug-session\",\"runId\":\"post-fix\"}\n";
+                log_file.close();
+            }
+        }
+        // #endregion agent log
         if (r == nullptr) {
             a->p1 = a->p2 = nullptr;
             goto fail;
@@ -214,8 +285,28 @@ adv1:
     back    = list->p2;
     var     = back->p2;
     d_token = list->typ;
+    // #region agent log
+    {
+        std::ofstream log_file("/Users/vak/Project/Cursor/snobol3/.cursor/debug.log", std::ios::app);
+        if (log_file.is_open()) {
+            auto now = std::time(nullptr);
+            log_file << "{\"id\":\"log_search_" << now << "_adv1\",\"timestamp\":" << (now * 1000) << ",\"location\":\"sno3.cpp:adv1\",\"message\":\"Starting matching phase\",\"data\":{\"d_token\":" << static_cast<int>(d_token) << ",\"isSimple\":" << (static_cast<int>(d_token) < 2 ? 1 : 0) << ",\"nextIsNull\":" << (next == nullptr ? 1 : 0) << ",\"lastIsNull\":" << (last == nullptr ? 1 : 0) << "},\"sessionId\":\"debug-session\",\"runId\":\"post-fix\"}\n";
+            log_file.close();
+        }
+    }
+    // #endregion agent log
     if (static_cast<int>(d_token) < 2) {
         // Simple pattern - match string directly
+        // #region agent log
+        {
+            std::ofstream log_file("/Users/vak/Project/Cursor/snobol3/.cursor/debug.log", std::ios::app);
+            if (log_file.is_open()) {
+                auto now = std::time(nullptr);
+                log_file << "{\"id\":\"log_search_" << now << "_simple\",\"timestamp\":" << (now * 1000) << ",\"location\":\"sno3.cpp:simple\",\"message\":\"Matching simple pattern\",\"data\":{\"varIsNull\":" << (var == nullptr ? 1 : 0) << ",\"nextIsNull\":" << (next == nullptr ? 1 : 0) << "},\"sessionId\":\"debug-session\",\"runId\":\"post-fix\"}\n";
+                log_file.close();
+            }
+        }
+        // #endregion agent log
         if (var == nullptr)
             goto advanc;
         if (next == nullptr)

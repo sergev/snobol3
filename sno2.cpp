@@ -1,4 +1,18 @@
 #include "sno.h"
+#include <fstream>
+#include <sstream>
+#include <ctime>
+
+// #region agent log
+static void debug_log(const char* location, const char* message, const char* data_json) {
+    std::ofstream log_file("/Users/vak/Project/Cursor/snobol3/.cursor/debug.log", std::ios::app);
+    if (log_file.is_open()) {
+        auto now = std::time(nullptr);
+        log_file << "{\"id\":\"log_" << now << "\",\"timestamp\":" << (now * 1000) << ",\"location\":\"" << location << "\",\"message\":\"" << message << "\",\"data\":" << data_json << ",\"sessionId\":\"debug-session\",\"runId\":\"run1\"}\n";
+        log_file.close();
+    }
+}
+// #endregion agent log
 
 //
 // Parse the next component (token) from the input stream.
@@ -429,14 +443,21 @@ l2:
     case Token::TOKEN_EQUALS:      // Equals (assignment)
     case Token::TOKEN_RPAREN:      // Right paren (used in expressions)
         // End of pattern - fall through to normal return
+        // #region agent log
+        {
+            std::ostringstream oss;
+            oss << "{\"token\":" << static_cast<int>(comp->typ) << ",\"termIsNull\":" << (term == nullptr ? 1 : 0) << "}";
+            debug_log("sno2.cpp:432", "End of pattern in match()", oss.str().c_str());
+        }
+        // #endregion agent log
         break;
 
     default:
         // Other token types not valid in pattern context
         goto merr;
     }
-    if (term)
-        term->typ = Token::STMT_REPLACE; // Mark term as pattern replacement
+    // Note: We don't set term->typ = STMT_REPLACE here because it would break pattern matching.
+    // Instead, we detect replacement in compile() by checking if both m and as exist.
     list->typ = Token::TOKEN_END;
     return *comp;
 
@@ -485,6 +506,13 @@ Node *SnobolContext::compile()
     r    = &alloc();
     comp = &expr(nullptr, Token::TOKEN_DIV, *r);
     a    = comp->typ;
+    // #region agent log
+    {
+        std::ostringstream oss;
+        oss << "{\"tokenAfterExpr\":" << static_cast<int>(a) << ",\"mIsNull\":" << (m == nullptr ? 1 : 0) << "}";
+        debug_log("sno2.cpp:487", "After expr() in compile()", oss.str().c_str());
+    }
+    // #endregion agent log
     if (a == Token::TOKEN_END) // End of statement
         goto asmble;
     if (a == Token::TOKEN_ALTERNATION) // Slash - goto statement
@@ -495,17 +523,39 @@ Node *SnobolContext::compile()
     m    = &alloc();
     comp = &match(comp, *m);
     a    = comp->typ;
+    // #region agent log
+    {
+        std::ostringstream oss;
+        oss << "{\"tokenAfterMatch\":" << static_cast<int>(a) << ",\"mIsNull\":" << (m == nullptr ? 1 : 0) << "}";
+        debug_log("sno2.cpp:497", "After match() in compile()", oss.str().c_str());
+    }
+    // #endregion agent log
     if (a == Token::TOKEN_END)
         goto asmble;
     if (a == Token::TOKEN_ALTERNATION)
         goto xfer;
-    if (a == Token::TOKEN_EQUALS)
+    if (a == Token::TOKEN_EQUALS) {
+        // #region agent log
+        {
+            std::ostringstream oss;
+            oss << "{\"mExists\":" << (m != nullptr ? 1 : 0) << ",\"goingToAssig\":1}";
+            debug_log("sno2.cpp:502", "TOKEN_EQUALS after match(), going to assig", oss.str().c_str());
+        }
+        // #endregion agent log
         goto assig;
+    }
     writes("unrecognized component in match");
     return nullptr;
 
 assig:
     // Parse assignment value
+    // #region agent log
+    {
+        std::ostringstream oss;
+        oss << "{\"mExists\":" << (m != nullptr ? 1 : 0) << ",\"asIsNull\":" << (as == nullptr ? 1 : 0) << "}";
+        debug_log("sno2.cpp:509", "In assig section", oss.str().c_str());
+    }
+    // #endregion agent log
     free_node(*comp);
     as   = &alloc();
     comp = &expr(nullptr, Token::EXPR_SPECIAL, *as);
@@ -591,16 +641,37 @@ asmble:
         l->typ = Token::EXPR_LABEL; // type label;
     }
     comp->p2 = r; // Link to expression
-    if (m) {
+    // #region agent log
+    {
+        std::ostringstream oss;
+        oss << "{\"mExists\":" << (m != nullptr ? 1 : 0) << ",\"asExists\":" << (as != nullptr ? 1 : 0) << ",\"currentT\":" << static_cast<int>(t) << "}";
+        debug_log("sno2.cpp:594", "Before setting statement type in asmble", oss.str().c_str());
+    }
+    // #endregion agent log
+    // Check if this is a pattern replacement (both m and as exist)
+    // Pattern replacement occurs when match() returns TOKEN_EQUALS and we then parse an assignment
+    if (m && as) {
+        // Pattern replacement: r->p1 = m, m->p1 = as, as->p1 = g
+        t     = Token::STMT_REPLACE; // Type 3: pattern replacement
+        r->p1 = m;
+        m->p1 = as;
+        r     = as; // Set r to as for goto structure linking
+    } else if (m) {
         t     = Token::STMT_MATCH; // Type 1: pattern matching statement
         r->p1 = m;
         r     = m;
-    }
-    if (as) {
+    } else if (as) {
         t     = Token::STMT_ASSIGN; // Type 2: assignment statement
         r->p1 = as;
         r     = as;
     }
+    // #region agent log
+    {
+        std::ostringstream oss;
+        oss << "{\"finalT\":" << static_cast<int>(t) << ",\"mExists\":" << (m != nullptr ? 1 : 0) << ",\"asExists\":" << (as != nullptr ? 1 : 0) << "}";
+        debug_log("sno2.cpp:603", "After setting statement type in asmble", oss.str().c_str());
+    }
+    // #endregion agent log
     // Build goto structure: g->p1 = success goto, g->p2 = failure goto
     g     = &alloc();
     g->p1 = nullptr;

@@ -292,16 +292,16 @@ end         syspot = "done"
 TEST_F(PatternTest, PatternMatchMultipleReplacements)
 {
     std::string program = R"(
-start       str = "hello hello"
-            str "hello" = "hi"          /s(cont)f(done)
-cont        syspot = str                /(start)
+            str = "hello hello"
+loop        str "hello" = "hi"          /f(done)
+            syspot = str                /(loop)
 done        syspot = str
 end         return
 )";
 
     SnobolTestResult result = run_snobol_program(program);
-    // This will replace first occurrence, then continue
-    EXPECT_TRUE(result.success || !result.stderr_output.empty());
+    EXPECT_TRUE(result.success) << result.stderr_output;
+    EXPECT_EQ(result.stdout_output, "hi hello\nhi hi\nhi hi\n");
 }
 
 TEST_F(PatternTest, EmptyPattern)

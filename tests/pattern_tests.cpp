@@ -112,7 +112,7 @@ end     return
     EXPECT_EQ(result.stdout_output, "hello universe\n");
 }
 
-TEST_F(PatternTest, DISABLED_PatternReplacement_Failure)
+TEST_F(PatternTest, PatternReplacement_Failure)
 {
     std::string program = R"(
 start       str = "hello world"

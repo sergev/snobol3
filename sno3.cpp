@@ -148,7 +148,7 @@ badv1:
         mes("alternations are not supported yet");
         return nullptr;
     }
-    if (static_cast<int>(c) < static_cast<int>(Token::STMT_ASSIGN)) {
+    if (c < Token::TOKEN_ALTERNATION) {
         // Simple pattern component - evaluate and store
         back->p2 = eval(*b, 1);
         goto badvanc;
@@ -245,7 +245,7 @@ adv1:
     back    = list->p2;
     var     = back->p2;
     d_token = list->typ;
-    if (static_cast<int>(d_token) < 2) {
+    if (d_token < Token::TOKEN_ALTERNATION) {
         // Simple pattern - match string directly
         if (var == nullptr)
             goto advanc;
@@ -317,7 +317,7 @@ fadv:
 f1:
     back = list->p2;
     var  = back->p2;
-    if (static_cast<int>(list->typ) < static_cast<int>(Token::TOKEN_ALTERNATION)) {
+    if (list->typ < Token::TOKEN_ALTERNATION) {
         // Simple pattern - no assignment needed
         delete_string(var);
         goto fadv;

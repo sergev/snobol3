@@ -374,7 +374,7 @@ void Node::debug_print(std::ostream &os, int depth, int max_depth) const
         os << "DIV";
     } else if (typ == Token::TOKEN_DOLLAR) {
         os << "DOLLAR";
-    } else if (typ == Token::EXPR_CALL) {
+    } else if (typ == Token::TOKEN_CALL) {
         os << "CALL";
     } else if (typ == Token::TOKEN_VARIABLE) {
         os << "VARIABLE";

@@ -80,15 +80,15 @@ l1:
         delete_string(a1);
         stack->typ = Token::EXPR_VAR_REF; // Mark as variable reference
         goto advanc;
-    case Token::EXPR_CALL: // Function call
-        if (stack->typ != Token::EXPR_VAR_REF)
+    case Token::TOKEN_CALL: // Function call
+        if (!stack || stack->typ != Token::EXPR_VAR_REF)
             writes("illegal function");
         a1 = stack->p1;
         // If a1 is a variable node (TOKEN_VARIABLE), follow p1 to get the symbol
         if (a1->typ == Token::TOKEN_VARIABLE) {
             a1 = a1->p1;
         }
-        if (a1->typ != Token::EXPR_FUNCTION)
+        if (!a1 || a1->typ != Token::EXPR_FUNCTION)
             writes("illegal function");
         a1 = a1->p2; // Get a_ptr (variable node) from function symbol
         {

@@ -26,11 +26,10 @@ enum class CharClass {
 
 //
 // Token type enumeration for node types
-// Uses TOKEN_* prefix for lexical/parsing operations
-// Uses EXPR_* prefix for runtime/evaluation operations
-// Uses STMT_* prefix for statement types
 //
 enum class Token {
+
+    // Lexical/parsing operations
     TOKEN_END         = 0,  // End marker
     TOKEN_UNANCHORED  = 1,  // Unanchored search
     TOKEN_ALTERNATION = 2,  // Pattern alternation
@@ -44,13 +43,13 @@ enum class Token {
     TOKEN_MULT        = 10, // Multiplication operator
     TOKEN_DIV         = 11, // Division operator
     TOKEN_DOLLAR      = 12, // Dollar sign (pattern immediate value)
-    EXPR_CALL         = 13, // Function call
+    TOKEN_CALL        = 13, // Function call
     TOKEN_VARIABLE    = 14, // Variable reference
     TOKEN_STRING      = 15, // String literal
     TOKEN_LPAREN      = 16, // Left parenthesis
 
     // Runtime/evaluation operations
-    EXPR_VAR_REF  = 0,  // Variable reference
+    EXPR_VAR_REF  = 0,  // Variable reference TODO: use unique value
     EXPR_VALUE    = 51, // Value
     EXPR_LABEL    = 52, // Label
     EXPR_SYSPIT   = 53, // System input function

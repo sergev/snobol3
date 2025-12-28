@@ -272,7 +272,7 @@ l3:
         if (space_flag)
             goto l4;
         b  = &compon();
-        op = comp->typ = Token::EXPR_CALL; // Function call
+        op = comp->typ = Token::TOKEN_CALL; // Function call
         if (b->typ == Token::TOKEN_RPAREN) {
             // Empty argument list
             comp->p1 = nullptr;

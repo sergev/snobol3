@@ -1,4 +1,5 @@
 #include "sno.h"
+#include <iostream>
 
 //
 // Parse the next component (token) from the input stream.
@@ -289,6 +290,10 @@ l3:
         a->p1 = nullptr;
     l10:
         free_node(*b);
+        // Debug: print EXPR_CALL node after compilation
+        std::cerr << "\n=== DEBUG: EXPR_CALL node after compilation ===\n";
+        comp->debug_print(std::cerr, 0, 5);
+        std::cerr << "===========================================\n\n";
         goto l6;
 
     l4: // Implicit concatenation (space between operands)

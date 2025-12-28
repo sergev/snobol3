@@ -1,4 +1,5 @@
 #include "sno.h"
+#include <iostream>
 
 //
 // Evaluate an operand from the evaluation stack.
@@ -82,6 +83,14 @@ l1:
         stack->typ = Token::EXPR_VAR_REF; // Mark as variable reference
         goto advanc;
     case Token::EXPR_CALL: // Function call
+        // Debug: print EXPR_CALL node in eval
+        std::cerr << "\n=== DEBUG: EXPR_CALL node in eval() ===\n";
+        std::cerr << "list->typ = EXPR_CALL\n";
+        std::cerr << "list->p1 = ";
+        if (list->p1) list->p1->debug_print(std::cerr, 0, 3); else std::cerr << "NULL\n";
+        std::cerr << "list->p2 = ";
+        if (list->p2) list->p2->debug_print(std::cerr, 0, 3); else std::cerr << "NULL\n";
+        std::cerr << "======================================\n\n";
         if (stack->typ != Token::TOKEN_END)
             writes("illegal function");
         a1 = stack->p1;

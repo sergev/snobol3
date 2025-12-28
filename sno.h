@@ -105,6 +105,7 @@ struct Node {
     int equal(const Node *other) const;
     int bextend(const Node *last);
     int ubextend(const Node *last);
+    void debug_print(std::ostream &os, int depth = 0, int max_depth = 10) const;
 };
 
 //

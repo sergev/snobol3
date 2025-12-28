@@ -2,6 +2,9 @@
 // Snobol III
 //
 #include "sno.h"
+#include <iomanip>
+#include <ios>
+#include <cstdint>
 
 //
 // Constructor - initialize all fields including stream references
@@ -331,6 +334,111 @@ int Node::equal(const Node *string2) const
         }
         if (k == l)
             return (1);
+    }
+}
+
+//
+// Debug print a compact representation of the node tree.
+// Prints token type and structure, handling cycles and depth limits.
+//
+void Node::debug_print(std::ostream &os, int depth, int max_depth) const
+{
+    if (depth > max_depth) {
+        os << "...";
+        return;
+    }
+
+    // Print indentation
+    for (int i = 0; i < depth; i++) {
+        os << "  ";
+    }
+
+    // Print token type name (use if-else since some tokens share enum values)
+    int typ_val = static_cast<int>(typ);
+    if (typ == Token::TOKEN_END || typ == Token::EXPR_VAR_REF || typ == Token::STMT_SIMPLE) {
+        if (typ == Token::TOKEN_END) os << "END";
+        else if (typ == Token::EXPR_VAR_REF) os << "VAR_REF";
+        else os << "STMT_SIMPLE";
+    } else if (typ == Token::EXPR_VALUE || typ == Token::TOKEN_UNANCHORED || typ == Token::STMT_MATCH) {
+        if (typ == Token::EXPR_VALUE) os << "VALUE";
+        else if (typ == Token::TOKEN_UNANCHORED) os << "UNANCHORED";
+        else os << "STMT_MATCH";
+    } else if (typ == Token::EXPR_LABEL || typ == Token::TOKEN_ALTERNATION || typ == Token::STMT_ASSIGN) {
+        if (typ == Token::EXPR_LABEL) os << "LABEL";
+        else if (typ == Token::TOKEN_ALTERNATION) os << "ALTERNATION";
+        else os << "STMT_ASSIGN";
+    } else if (typ == Token::EXPR_SYSPIT || typ == Token::TOKEN_EQUALS || typ == Token::STMT_REPLACE) {
+        if (typ == Token::EXPR_SYSPIT) os << "SYSPIT";
+        else if (typ == Token::TOKEN_EQUALS) os << "EQUALS";
+        else os << "STMT_REPLACE";
+    } else if (typ == Token::EXPR_SYSPOT || typ == Token::TOKEN_COMMA) {
+        if (typ == Token::EXPR_SYSPOT) os << "SYSPOT";
+        else os << "COMMA";
+    } else if (typ == Token::EXPR_FUNCTION || typ == Token::TOKEN_RPAREN) {
+        if (typ == Token::EXPR_FUNCTION) os << "FUNCTION";
+        else os << "RPAREN";
+    } else if (typ == Token::EXPR_SPECIAL) {
+        os << "SPECIAL";
+    } else if (typ == Token::TOKEN_WHITESPACE) {
+        os << "WHITESPACE";
+    } else if (typ == Token::TOKEN_PLUS) {
+        os << "PLUS";
+    } else if (typ == Token::TOKEN_MINUS) {
+        os << "MINUS";
+    } else if (typ == Token::TOKEN_MULT) {
+        os << "MULT";
+    } else if (typ == Token::TOKEN_DIV) {
+        os << "DIV";
+    } else if (typ == Token::TOKEN_DOLLAR) {
+        os << "DOLLAR";
+    } else if (typ == Token::EXPR_CALL) {
+        os << "CALL";
+    } else if (typ == Token::TOKEN_VARIABLE) {
+        os << "VARIABLE";
+    } else if (typ == Token::TOKEN_STRING) {
+        os << "STRING";
+    } else if (typ == Token::TOKEN_LPAREN) {
+        os << "LPAREN";
+    } else {
+        os << "UNKNOWN(" << typ_val << ")";
+    }
+
+    // Print address for reference (compact hex)
+    os << " @0x" << std::hex << reinterpret_cast<uintptr_t>(this) << std::dec;
+
+    // Print character if it's a printable character node
+    if (ch >= 32 && ch < 127 && (typ == Token::TOKEN_STRING || ch != 0)) {
+        os << " '" << ch << "'";
+    }
+
+    os << "\n";
+
+    // Print p1 subtree
+    if (p1 != nullptr) {
+        for (int i = 0; i < depth; i++) {
+            os << "  ";
+        }
+        os << "  p1-> ";
+        p1->debug_print(os, depth + 1, max_depth);
+    } else {
+        for (int i = 0; i < depth; i++) {
+            os << "  ";
+        }
+        os << "  p1-> NULL\n";
+    }
+
+    // Print p2 subtree
+    if (p2 != nullptr) {
+        for (int i = 0; i < depth; i++) {
+            os << "  ";
+        }
+        os << "  p2-> ";
+        p2->debug_print(os, depth + 1, max_depth);
+    } else {
+        for (int i = 0; i < depth; i++) {
+            os << "  ";
+        }
+        os << "  p2-> NULL\n";
     }
 }
 

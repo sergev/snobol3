@@ -1,6 +1,4 @@
 #include "sno.h"
-#include <fstream>
-#include <ctime>
 
 //
 // Evaluate an operand from the evaluation stack.
@@ -260,29 +258,9 @@ Node *SnobolContext::execute(const Node &e)
         a  = ca->p1;            // Goto structure
         b  = eval(*r->p2, 0);   // Get variable reference
         d  = search(*m, b->p2); // Search pattern in variable's value
-        // #region agent log
-        {
-            std::ofstream log_file("/Users/vak/Project/Cursor/snobol3/.cursor/debug.log", std::ios::app);
-            if (log_file.is_open()) {
-                auto now = std::time(nullptr);
-                log_file << "{\"id\":\"log_exec_replace_1\",\"timestamp\":" << (now * 1000) << ",\"location\":\"sno4.cpp:STMT_REPLACE\",\"message\":\"After search\",\"data\":{\"dIsNull\":" << (d == nullptr ? 1 : 0) << ",\"bP2IsNull\":" << (b->p2 == nullptr ? 1 : 0) << "},\"sessionId\":\"debug-session\",\"runId\":\"initial\"}\n";
-                log_file.close();
-            }
-        }
-        // #endregion agent log
         if (d == nullptr)
             goto xfail;
         c = eval(*ca->p2, 1); // Evaluate replacement value
-        // #region agent log
-        {
-            std::ofstream log_file("/Users/vak/Project/Cursor/snobol3/.cursor/debug.log", std::ios::app);
-            if (log_file.is_open()) {
-                auto now = std::time(nullptr);
-                log_file << "{\"id\":\"log_exec_replace_2\",\"timestamp\":" << (now * 1000) << ",\"location\":\"sno4.cpp:STMT_REPLACE\",\"message\":\"Checking match position\",\"data\":{\"dP1IsNull\":" << (d->p1 == nullptr ? 1 : 0) << ",\"dP2IsNull\":" << (d->p2 == nullptr ? 1 : 0) << ",\"dP2EqBP2P2\":" << (d->p2 == b->p2->p2 ? 1 : 0) << ",\"dP1EqBP2P1\":" << (d->p1 == b->p2->p1 ? 1 : 0) << "},\"sessionId\":\"debug-session\",\"runId\":\"initial\"}\n";
-                log_file.close();
-            }
-        }
-        // #endregion agent log
         // Check if match spans entire string (starts at beginning AND ends at end)
         if ((d->p1 == nullptr || d->p1 == b->p2->p1) && d->p2 == b->p2->p2) {
             // Match entire string - replace
@@ -295,67 +273,14 @@ Node *SnobolContext::execute(const Node &e)
             // Build result: [before] + [replacement] + [after]
             Node* result = c;
             // Add part before match if match doesn't start at beginning
-            // #region agent log
-            {
-                std::ofstream log_file("/Users/vak/Project/Cursor/snobol3/.cursor/debug.log", std::ios::app);
-                if (log_file.is_open()) {
-                    auto now = std::time(nullptr);
-                    log_file << "{\"id\":\"log_exec_replace_5\",\"timestamp\":" << (now * 1000) << ",\"location\":\"sno4.cpp:STMT_REPLACE\",\"message\":\"Checking before part\",\"data\":{\"dP1IsNull\":" << (d->p1 == nullptr ? 1 : 0) << ",\"dP1EqBP2P1\":" << (d->p1 == b->p2->p1 ? 1 : 0) << ",\"dP1Addr\":" << reinterpret_cast<uintptr_t>(d->p1) << ",\"bP2P1Addr\":" << reinterpret_cast<uintptr_t>(b->p2->p1) << "},\"sessionId\":\"debug-session\",\"runId\":\"initial\"}\n";
-                    log_file.close();
-                }
-            }
-            // #endregion agent log
             if (d->p1 != nullptr && d->p1 != b->p2->p1) {
                 Node* before = &alloc();
                 before->p1 = b->p2->p1;  // First character
                 before->p2 = d->p1;       // Last character before match
-                // #region agent log
-                {
-                    std::ofstream log_file("/Users/vak/Project/Cursor/snobol3/.cursor/debug.log", std::ios::app);
-                    if (log_file.is_open()) {
-                        auto now = std::time(nullptr);
-                        char dP1Ch = d->p1 ? d->p1->ch : 0;
-                        char beforeP2P1Ch = (before->p2 && before->p2->p1) ? before->p2->p1->ch : 0;
-                        log_file << "{\"id\":\"log_exec_replace_6\",\"timestamp\":" << (now * 1000) << ",\"location\":\"sno4.cpp:STMT_REPLACE\",\"message\":\"Created before part\",\"data\":{\"beforeP1Addr\":" << reinterpret_cast<uintptr_t>(before->p1) << ",\"beforeP2Addr\":" << reinterpret_cast<uintptr_t>(before->p2) << ",\"beforeP2P1Addr\":" << reinterpret_cast<uintptr_t>(before->p2->p1) << ",\"dP1Ch\":" << static_cast<int>(dP1Ch) << ",\"beforeP2P1Ch\":" << static_cast<int>(beforeP2P1Ch) << "},\"sessionId\":\"debug-session\",\"runId\":\"initial\"}\n";
-                        log_file.close();
-                    }
-                }
-                // #endregion agent log
-                // #region agent log
-                {
-                    std::ofstream log_file("/Users/vak/Project/Cursor/snobol3/.cursor/debug.log", std::ios::app);
-                    if (log_file.is_open()) {
-                        auto now = std::time(nullptr);
-                        log_file << "{\"id\":\"log_exec_replace_7\",\"timestamp\":" << (now * 1000) << ",\"location\":\"sno4.cpp:STMT_REPLACE\",\"message\":\"Before cat(before, result)\",\"data\":{},\"sessionId\":\"debug-session\",\"runId\":\"initial\"}\n";
-                        log_file.close();
-                    }
-                }
-                // #endregion agent log
                 result = cat(before, result);
-                // #region agent log
-                {
-                    std::ofstream log_file("/Users/vak/Project/Cursor/snobol3/.cursor/debug.log", std::ios::app);
-                    if (log_file.is_open()) {
-                        auto now = std::time(nullptr);
-                        char resultP1Ch = result && result->p1 ? result->p1->ch : 0;
-                        log_file << "{\"id\":\"log_exec_replace_8\",\"timestamp\":" << (now * 1000) << ",\"location\":\"sno4.cpp:STMT_REPLACE\",\"message\":\"After cat(before, result)\",\"data\":{\"resultP1Ch\":" << static_cast<int>(resultP1Ch) << "},\"sessionId\":\"debug-session\",\"runId\":\"initial\"}\n";
-                        log_file.close();
-                    }
-                }
-                // #endregion agent log
                 free_node(*before);
             }
             // Add part after match if match doesn't end at end
-            // #region agent log
-            {
-                std::ofstream log_file("/Users/vak/Project/Cursor/snobol3/.cursor/debug.log", std::ios::app);
-                if (log_file.is_open()) {
-                    auto now = std::time(nullptr);
-                    log_file << "{\"id\":\"log_exec_replace_4\",\"timestamp\":" << (now * 1000) << ",\"location\":\"sno4.cpp:STMT_REPLACE\",\"message\":\"Checking after part\",\"data\":{\"dP2IsNull\":" << (d->p2 == nullptr ? 1 : 0) << ",\"dP2EqBP2P2\":" << (d->p2 == b->p2->p2 ? 1 : 0) << ",\"dP2Addr\":" << reinterpret_cast<uintptr_t>(d->p2) << ",\"bP2P2Addr\":" << reinterpret_cast<uintptr_t>(b->p2->p2) << "},\"sessionId\":\"debug-session\",\"runId\":\"initial\"}\n";
-                    log_file.close();
-                }
-            }
-            // #endregion agent log
             if (d->p2 != nullptr && d->p2 != b->p2->p2) {
                 Node* after = &alloc();
                 after->p1 = d->p2;        // First character after match
@@ -363,27 +288,6 @@ Node *SnobolContext::execute(const Node &e)
                 result = cat(result, after);
                 free_node(*after);
             }
-            // #region agent log
-            {
-                std::ofstream log_file("/Users/vak/Project/Cursor/snobol3/.cursor/debug.log", std::ios::app);
-                if (log_file.is_open()) {
-                    auto now = std::time(nullptr);
-                    // Trace result string to see what it contains
-                    std::string resultStr = "";
-                    if (result != nullptr && result->p1 != nullptr && result->p2 != nullptr) {
-                        Node* curr = result->p1;
-                        int len = 0;
-                        while (curr != result->p2 && curr != nullptr && len < 100) {
-                            resultStr += curr->ch;
-                            curr = curr->p1;
-                            len++;
-                        }
-                    }
-                    log_file << "{\"id\":\"log_exec_replace_9\",\"timestamp\":" << (now * 1000) << ",\"location\":\"sno4.cpp:STMT_REPLACE\",\"message\":\"Final result before assign\",\"data\":{\"resultStr\":\"" << resultStr << "\",\"resultStrLen\":" << resultStr.length() << "},\"sessionId\":\"debug-session\",\"runId\":\"initial\"}\n";
-                    log_file.close();
-                }
-            }
-            // #endregion agent log
             assign(*b, *result);
             free_node(*d);
             delete_string(c);

@@ -88,17 +88,13 @@ bad:
 //
 //   d->p1: Character node BEFORE the match start
 //          - nullptr if match starts at beginning of string
-//          - Points to the character node immediately before match_start_pos
-//          - Used by replacement logic to determine what comes before the match
 //
 //   d->p2: Character node AFTER the match end
 //          - Points to the character node immediately after the match
 //          - If match ends at end of string: d->p2 = r->p2 (end marker)
 //          - Otherwise: d->p2 = next (character node after match)
-//          - Used by replacement logic to determine what comes after the match
 //
 // EXAMPLE: For string "hello world" matching "world":
-//   - match_start_pos = 'w' (first char of "world")
 //   - next = nullptr (match is at end)
 //   - d->p1 = ' ' (space before "world")
 //   - d->p2 = r->p2 (end marker, since match ends at end)
@@ -110,7 +106,7 @@ Node *SnobolContext::search(const Node &arg, Node *r)
     Token c;
     Token d_token;
     int d{}, len;
-    Node *match_start = nullptr; // Track where current match attempt started
+    Node *before_match_start = nullptr; // Track node before match_start
 
     // Initialize pattern matching state
     a    = arg.p2;          // Start of pattern component list
@@ -132,9 +128,9 @@ badvanc:
         if (r == nullptr)
             next = last = nullptr;
         else {
-            next        = r->p1; // Start of subject string
-            last        = r->p2; // End of subject string
-            match_start = next;  // Track where this match attempt starts
+            next             = r->p1; // Start of subject string
+            last             = r->p2; // End of subject string
+            before_match_start = nullptr; // Match starts at beginning, nothing before it
         }
         goto adv1;
     }
@@ -185,10 +181,11 @@ retard:
             rfail = 1;
             goto fail;
         }
+
         // Advance to next position and try again
-        next        = next->p1;
-        match_start = next; // Reset match start for new attempt
-        list        = base;
+        before_match_start = next; // Current next will be before the new match_start
+        next               = next->p1;
+        list               = base;
         goto adv1;
     }
     list = a;
@@ -198,6 +195,7 @@ retard:
     etc  = var->p2;
     if (etc->p2) // Has length constraint - need to retry
         goto retard;
+
     // Try to extend current match
     if (var->typ == Token::TOKEN_UNANCHORED) { // Balanced pattern (value 1)
         if (str->bextend(last) == 0)
@@ -224,22 +222,10 @@ advanc:
             a->p1 = a->p2 = nullptr;
             goto fail;
         }
+
         // Set a->p1 to character BEFORE match start (or nullptr if match at start)
-        if (match_start == r->p1) {
-            // Match starts at beginning of string
-            a->p1 = nullptr;
-        } else {
-            // Find character before match_start
-            b = r->p1;
-            while (b != nullptr && b->p1 != match_start && b != r->p2) {
-                b = b->p1;
-            }
-            if (b != nullptr && b->p1 == match_start) {
-                a->p1 = b; // Character before match start
-            } else {
-                a->p1 = nullptr; // Fallback
-            }
-        }
+        a->p1 = before_match_start;
+
         // Set a->p2 to character AFTER match end (or r->p2 if match at end)
         if (next == nullptr) {
             // Match ends at end of string
@@ -261,10 +247,6 @@ adv1:
             goto advanc;
         if (next == nullptr)
             goto retard;
-        // Track where this match attempt starts (for first pattern component)
-        if (match_start == nullptr || (list == base->p1 && match_start != next)) {
-            match_start = next;
-        }
         a = next;
         b = var->p1;
         e = var->p2;
@@ -310,6 +292,7 @@ adv1:
         }
         goto advanc;
     }
+
     // Match with specific length
     while (len--)
         if (str->ubextend(last) == 0)

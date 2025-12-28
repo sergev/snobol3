@@ -89,12 +89,13 @@ bad:
 //   d->p1: Character node BEFORE the match start
 //          - nullptr if match starts at beginning of string
 //          - Points to the character node immediately before match_start_pos
-//          - Special case: if match is at end, d->p1 = r->p2 (end marker)
+//          - Used by replacement logic to determine what comes before the match
 //
 //   d->p2: Character node AFTER the match end
 //          - Points to the character node immediately after the match
 //          - If match ends at end of string: d->p2 = r->p2 (end marker)
 //          - Otherwise: d->p2 = next (character node after match)
+//          - Used by replacement logic to determine what comes after the match
 //
 // EXAMPLE: For string "hello world" matching "world":
 //   - match_start_pos = 'w' (first char of "world")
@@ -109,7 +110,7 @@ Node *SnobolContext::search(const Node &arg, Node *r)
     Token c;
     Token d_token;
     int d{}, len;
-    Node *match_start_pos = nullptr; // Track where current match attempt started
+    Node *match_start = nullptr; // Track where current match attempt started
 
     // Initialize pattern matching state
     a    = arg.p2;          // Start of pattern component list
@@ -131,9 +132,9 @@ badvanc:
         if (r == nullptr)
             next = last = nullptr;
         else {
-            next = r->p1; // Start of subject string
-            last = r->p2; // End of subject string
-            match_start_pos = next; // Track initial match start position
+            next        = r->p1; // Start of subject string
+            last        = r->p2; // End of subject string
+            match_start = next;  // Track where this match attempt starts
         }
         goto adv1;
     }
@@ -185,9 +186,9 @@ retard:
             goto fail;
         }
         // Advance to next position and try again
-        next = next->p1;
-        match_start_pos = nullptr; // Reset - will be set when we start new match attempt
-        list = base;
+        next        = next->p1;
+        match_start = next; // Reset match start for new attempt
+        list        = base;
         goto adv1;
     }
     list = a;
@@ -223,33 +224,29 @@ advanc:
             a->p1 = a->p2 = nullptr;
             goto fail;
         }
-        // For simple patterns: use original logic
-        // a->p1 = character before match start (or nullptr if match at start)
-        // a->p2 = character after match (next, or r->p2 if match at end)
-        b = r->p1;
-        if (match_start_pos != nullptr && match_start_pos != r->p1) {
-            // Match not at start - find character before match_start_pos
-            Node* prev = nullptr;
-            int safety = 0;
-            while (b != match_start_pos && b != nullptr && b != r->p2 && safety < 10000) {
-                prev = b;
+        // Set a->p1 to character BEFORE match start (or nullptr if match at start)
+        if (match_start == r->p1) {
+            // Match starts at beginning of string
+            a->p1 = nullptr;
+        } else {
+            // Find character before match_start
+            b = r->p1;
+            while (b != nullptr && b->p1 != match_start && b != r->p2) {
                 b = b->p1;
-                safety++;
             }
-            if (b == match_start_pos && prev != nullptr) {
-                a->p1 = prev;
+            if (b != nullptr && b->p1 == match_start) {
+                a->p1 = b; // Character before match start
             } else {
                 a->p1 = nullptr; // Fallback
             }
-        } else {
-            a->p1 = nullptr; // Match at start
         }
-        // a->p2 should point to character after match, or end marker if match at end
+        // Set a->p2 to character AFTER match end (or r->p2 if match at end)
         if (next == nullptr) {
-            // Match at end - a->p2 should point to end marker
+            // Match ends at end of string
             a->p2 = r->p2;
         } else {
-            a->p2 = next; // Character after match
+            // next points to character after match end
+            a->p2 = next;
         }
         goto fail;
     }
@@ -260,14 +257,14 @@ adv1:
     d_token = list->typ;
     if (static_cast<int>(d_token) < 2) {
         // Simple pattern - match string directly
-        // Track where this match attempt starts
-        if (match_start_pos == nullptr || match_start_pos != next) {
-            match_start_pos = next; // Record where we're starting this match attempt
-        }
         if (var == nullptr)
             goto advanc;
         if (next == nullptr)
             goto retard;
+        // Track where this match attempt starts (for first pattern component)
+        if (match_start == nullptr || (list == base->p1 && match_start != next)) {
+            match_start = next;
+        }
         a = next;
         b = var->p1;
         e = var->p2;

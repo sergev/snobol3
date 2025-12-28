@@ -228,69 +228,69 @@ Node *SnobolContext::execute(const Node &e)
         b  = eval(*r->p2, 0);          // Get variable reference
         assign(*b, *eval(*ca->p2, 1)); // Assign value
         goto xsuc;
-    case Token::STMT_REPLACE:   // r m a g - Pattern replacement
-        // PATTERN REPLACEMENT LOGIC:
-        // After search() returns match result 'd', use d->p1 and d->p2 to determine
-        // which parts of the string to keep:
-        //
-        //   d->p1: Character BEFORE match start (nullptr if match at start)
-        //   d->p2: Character AFTER match end (r->p2 if match at end)
-        //
-        // REPLACEMENT CASES:
-        //   1. Match spans entire string:
-        //      Condition: (d->p1 == nullptr || d->p1 == b->p2->p1) && d->p2 == b->p2->p2
-        //      Action: Replace entire string with replacement value
-        //
-        //   2. Match at start only:
-        //      Condition: (d->p1 == nullptr || d->p1 == b->p2->p1) && d->p2 != b->p2->p2
-        //      Action: replacement + part after match
-        //
-        //   3. Match at end only:
-        //      Condition: d->p1 != nullptr && d->p1 != b->p2->p1 && d->p2 == b->p2->p2
-        //      Action: part before match + replacement
-        //
-        //   4. Match in middle:
-        //      Condition: d->p1 != nullptr && d->p1 != b->p2->p1 && d->p2 != b->p2->p2
-        //      Action: part before match + replacement + part after match
-        //
-        m  = r->p1;             // Match pattern
-        ca = m->p1;             // Assignment structure
-        a  = ca->p1;            // Goto structure
-        b  = eval(*r->p2, 0);   // Get variable reference
-        d  = search(*m, b->p2); // Search pattern in variable's value
-        if (d == nullptr)
-            goto xfail;
-        c = eval(*ca->p2, 1); // Evaluate replacement value
-        // Check if match spans entire string (starts at beginning AND ends at end)
-        if ((d->p1 == nullptr || d->p1 == b->p2->p1) && d->p2 == b->p2->p2) {
-            // Match entire string - replace
-            assign(*b, *c);
+    case Token::STMT_REPLACE: // r m a g - Pattern replacement
+        // search() returns: d->p1 = char before match (nullptr if at start), d->p2 = char after
+        // match (r->p2 if at end)
+        {
+            Node *before_node, *after_node, *result_node;
+            m  = r->p1;             // Match pattern
+            ca = m->p1;             // Assignment structure
+            a  = ca->p1;            // Goto structure
+            b  = eval(*r->p2, 0);   // Get variable reference
+            d  = search(*m, b->p2); // Search pattern in variable's value
+            if (d == nullptr)
+                goto xfail;
+            c = eval(*ca->p2, 1); // Evaluate replacement value
+            // Check if match spans entire string
+            if (d->p1 == nullptr && d->p2 == b->p2->p2) {
+                // Match entire string - replace
+                assign(*b, *c);
+                free_node(*d);
+                delete_string(c);
+                goto xsuc;
+            }
+            // Check if match at end
+            if (d->p2 == b->p2->p2) {
+                // Match at end - replace: [before] + [replacement]
+                before_node     = &alloc();
+                before_node->p1 = b->p2->p1; // First character
+                before_node->p2 = d->p1;     // Last character before match
+                result_node     = cat(before_node, c);
+                free_node(*before_node);
+                assign(*b, *result_node);
+                free_node(*d);
+                delete_string(c);
+                goto xsuc;
+            }
+            // Check if match at start
+            if (d->p1 == nullptr) {
+                // Match at start - replace: [replacement] + [after]
+                after_node     = &alloc();
+                after_node->p1 = d->p2;     // First character after match
+                after_node->p2 = b->p2->p2; // End marker
+                result_node    = cat(c, after_node);
+                free_node(*after_node);
+                assign(*b, *result_node);
+                free_node(*d);
+                delete_string(c);
+                goto xsuc;
+            }
+            // Match in middle - replace: [before] + [replacement] + [after]
+            before_node     = &alloc();
+            before_node->p1 = b->p2->p1; // First character
+            before_node->p2 = d->p1;     // Last character before match
+            after_node      = &alloc();
+            after_node->p1  = d->p2;     // First character after match
+            after_node->p2  = b->p2->p2; // End marker
+            result_node     = cat(before_node, c);
+            free_node(*before_node);
+            result_node = cat(result_node, after_node);
+            free_node(*after_node);
+            assign(*b, *result_node);
             free_node(*d);
             delete_string(c);
-        } else {
-            // Build result: [before] + [replacement] + [after]
-            Node* result = c;
-            // Add part before match if match doesn't start at beginning
-            if (d->p1 != nullptr && d->p1 != b->p2->p1) {
-                Node* before = &alloc();
-                before->p1 = b->p2->p1;  // First character
-                before->p2 = d->p1;       // Last character before match
-                result = cat(before, result);
-                free_node(*before);
-            }
-            // Add part after match if match doesn't end at end
-            if (d->p2 != nullptr && d->p2 != b->p2->p2) {
-                Node* after = &alloc();
-                after->p1 = d->p2;        // First character after match
-                after->p2 = b->p2->p2;    // Last character (end marker)
-                result = cat(result, after);
-                free_node(*after);
-            }
-            assign(*b, *result);
-            free_node(*d);
-            delete_string(c);
+            goto xsuc;
         }
-        goto xsuc;
 
     default:
         // Invalid statement type

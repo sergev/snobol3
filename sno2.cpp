@@ -367,10 +367,10 @@ l2:
         comp = &compon();
         goto l2;
 
-    case Token::TOKEN_DOLLAR:   // Pattern immediate ($)
-    case Token::TOKEN_VARIABLE: // Variable
-    case Token::TOKEN_STRING:   // String literal
-    case Token::TOKEN_LPAREN:   // Left parenthesis
+    case Token::TOKEN_DOLLAR:                                // Pattern immediate ($)
+    case Token::TOKEN_VARIABLE:                              // Variable
+    case Token::TOKEN_STRING:                                // String literal
+    case Token::TOKEN_LPAREN:                                // Left parenthesis
         comp      = &expr(comp, Token::EXPR_SPECIAL, *list); // Parse as expression
         list->typ = Token::TOKEN_UNANCHORED;                 // Pattern component
         goto l3;

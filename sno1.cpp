@@ -6,8 +6,7 @@
 //
 // Constructor - initialize all fields including stream references
 //
-SnobolContext::SnobolContext(std::ostream &output)
-    : fin(&std::cin), fout(output)
+SnobolContext::SnobolContext(std::ostream &output) : fin(&std::cin), fout(output)
 {
     // Initialize built-in symbols
     lookf     = &init("f", Token::EXPR_VAR_REF);
@@ -27,7 +26,7 @@ void SnobolContext::compile_program(std::istream &input)
 
     // Compile all statements until "end" is encountered
     // Link statements together in a list
-    fin = &input;
+    fin     = &input;
     program = compile();
     for (cur = program; lookend->typ != Token::EXPR_LABEL; cur = next) {
         next    = compile();

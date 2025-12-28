@@ -91,7 +91,7 @@ l1:
         std::cerr << "list->p2 = ";
         if (list->p2) list->p2->debug_print(std::cerr, 0, 3); else std::cerr << "NULL\n";
         std::cerr << "======================================\n\n";
-        if (stack->typ != Token::TOKEN_END)
+        if (stack->typ != Token::EXPR_VAR_REF)
             writes("illegal function");
         a1 = stack->p1;
         // If a1 is a variable node (TOKEN_VARIABLE), follow p1 to get the symbol

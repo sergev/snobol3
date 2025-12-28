@@ -403,9 +403,6 @@ void Node::debug_print(std::ostream &os, int depth, int max_depth) const
         os << "UNKNOWN(" << typ_val << ")";
     }
 
-    // Print address for reference (compact hex)
-    os << " @0x" << std::hex << reinterpret_cast<uintptr_t>(this) << std::dec;
-
     // Print character if it's a printable character node
     if (ch >= 32 && ch < 127 && (typ == Token::TOKEN_STRING || ch != 0)) {
         os << " '" << ch << "'";

@@ -84,6 +84,26 @@ bad:
 // Implements backtracking pattern matching algorithm for Snobol patterns.
 // Returns a match result node on success, NULL on failure.
 //
+// RETURN VALUE STRUCTURE:
+// When a match is found, search() returns a Node* (typically called 'd' in execute())
+// with the following structure:
+//
+//   d->p1: Character node BEFORE the match start
+//          - nullptr if match starts at beginning of string
+//          - Points to the character node immediately before match_start_pos
+//          - Special case: if match is at end, d->p1 = r->p2 (end marker)
+//
+//   d->p2: Character node AFTER the match end
+//          - Points to the character node immediately after the match
+//          - If match ends at end of string: d->p2 = r->p2 (end marker)
+//          - Otherwise: d->p2 = next (character node after match)
+//
+// EXAMPLE: For string "hello world" matching "world":
+//   - match_start_pos = 'w' (first char of "world")
+//   - next = nullptr (match is at end)
+//   - d->p1 = ' ' (space before "world")
+//   - d->p2 = r->p2 (end marker, since match ends at end)
+//
 Node *SnobolContext::search(const Node &arg, Node *r)
 {
     Node *list, *back, *str, *etc, *next, *last, *base, *e;
@@ -91,6 +111,7 @@ Node *SnobolContext::search(const Node &arg, Node *r)
     Token c;
     Token d_token;
     int d{}, len;
+    Node *match_start_pos = nullptr; // Track where current match attempt started
 
     // #region agent log
     {
@@ -143,6 +164,7 @@ badvanc:
         else {
             next = r->p1; // Start of subject string
             last = r->p2; // End of subject string
+            match_start_pos = next; // Track initial match start position
         }
         // #region agent log
         {
@@ -216,10 +238,38 @@ badv1:
 
 retard:
     // Backtrack to previous pattern component
+    // #region agent log
+    {
+        std::ofstream log_file("/Users/vak/Project/Cursor/snobol3/.cursor/debug.log", std::ios::app);
+        if (log_file.is_open()) {
+            auto now = std::time(nullptr);
+            log_file << "{\"id\":\"log_search_" << now << "_retard\",\"timestamp\":" << (now * 1000) << ",\"location\":\"sno3.cpp:retard\",\"message\":\"Backtracking\",\"data\":{},\"sessionId\":\"debug-session\",\"runId\":\"post-fix\"}\n";
+            log_file.close();
+        }
+    }
+    // #endregion agent log
     a = back->p1;
     if (a == nullptr) {
-        rfail = 1;
-        goto fail;
+        // No previous pattern component - try next position in subject for unanchored search
+        // #region agent log
+        {
+            std::ofstream log_file("/Users/vak/Project/Cursor/snobol3/.cursor/debug.log", std::ios::app);
+            if (log_file.is_open()) {
+                auto now = std::time(nullptr);
+                log_file << "{\"id\":\"log_search_" << now << "_no_prev\",\"timestamp\":" << (now * 1000) << ",\"location\":\"sno3.cpp:retard\",\"message\":\"No previous component, trying next position\",\"data\":{\"nextIsNull\":" << (next == nullptr ? 1 : 0) << ",\"lastIsNull\":" << (last == nullptr ? 1 : 0) << "},\"sessionId\":\"debug-session\",\"runId\":\"post-fix\"}\n";
+                log_file.close();
+            }
+        }
+        // #endregion agent log
+        if (next == nullptr || next == last) {
+            rfail = 1;
+            goto fail;
+        }
+        // Advance to next position and try again
+        next = next->p1;
+        match_start_pos = nullptr; // Reset - will be set when we start new match attempt
+        list = base;
+        goto adv1;
     }
     list = a;
     back = list->p2;
@@ -264,21 +314,91 @@ advanc:
             a->p1 = a->p2 = nullptr;
             goto fail;
         }
-        b     = r->p1;
-        a->p1 = b;
-        if (next == nullptr) {
-            a->p2 = r->p2;
-            goto fail;
-        }
-        // Find match end position
-        while (1) {
-            e = b->p1;
-            if (e == next) {
-                a->p2 = b;
-                goto fail;
+        // For simple patterns: use original logic
+        // a->p1 = character before match start (or nullptr if match at start)
+        // a->p2 = character after match (next, or r->p2 if match at end)
+        // #region agent log
+        {
+            std::ofstream log_file("/Users/vak/Project/Cursor/snobol3/.cursor/debug.log", std::ios::app);
+            if (log_file.is_open()) {
+                auto now = std::time(nullptr);
+                log_file << "{\"id\":\"log_search_" << now << "_find_match_start\",\"timestamp\":" << (now * 1000) << ",\"location\":\"sno3.cpp:find_match_start\",\"message\":\"Finding match start position\",\"data\":{\"matchStartPosIsNull\":" << (match_start_pos == nullptr ? 1 : 0) << ",\"matchStartPosEqR1\":" << (match_start_pos == r->p1 ? 1 : 0) << ",\"nextIsNull\":" << (next == nullptr ? 1 : 0) << "},\"sessionId\":\"debug-session\",\"runId\":\"post-fix\"}\n";
+                log_file.close();
             }
-            b = e;
         }
+        // #endregion agent log
+        b = r->p1;
+        if (match_start_pos != nullptr && match_start_pos != r->p1) {
+            // Match not at start - find character before match_start_pos
+            Node* prev = nullptr;
+            int safety = 0;
+            // #region agent log
+            {
+                std::ofstream log_file("/Users/vak/Project/Cursor/snobol3/.cursor/debug.log", std::ios::app);
+                if (log_file.is_open()) {
+                    auto now = std::time(nullptr);
+                    char matchStartCh = match_start_pos ? match_start_pos->ch : 0;
+                    log_file << "{\"id\":\"log_search_" << now << "_loop_start\",\"timestamp\":" << (now * 1000) << ",\"location\":\"sno3.cpp:loop_start\",\"message\":\"Starting loop to find prev\",\"data\":{\"matchStartCh\":" << static_cast<int>(matchStartCh) << ",\"matchStartAddr\":" << reinterpret_cast<uintptr_t>(match_start_pos) << "},\"sessionId\":\"debug-session\",\"runId\":\"post-fix\"}\n";
+                    log_file.close();
+                }
+            }
+            // #endregion agent log
+            while (b != match_start_pos && b != nullptr && b != r->p2 && safety < 10000) {
+                prev = b;
+                b = b->p1;
+                safety++;
+                if (safety % 1000 == 0) {
+                    // #region agent log
+                    {
+                        std::ofstream log_file("/Users/vak/Project/Cursor/snobol3/.cursor/debug.log", std::ios::app);
+                        if (log_file.is_open()) {
+                            auto now = std::time(nullptr);
+                            log_file << "{\"id\":\"log_search_" << now << "_loop_iter\",\"timestamp\":" << (now * 1000) << ",\"location\":\"sno3.cpp:loop_iter\",\"message\":\"Loop iteration\",\"data\":{\"safety\":" << safety << ",\"bIsNull\":" << (b == nullptr ? 1 : 0) << ",\"bEqR2\":" << (b == r->p2 ? 1 : 0) << "},\"sessionId\":\"debug-session\",\"runId\":\"post-fix\"}\n";
+                            log_file.close();
+                        }
+                    }
+                    // #endregion agent log
+                }
+            }
+            // #region agent log
+            {
+                std::ofstream log_file("/Users/vak/Project/Cursor/snobol3/.cursor/debug.log", std::ios::app);
+                if (log_file.is_open()) {
+                    auto now = std::time(nullptr);
+                    char prevCh = prev ? prev->ch : 0;
+                    char bCh = b ? b->ch : 0;
+                    log_file << "{\"id\":\"log_search_" << now << "_loop_end\",\"timestamp\":" << (now * 1000) << ",\"location\":\"sno3.cpp:loop_end\",\"message\":\"Loop ended\",\"data\":{\"safety\":" << safety << ",\"bEqMatchStart\":" << (b == match_start_pos ? 1 : 0) << ",\"prevIsNull\":" << (prev == nullptr ? 1 : 0) << ",\"prevCh\":" << static_cast<int>(prevCh) << ",\"bCh\":" << static_cast<int>(bCh) << "},\"sessionId\":\"debug-session\",\"runId\":\"post-fix\"}\n";
+                    log_file.close();
+                }
+            }
+            // #endregion agent log
+            if (b == match_start_pos && prev != nullptr) {
+                a->p1 = prev;
+                // #region agent log
+                {
+                    std::ofstream log_file("/Users/vak/Project/Cursor/snobol3/.cursor/debug.log", std::ios::app);
+                    if (log_file.is_open()) {
+                        auto now = std::time(nullptr);
+                        char aP1Ch = a->p1 ? a->p1->ch : 0;
+                        log_file << "{\"id\":\"log_search_" << now << "_set_p1\",\"timestamp\":" << (now * 1000) << ",\"location\":\"sno3.cpp:set_p1\",\"message\":\"Set a->p1\",\"data\":{\"aP1Ch\":" << static_cast<int>(aP1Ch) << "},\"sessionId\":\"debug-session\",\"runId\":\"post-fix\"}\n";
+                        log_file.close();
+                    }
+                }
+                // #endregion agent log
+            } else {
+                a->p1 = nullptr; // Fallback
+            }
+        } else {
+            a->p1 = nullptr; // Match at start
+        }
+        // a->p2 should point to character after match, or end marker if match at end
+        if (next == nullptr) {
+            // Match at end - a->p2 should point to end marker
+            a->p2 = r->p2;
+        } else {
+            a->p2 = next; // Character after match
+        }
+        goto fail;
     }
     list = a;
 adv1:
@@ -297,6 +417,10 @@ adv1:
     // #endregion agent log
     if (static_cast<int>(d_token) < 2) {
         // Simple pattern - match string directly
+        // Track where this match attempt starts
+        if (match_start_pos == nullptr || match_start_pos != next) {
+            match_start_pos = next; // Record where we're starting this match attempt
+        }
         // #region agent log
         {
             std::ofstream log_file("/Users/vak/Project/Cursor/snobol3/.cursor/debug.log", std::ios::app);
@@ -314,7 +438,33 @@ adv1:
         a = next;
         b = var->p1;
         e = var->p2;
+        // #region agent log
+        {
+            std::ofstream log_file("/Users/vak/Project/Cursor/snobol3/.cursor/debug.log", std::ios::app);
+            if (log_file.is_open()) {
+                auto now = std::time(nullptr);
+                int patternLen = 0;
+                Node* tmp = b;
+                while (tmp && tmp != e) {
+                    patternLen++;
+                    tmp = tmp->p1;
+                }
+                log_file << "{\"id\":\"log_search_" << now << "_match_start\",\"timestamp\":" << (now * 1000) << ",\"location\":\"sno3.cpp:match_loop\",\"message\":\"Starting character matching\",\"data\":{\"patternLen\":" << patternLen << ",\"bIsNull\":" << (b == nullptr ? 1 : 0) << ",\"eIsNull\":" << (e == nullptr ? 1 : 0) << ",\"aIsNull\":" << (a == nullptr ? 1 : 0) << ",\"lastIsNull\":" << (last == nullptr ? 1 : 0) << "},\"sessionId\":\"debug-session\",\"runId\":\"post-fix\"}\n";
+                log_file.close();
+            }
+        }
+        // #endregion agent log
         while (1) {
+            // #region agent log
+            {
+                std::ofstream log_file("/Users/vak/Project/Cursor/snobol3/.cursor/debug.log", std::ios::app);
+                if (log_file.is_open()) {
+                    auto now = std::time(nullptr);
+                    log_file << "{\"id\":\"log_search_" << now << "_char\",\"timestamp\":" << (now * 1000) << ",\"location\":\"sno3.cpp:match_loop\",\"message\":\"Comparing characters\",\"data\":{\"aCh\":" << (a ? static_cast<int>(a->ch) : -1) << ",\"bCh\":" << (b ? static_cast<int>(b->ch) : -1) << ",\"bEqE\":" << (b == e ? 1 : 0) << ",\"aEqLast\":" << (a == last ? 1 : 0) << "},\"sessionId\":\"debug-session\",\"runId\":\"post-fix\"}\n";
+                    log_file.close();
+                }
+            }
+            // #endregion agent log
             if (a->ch != b->ch)
                 goto retard;
             if (b == e) // Matched entire string

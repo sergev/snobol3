@@ -231,47 +231,41 @@ Node *SnobolContext::execute(const Node &e)
         assign(*b, *eval(*ca->p2, 1)); // Assign value
         goto xsuc;
     case Token::STMT_REPLACE:   // r m a g - Pattern replacement
-        // #region agent log
-        {
-            std::ofstream log_file("/Users/vak/Project/Cursor/snobol3/.cursor/debug.log", std::ios::app);
-            if (log_file.is_open()) {
-                auto now = std::time(nullptr);
-                log_file << "{\"id\":\"log_exec_" << now << "\",\"timestamp\":" << (now * 1000) << ",\"location\":\"sno4.cpp:231\",\"message\":\"Executing STMT_REPLACE\",\"data\":{\"rIsNull\":" << (r == nullptr ? 1 : 0) << ",\"rP1IsNull\":" << (r && r->p1 == nullptr ? 1 : 0) << "},\"sessionId\":\"debug-session\",\"runId\":\"post-fix\"}\n";
-                log_file.close();
-            }
-        }
-        // #endregion agent log
+        // PATTERN REPLACEMENT LOGIC:
+        // After search() returns match result 'd', use d->p1 and d->p2 to determine
+        // which parts of the string to keep:
+        //
+        //   d->p1: Character BEFORE match start (nullptr if match at start)
+        //   d->p2: Character AFTER match end (r->p2 if match at end)
+        //
+        // REPLACEMENT CASES:
+        //   1. Match spans entire string:
+        //      Condition: (d->p1 == nullptr || d->p1 == b->p2->p1) && d->p2 == b->p2->p2
+        //      Action: Replace entire string with replacement value
+        //
+        //   2. Match at start only:
+        //      Condition: (d->p1 == nullptr || d->p1 == b->p2->p1) && d->p2 != b->p2->p2
+        //      Action: replacement + part after match
+        //
+        //   3. Match at end only:
+        //      Condition: d->p1 != nullptr && d->p1 != b->p2->p1 && d->p2 == b->p2->p2
+        //      Action: part before match + replacement
+        //
+        //   4. Match in middle:
+        //      Condition: d->p1 != nullptr && d->p1 != b->p2->p1 && d->p2 != b->p2->p2
+        //      Action: part before match + replacement + part after match
+        //
         m  = r->p1;             // Match pattern
-        // #region agent log
-        {
-            std::ofstream log_file("/Users/vak/Project/Cursor/snobol3/.cursor/debug.log", std::ios::app);
-            if (log_file.is_open()) {
-                auto now = std::time(nullptr);
-                log_file << "{\"id\":\"log_exec_" << now << "\",\"timestamp\":" << (now * 1000) << ",\"location\":\"sno4.cpp:233\",\"message\":\"Got match pattern\",\"data\":{\"mIsNull\":" << (m == nullptr ? 1 : 0) << ",\"mP1IsNull\":" << (m && m->p1 == nullptr ? 1 : 0) << "},\"sessionId\":\"debug-session\",\"runId\":\"post-fix\"}\n";
-                log_file.close();
-            }
-        }
-        // #endregion agent log
         ca = m->p1;             // Assignment structure
         a  = ca->p1;            // Goto structure
         b  = eval(*r->p2, 0);   // Get variable reference
-        // #region agent log
-        {
-            std::ofstream log_file("/Users/vak/Project/Cursor/snobol3/.cursor/debug.log", std::ios::app);
-            if (log_file.is_open()) {
-                auto now = std::time(nullptr);
-                log_file << "{\"id\":\"log_exec_" << now << "\",\"timestamp\":" << (now * 1000) << ",\"location\":\"sno4.cpp:235\",\"message\":\"Got variable reference\",\"data\":{\"bIsNull\":" << (b == nullptr ? 1 : 0) << ",\"bP2IsNull\":" << (b && b->p2 == nullptr ? 1 : 0) << "},\"sessionId\":\"debug-session\",\"runId\":\"post-fix\"}\n";
-                log_file.close();
-            }
-        }
-        // #endregion agent log
         d  = search(*m, b->p2); // Search pattern in variable's value
         // #region agent log
         {
             std::ofstream log_file("/Users/vak/Project/Cursor/snobol3/.cursor/debug.log", std::ios::app);
             if (log_file.is_open()) {
                 auto now = std::time(nullptr);
-                log_file << "{\"id\":\"log_exec_" << now << "\",\"timestamp\":" << (now * 1000) << ",\"location\":\"sno4.cpp:236\",\"message\":\"Pattern search result\",\"data\":{\"dIsNull\":" << (d == nullptr ? 1 : 0) << "},\"sessionId\":\"debug-session\",\"runId\":\"post-fix\"}\n";
+                log_file << "{\"id\":\"log_exec_replace_1\",\"timestamp\":" << (now * 1000) << ",\"location\":\"sno4.cpp:STMT_REPLACE\",\"message\":\"After search\",\"data\":{\"dIsNull\":" << (d == nullptr ? 1 : 0) << ",\"bP2IsNull\":" << (b->p2 == nullptr ? 1 : 0) << "},\"sessionId\":\"debug-session\",\"runId\":\"initial\"}\n";
                 log_file.close();
             }
         }
@@ -284,33 +278,117 @@ Node *SnobolContext::execute(const Node &e)
             std::ofstream log_file("/Users/vak/Project/Cursor/snobol3/.cursor/debug.log", std::ios::app);
             if (log_file.is_open()) {
                 auto now = std::time(nullptr);
-                log_file << "{\"id\":\"log_exec_" << now << "\",\"timestamp\":" << (now * 1000) << ",\"location\":\"sno4.cpp:239\",\"message\":\"Evaluated replacement value\",\"data\":{\"cIsNull\":" << (c == nullptr ? 1 : 0) << "},\"sessionId\":\"debug-session\",\"runId\":\"post-fix\"}\n";
+                log_file << "{\"id\":\"log_exec_replace_2\",\"timestamp\":" << (now * 1000) << ",\"location\":\"sno4.cpp:STMT_REPLACE\",\"message\":\"Checking match position\",\"data\":{\"dP1IsNull\":" << (d->p1 == nullptr ? 1 : 0) << ",\"dP2IsNull\":" << (d->p2 == nullptr ? 1 : 0) << ",\"dP2EqBP2P2\":" << (d->p2 == b->p2->p2 ? 1 : 0) << ",\"dP1EqBP2P1\":" << (d->p1 == b->p2->p1 ? 1 : 0) << "},\"sessionId\":\"debug-session\",\"runId\":\"initial\"}\n";
                 log_file.close();
             }
         }
         // #endregion agent log
-        if (d->p1 == nullptr) {
-            // Match at end - append
-            free_node(*d);
-            assign(*b, *cat(c, b->p2));
-            delete_string(c);
-            goto xsuc;
-        }
-        if (d->p2 == b->p2->p2) {
+        // Check if match spans entire string (starts at beginning AND ends at end)
+        if ((d->p1 == nullptr || d->p1 == b->p2->p1) && d->p2 == b->p2->p2) {
             // Match entire string - replace
             assign(*b, *c);
             free_node(*d);
+            delete_string(c);
             goto xsuc;
         }
-        // Match in middle - replace matched portion
-        r     = &alloc();
-        r->p1 = d->p2->p1;
-        r->p2 = b->p2->p2;
-        assign(*b, *cat(c, r));
-        free_node(*d);
-        free_node(*r);
-        delete_string(c);
-        goto xsuc;
+        {
+            // Build result: [before] + [replacement] + [after]
+            Node* result = c;
+            // Add part before match if match doesn't start at beginning
+            // #region agent log
+            {
+                std::ofstream log_file("/Users/vak/Project/Cursor/snobol3/.cursor/debug.log", std::ios::app);
+                if (log_file.is_open()) {
+                    auto now = std::time(nullptr);
+                    log_file << "{\"id\":\"log_exec_replace_5\",\"timestamp\":" << (now * 1000) << ",\"location\":\"sno4.cpp:STMT_REPLACE\",\"message\":\"Checking before part\",\"data\":{\"dP1IsNull\":" << (d->p1 == nullptr ? 1 : 0) << ",\"dP1EqBP2P1\":" << (d->p1 == b->p2->p1 ? 1 : 0) << ",\"dP1Addr\":" << reinterpret_cast<uintptr_t>(d->p1) << ",\"bP2P1Addr\":" << reinterpret_cast<uintptr_t>(b->p2->p1) << "},\"sessionId\":\"debug-session\",\"runId\":\"initial\"}\n";
+                    log_file.close();
+                }
+            }
+            // #endregion agent log
+            if (d->p1 != nullptr && d->p1 != b->p2->p1) {
+                Node* before = &alloc();
+                before->p1 = b->p2->p1;  // First character
+                before->p2 = d->p1;       // Last character before match
+                // #region agent log
+                {
+                    std::ofstream log_file("/Users/vak/Project/Cursor/snobol3/.cursor/debug.log", std::ios::app);
+                    if (log_file.is_open()) {
+                        auto now = std::time(nullptr);
+                        char dP1Ch = d->p1 ? d->p1->ch : 0;
+                        char beforeP2P1Ch = (before->p2 && before->p2->p1) ? before->p2->p1->ch : 0;
+                        log_file << "{\"id\":\"log_exec_replace_6\",\"timestamp\":" << (now * 1000) << ",\"location\":\"sno4.cpp:STMT_REPLACE\",\"message\":\"Created before part\",\"data\":{\"beforeP1Addr\":" << reinterpret_cast<uintptr_t>(before->p1) << ",\"beforeP2Addr\":" << reinterpret_cast<uintptr_t>(before->p2) << ",\"beforeP2P1Addr\":" << reinterpret_cast<uintptr_t>(before->p2->p1) << ",\"dP1Ch\":" << static_cast<int>(dP1Ch) << ",\"beforeP2P1Ch\":" << static_cast<int>(beforeP2P1Ch) << "},\"sessionId\":\"debug-session\",\"runId\":\"initial\"}\n";
+                        log_file.close();
+                    }
+                }
+                // #endregion agent log
+                // #region agent log
+                {
+                    std::ofstream log_file("/Users/vak/Project/Cursor/snobol3/.cursor/debug.log", std::ios::app);
+                    if (log_file.is_open()) {
+                        auto now = std::time(nullptr);
+                        log_file << "{\"id\":\"log_exec_replace_7\",\"timestamp\":" << (now * 1000) << ",\"location\":\"sno4.cpp:STMT_REPLACE\",\"message\":\"Before cat(before, result)\",\"data\":{},\"sessionId\":\"debug-session\",\"runId\":\"initial\"}\n";
+                        log_file.close();
+                    }
+                }
+                // #endregion agent log
+                result = cat(before, result);
+                // #region agent log
+                {
+                    std::ofstream log_file("/Users/vak/Project/Cursor/snobol3/.cursor/debug.log", std::ios::app);
+                    if (log_file.is_open()) {
+                        auto now = std::time(nullptr);
+                        char resultP1Ch = result && result->p1 ? result->p1->ch : 0;
+                        log_file << "{\"id\":\"log_exec_replace_8\",\"timestamp\":" << (now * 1000) << ",\"location\":\"sno4.cpp:STMT_REPLACE\",\"message\":\"After cat(before, result)\",\"data\":{\"resultP1Ch\":" << static_cast<int>(resultP1Ch) << "},\"sessionId\":\"debug-session\",\"runId\":\"initial\"}\n";
+                        log_file.close();
+                    }
+                }
+                // #endregion agent log
+                free_node(*before);
+            }
+            // Add part after match if match doesn't end at end
+            // #region agent log
+            {
+                std::ofstream log_file("/Users/vak/Project/Cursor/snobol3/.cursor/debug.log", std::ios::app);
+                if (log_file.is_open()) {
+                    auto now = std::time(nullptr);
+                    log_file << "{\"id\":\"log_exec_replace_4\",\"timestamp\":" << (now * 1000) << ",\"location\":\"sno4.cpp:STMT_REPLACE\",\"message\":\"Checking after part\",\"data\":{\"dP2IsNull\":" << (d->p2 == nullptr ? 1 : 0) << ",\"dP2EqBP2P2\":" << (d->p2 == b->p2->p2 ? 1 : 0) << ",\"dP2Addr\":" << reinterpret_cast<uintptr_t>(d->p2) << ",\"bP2P2Addr\":" << reinterpret_cast<uintptr_t>(b->p2->p2) << "},\"sessionId\":\"debug-session\",\"runId\":\"initial\"}\n";
+                    log_file.close();
+                }
+            }
+            // #endregion agent log
+            if (d->p2 != nullptr && d->p2 != b->p2->p2) {
+                Node* after = &alloc();
+                after->p1 = d->p2;        // First character after match
+                after->p2 = b->p2->p2;    // Last character (end marker)
+                result = cat(result, after);
+                free_node(*after);
+            }
+            // #region agent log
+            {
+                std::ofstream log_file("/Users/vak/Project/Cursor/snobol3/.cursor/debug.log", std::ios::app);
+                if (log_file.is_open()) {
+                    auto now = std::time(nullptr);
+                    // Trace result string to see what it contains
+                    std::string resultStr = "";
+                    if (result != nullptr && result->p1 != nullptr && result->p2 != nullptr) {
+                        Node* curr = result->p1;
+                        int len = 0;
+                        while (curr != result->p2 && curr != nullptr && len < 100) {
+                            resultStr += curr->ch;
+                            curr = curr->p1;
+                            len++;
+                        }
+                    }
+                    log_file << "{\"id\":\"log_exec_replace_9\",\"timestamp\":" << (now * 1000) << ",\"location\":\"sno4.cpp:STMT_REPLACE\",\"message\":\"Final result before assign\",\"data\":{\"resultStr\":\"" << resultStr << "\",\"resultStrLen\":" << resultStr.length() << "},\"sessionId\":\"debug-session\",\"runId\":\"initial\"}\n";
+                    log_file.close();
+                }
+            }
+            // #endregion agent log
+            assign(*b, *result);
+            free_node(*d);
+            delete_string(c);
+            goto xsuc;
+        }
 
     default:
         // Invalid statement type

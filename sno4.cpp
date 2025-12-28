@@ -85,11 +85,15 @@ l1:
         if (stack->typ != Token::TOKEN_END)
             writes("illegal function");
         a1 = stack->p1;
+        // If a1 is a variable node (TOKEN_VARIABLE), follow p1 to get the symbol
+        if (a1->typ == Token::TOKEN_VARIABLE) {
+            a1 = a1->p1;
+        }
         if (a1->typ != Token::EXPR_FUNCTION)
             writes("illegal function");
-        a1 = a1->p2;
+        a1 = a1->p2; // Get a_ptr (variable node) from function symbol
         {
-            Node *op_ptr = a1->p1; // Function body
+            Node *op_ptr = a1->p1->p1; // Function body (a_ptr->p1 is symbol, symbol->p1 is function body)
             a3base = a3 = &alloc();
             a3->p2      = op_ptr->p2; // Save return address
             op_ptr->p2  = nullptr;

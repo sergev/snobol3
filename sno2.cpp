@@ -666,7 +666,9 @@ def:
         a_ptr->p2 = nullptr;
     }
     l->p1 = r; // Link function body
-    l->p2 = nullptr;
+    // Keep l->p2 pointing to a_ptr for function calls to work
+    // (The legacy code sets it to 0, but that breaks function calls)
+    // l->p2 = nullptr;
     return (r);
 
 derr:

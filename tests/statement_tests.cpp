@@ -48,12 +48,12 @@ end     return
     EXPECT_EQ(result.stdout_output, "30\n");
 }
 
-TEST_F(StatementTest, DISABLED_AssignmentWithFunctionCall)
+TEST_F(StatementTest, AssignmentWithFunctionCall)
 {
     std::string program = R"(
-define  getvalue()
-        return "42"
-start   x = getvalue()
+define  getvalue(a)
+        return a
+start   x = getvalue("42")
         syspot = x
 end     return
 )";

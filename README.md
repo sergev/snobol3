@@ -69,6 +69,8 @@ SNO differs from standard Snobol III in the following ways:
 
 10. **Pseudo-variables**: The pseudo-variable `sysppt` is not available.
 
+11. **Pattern alternations**: Pattern alternations (using `/` in patterns) are compiled correctly but not yet supported at runtime. Using alternations will result in a runtime error message.
+
 ## References
 
 - Snobol III manual (JACM; Vol. 11 No. 1; Jan 1964; pp 21)

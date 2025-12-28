@@ -25,8 +25,6 @@ Node *SnobolContext::eval_operand(const Node &ptr)
         case Token::EXPR_FUNCTION: // Function - get function body
             a = a->p2->p1;
             goto l1;
-        case Token::EXPR_SPECIAL: // Special value - free space count
-            return &binstr(nfree());
         default:
             writes("attempt to take an illegal value");
             goto l1;

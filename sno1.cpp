@@ -229,23 +229,6 @@ void SnobolContext::free_node(Node &pointer)
 }
 
 //
-// Count the number of free nodes available (both in current block and free list).
-//
-int SnobolContext::nfree() const
-{
-    int i;
-    Node *a;
-
-    i = freesize;
-    a = freelist;
-    while (a) {
-        a = a->p1;
-        i++;
-    }
-    return (i);
-}
-
-//
 // Look up a symbol in the name table, creating it if it doesn't exist.
 // Returns a reference to the symbol's value node.
 //
@@ -377,8 +360,8 @@ void Node::debug_print(std::ostream &os, int depth, int max_depth) const
     } else if (typ == Token::EXPR_FUNCTION || typ == Token::TOKEN_RPAREN) {
         if (typ == Token::EXPR_FUNCTION) os << "FUNCTION";
         else os << "RPAREN";
-    } else if (typ == Token::EXPR_SPECIAL) {
-        os << "SPECIAL";
+    } else if (typ == Token::TOKEN_MARKER) {
+        os << "MARKER";
     } else if (typ == Token::TOKEN_WHITESPACE) {
         os << "WHITESPACE";
     } else if (typ == Token::TOKEN_PLUS) {

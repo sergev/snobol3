@@ -31,64 +31,33 @@ enum class CharClass {
 // Uses STMT_* prefix for statement types
 //
 enum class Token {
-    // Value 0: End marker / Variable reference
-    TOKEN_END    = 0,
-    EXPR_VAR_REF = 0,
+    TOKEN_END         = 0,  // End marker
+    TOKEN_UNANCHORED  = 1,  // Unanchored search
+    TOKEN_ALTERNATION = 2,  // Pattern alternation
+    TOKEN_EQUALS      = 3,  // Equals
+    TOKEN_COMMA       = 4,  // Comma
+    TOKEN_RPAREN      = 5,  // Right parenthesis
+    TOKEN_MARKER      = 6,  // Marker for left paren
+    TOKEN_WHITESPACE  = 7,  // Whitespace / Concatenation
+    TOKEN_PLUS        = 8,  // Plus operator
+    TOKEN_MINUS       = 9,  // Minus operator
+    TOKEN_MULT        = 10, // Multiplication operator
+    TOKEN_DIV         = 11, // Division operator
+    TOKEN_DOLLAR      = 12, // Dollar sign (pattern immediate value)
+    EXPR_CALL         = 13, // Function call
+    TOKEN_VARIABLE    = 14, // Variable reference
+    TOKEN_STRING      = 15, // String literal
+    TOKEN_LPAREN      = 16, // Left parenthesis
 
-    // Value 1: Unanchored search / Value
-    TOKEN_UNANCHORED = 1,
-    EXPR_VALUE       = 1,
+    // Runtime/evaluation operations
+    EXPR_VAR_REF  = 0,  // Variable reference
+    EXPR_VALUE    = 51, // Value
+    EXPR_LABEL    = 52, // Label
+    EXPR_SYSPIT   = 53, // System input function
+    EXPR_SYSPOT   = 54, // System output
+    EXPR_FUNCTION = 55, // Function
 
-    // Value 2: Pattern alternation / Label
-    TOKEN_ALTERNATION = 2,
-    EXPR_LABEL        = 2,
-
-    // Value 3: Equals / System input function
-    TOKEN_EQUALS = 3,
-    EXPR_SYSPIT  = 3,
-
-    // Value 4: Comma / System output
-    TOKEN_COMMA = 4,
-    EXPR_SYSPOT = 4,
-
-    // Value 5: Right parenthesis / Function
-    TOKEN_RPAREN  = 5,
-    EXPR_FUNCTION = 5,
-
-    // Value 6: Special value / Free space
-    EXPR_SPECIAL = 6,
-
-    // Value 7: Whitespace / Concatenation
-    TOKEN_WHITESPACE = 7,
-
-    // Value 8: Plus operator
-    TOKEN_PLUS = 8,
-
-    // Value 9: Minus operator
-    TOKEN_MINUS = 9,
-
-    // Value 10: Multiplication operator
-    TOKEN_MULT = 10,
-
-    // Value 11: Division operator
-    TOKEN_DIV = 11,
-
-    // Value 12: Dollar sign (pattern immediate value)
-    TOKEN_DOLLAR = 12,
-
-    // Value 13: Function call
-    EXPR_CALL = 13,
-
-    // Value 14: Variable reference
-    TOKEN_VARIABLE = 14,
-
-    // Value 15: String literal
-    TOKEN_STRING = 15,
-
-    // Value 16: Left parenthesis
-    TOKEN_LPAREN = 16,
-
-    // Program statements
+    // Statement types
     STMT_SIMPLE  = 100, // Expression evaluation statement
     STMT_MATCH   = 101, // Pattern matching statement
     STMT_ASSIGN  = 102, // Assignment statement
@@ -160,7 +129,6 @@ public:
     Node &cstr_to_node(const char *s);
     Node &alloc();
     void free_node(Node &pointer);
-    int nfree() const;
     Node &look(const Node &string);
     Node *copy(const Node *string);
     int strbin(const Node *string);

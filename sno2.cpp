@@ -279,11 +279,11 @@ l3:
             goto l10;
         }
         comp->p1 = a = &alloc();
-        b            = &expr(b, Token::EXPR_SPECIAL, *a);  // Parse first argument
+        b            = &expr(b, Token::TOKEN_MARKER, *a);  // Parse first argument
         while ((d_token = b->typ) == Token::TOKEN_COMMA) { // Comma - more arguments
             a->p1 = b;
             a     = b;
-            b     = &expr(nullptr, Token::EXPR_SPECIAL, *a);
+            b     = &expr(nullptr, Token::TOKEN_MARKER, *a);
         }
         if (d_token != Token::TOKEN_RPAREN) // Should end with right parenthesis
             writes("error in function");
@@ -312,7 +312,7 @@ l6:
         // Push operator onto stack
         stack = &push(stack);
         if (op == Token::TOKEN_LPAREN)
-            op = Token::EXPR_SPECIAL; // Treat left paren as low precedence
+            op = Token::TOKEN_MARKER; // Treat left paren as low precedence
         stack->typ = op;
         stack->p1  = comp;
         goto l1;
@@ -324,7 +324,7 @@ l6:
         list->typ = Token::TOKEN_END;
         return *comp;
     }
-    if (op1 == Token::EXPR_SPECIAL) {  // Left parenthesis marker
+    if (op1 == Token::TOKEN_MARKER) {  // Left parenthesis marker
         if (op != Token::TOKEN_RPAREN) // Should match right parenthesis
             writes("too many ('s");
         goto l1;
@@ -372,7 +372,7 @@ l2:
     case Token::TOKEN_VARIABLE:                              // Variable
     case Token::TOKEN_STRING:                                // String literal
     case Token::TOKEN_LPAREN:                                // Left parenthesis
-        comp      = &expr(comp, Token::EXPR_SPECIAL, *list); // Parse as expression
+        comp      = &expr(comp, Token::TOKEN_MARKER, *list); // Parse as expression
         list->typ = Token::TOKEN_UNANCHORED;                 // Pattern component
         goto l3;
 
@@ -399,7 +399,7 @@ l2:
             a->p2 = nullptr; // No right side
         } else {
             free_node(*comp);
-            comp = &expr(nullptr, Token::EXPR_SPECIAL, *a); // Parse right side
+            comp = &expr(nullptr, Token::TOKEN_MARKER, *a); // Parse right side
         }
         if (bal != Token::STMT_SIMPLE) {
             if (comp->typ != Token::TOKEN_RPAREN) // Should end with right paren
@@ -503,7 +503,7 @@ assig:
     // Parse assignment value
     free_node(*comp);
     as   = &alloc();
-    comp = &expr(nullptr, Token::EXPR_SPECIAL, *as);
+    comp = &expr(nullptr, Token::TOKEN_MARKER, *as);
     a    = comp->typ;
     if (a == Token::TOKEN_END)
         goto asmble;
@@ -542,7 +542,7 @@ xboth:
     free_node(*comp);
     xs   = &alloc();
     xf   = &alloc();
-    comp = &expr(nullptr, Token::EXPR_SPECIAL, *xs); // Parse success target
+    comp = &expr(nullptr, Token::TOKEN_MARKER, *xs); // Parse success target
     if (comp->typ != Token::TOKEN_RPAREN)            // Should end with right paren
         goto xerr;
     xf->p2 = xs->p2; // Share expression list
@@ -559,7 +559,7 @@ xsuc:
     if (comp->typ != Token::TOKEN_LPAREN)
         goto xerr;
     xs   = &alloc();
-    comp = &expr(nullptr, Token::EXPR_SPECIAL, *xs);
+    comp = &expr(nullptr, Token::TOKEN_MARKER, *xs);
     if (comp->typ != Token::TOKEN_RPAREN)
         goto xerr;
     goto xfer;
@@ -572,7 +572,7 @@ xfail:
     if (comp->typ != Token::TOKEN_LPAREN)
         goto xerr;
     xf   = &alloc();
-    comp = &expr(nullptr, Token::EXPR_SPECIAL, *xf);
+    comp = &expr(nullptr, Token::TOKEN_MARKER, *xf);
     if (comp->typ != Token::TOKEN_RPAREN)
         goto xerr;
     goto xfer;

@@ -144,6 +144,10 @@ badv1:
     b               = a->p2;
     c               = a->typ;
     list->typ       = c;
+    if (c == Token::TOKEN_ALTERNATION) {
+        mes("alternations are not supported yet");
+        return nullptr;
+    }
     if (static_cast<int>(c) < static_cast<int>(Token::STMT_ASSIGN)) {
         // Simple pattern component - evaluate and store
         back->p2 = eval(*b, 1);

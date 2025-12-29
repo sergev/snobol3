@@ -1,5 +1,6 @@
-#include "sno.h"
 #include <iostream>
+
+#include "sno.h"
 
 //
 // Parse the next component (token) from the input stream.
@@ -86,11 +87,11 @@ Node &SnobolContext::compon()
         if (a->ch == c) {
             // Empty string
             free_node(*schar);
-            a->typ = Token::TOKEN_STRING;
-            a->p1  = nullptr;
+            a->typ  = Token::TOKEN_STRING;
+            a->head = nullptr;
             return *a;
         }
-        b->p1 = a;
+        b->head = a;
         for (;;) {
             schar = getc_char();
             if (schar == nullptr) {
@@ -102,12 +103,12 @@ Node &SnobolContext::compon()
                 break;
             }
             // Add this character to the string
-            a->p1 = schar;
-            a     = schar;
+            a->head = schar;
+            a       = schar;
         }
-        b->p2      = a;
-        schar->typ = Token::TOKEN_STRING;
-        schar->p1  = b;
+        b->tail     = a;
+        schar->typ  = Token::TOKEN_STRING;
+        schar->head = b;
         return *schar;
     lerr:
         writes("illegal literal string");
@@ -127,21 +128,21 @@ Node &SnobolContext::compon()
         break;
     }
     // Identifier or keyword - collect characters until delimiter
-    b     = &alloc();
-    b->p1 = a = schar;
-    schar     = getc_char();
+    b       = &alloc();
+    b->head = a = schar;
+    schar       = getc_char();
     while (schar != nullptr && char_class(schar->ch) == CharClass::OTHER) {
-        a->p1 = schar;
-        a     = schar;
-        schar = getc_char();
+        a->head = schar;
+        a       = schar;
+        schar   = getc_char();
     }
-    b->p2       = a;
+    b->tail     = a;
     compon_next = 1;
     a           = &look(*b);
     delete_string(b);
-    b      = &alloc();
-    b->typ = Token::TOKEN_VARIABLE; // Variable reference
-    b->p1  = a;
+    b       = &alloc();
+    b->typ  = Token::TOKEN_VARIABLE; // Variable reference
+    b->head = a;
     return *b;
 }
 
@@ -167,7 +168,7 @@ Node &SnobolContext::nscomp()
 Node &SnobolContext::push(Node *stack)
 {
     Node &a = alloc();
-    a.p2    = stack;
+    a.tail  = stack;
     return a;
 }
 
@@ -182,7 +183,7 @@ Node *SnobolContext::pop(Node *stack)
     s = stack;
     if (s == nullptr)
         writes("pop");
-    a = s->p2;
+    a = s->tail;
     free_node(*s);
     return (a);
 }
@@ -204,7 +205,7 @@ Node &SnobolContext::expr(Node *start, Token eof, Node &e)
 
     // Initialize expression parser
     list       = &alloc(); // Output list (postfix expression)
-    e.p2       = list;
+    e.tail     = list;
     stack      = &push(nullptr); // Operator stack
     stack->typ = eof;            // End-of-expression marker (lowest precedence)
     operand    = 0;              // Flag: expecting operand (1) or operator (0)
@@ -275,19 +276,19 @@ l3:
         op = comp->typ = Token::TOKEN_CALL; // Function call
         if (b->typ == Token::TOKEN_RPAREN) {
             // Empty argument list
-            comp->p1 = nullptr;
+            comp->head = nullptr;
             goto l10;
         }
-        comp->p1 = a = &alloc();
-        b            = &expr(b, Token::TOKEN_MARKER, *a);  // Parse first argument
-        while ((d_token = b->typ) == Token::TOKEN_COMMA) { // Comma - more arguments
-            a->p1 = b;
-            a     = b;
-            b     = &expr(nullptr, Token::TOKEN_MARKER, *a);
+        comp->head = a = &alloc();
+        b              = &expr(b, Token::TOKEN_MARKER, *a); // Parse first argument
+        while ((d_token = b->typ) == Token::TOKEN_COMMA) {  // Comma - more arguments
+            a->head = b;
+            a       = b;
+            b       = &expr(nullptr, Token::TOKEN_MARKER, *a);
         }
         if (d_token != Token::TOKEN_RPAREN) // Should end with right parenthesis
             writes("error in function");
-        a->p1 = nullptr;
+        a->head = nullptr;
     l10:
         free_node(*b);
         goto l6;
@@ -313,12 +314,12 @@ l6:
         stack = &push(stack);
         if (op == Token::TOKEN_LPAREN)
             op = Token::TOKEN_MARKER; // Treat left paren as low precedence
-        stack->typ = op;
-        stack->p1  = comp;
+        stack->typ  = op;
+        stack->head = comp;
         goto l1;
     }
     // Pop and process operators
-    c     = stack->p1;
+    c     = stack->head;
     stack = pop(stack);
     if (stack == nullptr) {
         list->typ = Token::TOKEN_END;
@@ -331,10 +332,10 @@ l6:
     }
     if (op1 == Token::TOKEN_WHITESPACE) // Concatenation operator
         c = &alloc();
-    list->typ = op1;
-    list->p2  = c->p1;
-    list->p1  = c;
-    list      = c;
+    list->typ  = op1;
+    list->tail = c->head;
+    list->head = c;
+    list       = c;
     goto l6;
 }
 
@@ -350,17 +351,17 @@ Node &SnobolContext::match(Node *start, Node &m)
     Token b_token;
     Token bal;
 
-    bal  = Token::STMT_SIMPLE;
-    list = &alloc();
-    m.p2 = list;
-    comp = start;
+    bal    = Token::STMT_SIMPLE;
+    list   = &alloc();
+    m.tail = list;
+    comp   = start;
     if (!comp)
         comp = &compon();
     goto l2;
 
 l3:
-    list->p1 = a = &alloc();
-    list         = a;
+    list->head = a = &alloc();
+    list           = a;
 l2:
     switch (comp->typ) {
     case Token::TOKEN_WHITESPACE: // Whitespace - skip
@@ -390,13 +391,13 @@ l2:
         b_token = comp->typ;
         if (b_token == Token::TOKEN_ALTERNATION || b_token == Token::TOKEN_RPAREN ||
             b_token == Token::TOKEN_MULT || b_token == Token::TOKEN_UNANCHORED)
-            a->p1 = nullptr; // No left side
+            a->head = nullptr; // No left side
         else {
-            comp  = &expr(comp, Token::TOKEN_DIV, *a); // Parse left side
-            a->p1 = a->p2;
+            comp    = &expr(comp, Token::TOKEN_DIV, *a); // Parse left side
+            a->head = a->tail;
         }
         if (comp->typ != Token::TOKEN_ALTERNATION) {
-            a->p2 = nullptr; // No right side
+            a->tail = nullptr; // No right side
         } else {
             free_node(*comp);
             comp = &expr(nullptr, Token::TOKEN_MARKER, *a); // Parse right side
@@ -411,9 +412,9 @@ l2:
         if (b_token != Token::TOKEN_UNANCHORED &&
             b_token != Token::TOKEN_MULT) // Should be alternation or equals
             goto merr;
-        list->p2  = a;
-        list->typ = Token::TOKEN_ALTERNATION; // Alternation pattern
-        a->typ    = bal;
+        list->tail = a;
+        list->typ  = Token::TOKEN_ALTERNATION; // Alternation pattern
+        a->typ     = bal;
         free_node(*comp);
         comp = &compon();
         goto l3;
@@ -464,7 +465,7 @@ Node *SnobolContext::compile()
     a    = comp->typ;
     // Check for optional label
     if (a == Token::TOKEN_VARIABLE) {
-        l = comp->p1;
+        l = comp->head;
         free_node(*comp);
         comp = &compon();
         a    = comp->typ;
@@ -526,7 +527,7 @@ xfer:
     }
     if (a != Token::TOKEN_VARIABLE) // Should be a label
         goto xerr;
-    b = comp->p1;
+    b = comp->head;
     free_node(*comp);
     if (b == looks) // "s" - success goto
         goto xsuc;
@@ -545,8 +546,8 @@ xboth:
     comp = &expr(nullptr, Token::TOKEN_MARKER, *xs); // Parse success target
     if (comp->typ != Token::TOKEN_RPAREN)            // Should end with right paren
         goto xerr;
-    xf->p2 = xs->p2; // Share expression list
-    comp   = &compon();
+    xf->tail = xs->tail; // Share expression list
+    comp     = &compon();
     if (comp->typ != Token::TOKEN_END)
         goto xerr;
     goto asmble;
@@ -582,40 +583,40 @@ asmble:
     if (l) {
         if (l->typ != Token::TOKEN_END)
             writes("name doubly defined");
-        l->p2  = comp;
-        l->typ = Token::EXPR_LABEL; // type label;
+        l->tail = comp;
+        l->typ  = Token::EXPR_LABEL; // type label;
     }
-    comp->p2 = r; // Link to expression
+    comp->tail = r; // Link to expression
     // Check if this is a pattern replacement (both m and as exist)
     // Pattern replacement occurs when match() returns TOKEN_EQUALS and we then parse an assignment
     if (m && as) {
-        // Pattern replacement: r->p1 = m, m->p1 = as, as->p1 = g
-        t     = Token::STMT_REPLACE; // Type 3: pattern replacement
-        r->p1 = m;
-        m->p1 = as;
-        r     = as; // Set r to as for goto structure linking
+        // Pattern replacement: r->head = m, m->head = as, as->head = g
+        t       = Token::STMT_REPLACE; // Type 3: pattern replacement
+        r->head = m;
+        m->head = as;
+        r       = as; // Set r to as for goto structure linking
     } else if (m) {
-        t     = Token::STMT_MATCH; // Type 1: pattern matching statement
-        r->p1 = m;
-        r     = m;
+        t       = Token::STMT_MATCH; // Type 1: pattern matching statement
+        r->head = m;
+        r       = m;
     } else if (as) {
-        t     = Token::STMT_ASSIGN; // Type 2: assignment statement
-        r->p1 = as;
-        r     = as;
+        t       = Token::STMT_ASSIGN; // Type 2: assignment statement
+        r->head = as;
+        r       = as;
     }
-    // Build goto structure: g->p1 = success goto, g->p2 = failure goto
-    g     = &alloc();
-    g->p1 = nullptr;
+    // Build goto structure: g->head = success goto, g->tail = failure goto
+    g       = &alloc();
+    g->head = nullptr;
     if (xs) {
-        g->p1 = xs->p2; // Success goto target (expression list)
+        g->head = xs->tail; // Success goto target (expression list)
         free_node(*xs);
     }
-    g->p2 = nullptr;
+    g->tail = nullptr;
     if (xf) {
-        g->p2 = xf->p2; // Failure goto target (expression list)
+        g->tail = xf->tail; // Failure goto target (expression list)
         free_node(*xf);
     }
-    r->p1     = g;  // Link goto structure to statement
+    r->head   = g;  // Link goto structure to statement
     comp->typ = t;  // Statement type: 0=simple, 1=match, 2=assign, 3=replace
     comp->ch  = lc; // Store line number
     return (comp);
@@ -625,16 +626,16 @@ def:
     r = &nscomp();
     if (r->typ != Token::TOKEN_VARIABLE) // Should be function name
         goto derr;
-    l = r->p1;
+    l = r->head;
     if (l->typ != Token::TOKEN_END)
         writes("name doubly defined");
     l->typ = Token::EXPR_FUNCTION; // type function;
     {
         Node *a_ptr = r;
-        l->p2       = a_ptr;
+        l->tail     = a_ptr;
         r           = &nscomp();
         l           = r;
-        a_ptr->p1   = l;
+        a_ptr->head = l;
         if (r->typ == Token::TOKEN_END) // No parameters
             goto d4;
         if (r->typ != Token::TOKEN_LPAREN) // Should start with left paren
@@ -645,10 +646,10 @@ def:
         r = &nscomp();
         if (r->typ != Token::TOKEN_VARIABLE) // Should be parameter name
             goto derr;
-        a_ptr->p2 = r;
-        r->typ    = Token::EXPR_VAR_REF;
-        a_ptr     = r;
-        r         = &nscomp();
+        a_ptr->tail = r;
+        r->typ      = Token::EXPR_VAR_REF;
+        a_ptr       = r;
+        r           = &nscomp();
         if (r->typ == Token::TOKEN_COMMA) { // Comma - more parameters
             free_node(*r);
             goto d2;
@@ -663,13 +664,13 @@ def:
 
     d4:
         // Compile function body
-        r         = compile();
-        a_ptr->p2 = nullptr;
+        r           = compile();
+        a_ptr->tail = nullptr;
     }
-    l->p1 = r; // Link function body
-    // Keep l->p2 pointing to a_ptr for function calls to work
+    l->head = r; // Link function body
+    // Keep l->tail pointing to a_ptr for function calls to work
     // (The legacy code sets it to 0, but that breaks function calls)
-    // l->p2 = nullptr;
+    // l->tail = nullptr;
     return (r);
 
 derr:

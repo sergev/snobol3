@@ -67,8 +67,8 @@ enum class Token {
 // Node structure for Snobol III interpreter
 //
 struct Node {
-    Node *p1;
-    Node *p2;
+    Node *head;
+    Node *tail;
     Token typ;
     char ch;
 

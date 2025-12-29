@@ -145,8 +145,8 @@ end         syspot = "done"
     EXPECT_TRUE(result.success) << result.stderr_output;
     EXPECT_EQ(result.stdout_output, "alternations are not supported yet\nnot found\ndone\n");
 
-    //TODO: enable when alterations are implemented
-    //TODO: EXPECT_EQ(result.stdout_output, "found\ndone\n");
+    // TODO: enable when alterations are implemented
+    // TODO: EXPECT_EQ(result.stdout_output, "found\ndone\n");
 }
 
 TEST_F(PatternTest, SimpleAlternation_SecondMatch)
@@ -163,8 +163,8 @@ end         syspot = "done"
     EXPECT_TRUE(result.success) << result.stderr_output;
     EXPECT_EQ(result.stdout_output, "alternations are not supported yet\nnot found\ndone\n");
 
-    //TODO: enable when alterations are implemented
-    //TODO: EXPECT_EQ(result.stdout_output, "found\ndone\n");
+    // TODO: enable when alterations are implemented
+    // TODO: EXPECT_EQ(result.stdout_output, "found\ndone\n");
 }
 
 TEST_F(PatternTest, SimpleAlternation_NoMatch)
@@ -181,8 +181,8 @@ end         syspot = "done"
     EXPECT_TRUE(result.success) << result.stderr_output;
     EXPECT_EQ(result.stdout_output, "alternations are not supported yet\nnot found\ndone\n");
 
-    //TODO: enable when alterations are implemented
-    //TODO: EXPECT_EQ(result.stdout_output, "not found\ndone\n");
+    // TODO: enable when alterations are implemented
+    // TODO: EXPECT_EQ(result.stdout_output, "not found\ndone\n");
 }
 
 TEST_F(PatternTest, AlternationWithVariables)
@@ -201,8 +201,8 @@ end         syspot = "done"
     EXPECT_TRUE(result.success) << result.stderr_output;
     EXPECT_EQ(result.stdout_output, "alternations are not supported yet\nnot found\ndone\n");
 
-    //TODO: enable when alterations are implemented
-    //TODO: EXPECT_EQ(result.stdout_output, "found\ndone\n");
+    // TODO: enable when alterations are implemented
+    // TODO: EXPECT_EQ(result.stdout_output, "found\ndone\n");
 }
 
 // ============================================================================
@@ -223,8 +223,8 @@ end         syspot = "done"
     EXPECT_TRUE(result.success) << result.stderr_output;
     EXPECT_EQ(result.stdout_output, "alternations are not supported yet\nnot found\ndone\n");
 
-    //TODO: enable when alterations are implemented
-    //TODO: EXPECT_EQ(result.stdout_output, "found\ndone\n");
+    // TODO: enable when alterations are implemented
+    // TODO: EXPECT_EQ(result.stdout_output, "found\ndone\n");
 }
 
 // ============================================================================

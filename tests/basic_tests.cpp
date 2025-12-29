@@ -25,9 +25,9 @@ protected:
         }
         std::string result;
         Node *a = str;
-        Node *b = str->p2;
+        Node *b = str->tail;
         while (a != b) {
-            a = a->p1;
+            a = a->head;
             result += a->ch;
         }
         return result;

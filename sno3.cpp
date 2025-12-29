@@ -14,12 +14,12 @@ int Node::bextend(const Node *last)
     CharClass class_val;
 
     s = this;
-    c = s->p1;
+    c = s->head;
     if (c == nullptr)
         goto bad;
     b = 0; // Parenthesis balance counter
     d = 0; // Character count
-    a = s->p2;
+    a = s->tail;
     if (a == nullptr) {
         a = c;
         goto eb2;
@@ -27,7 +27,7 @@ int Node::bextend(const Node *last)
 eb1:
     if (a == last)
         goto bad;
-    a = a->p1;
+    a = a->head;
 eb2:
     d++;
     class_val = SnobolContext::char_class(a->ch);
@@ -43,7 +43,7 @@ eb2:
     }
 eb3:
     if (b == 0) { // Balanced - found end of pattern
-        s->p2 = a;
+        s->tail = a;
         return (d);
     }
     goto eb1;
@@ -61,17 +61,17 @@ int Node::ubextend(const Node *last)
     Node *a, *b, *s;
 
     s = this;
-    a = s->p1;
+    a = s->head;
     if (a == nullptr)
         goto bad;
-    b = s->p2;
+    b = s->tail;
     if (b == nullptr)
         goto good;
     if (b == last)
         goto bad;
-    a = b->p1;
+    a = b->head;
 good:
-    s->p2 = a;
+    s->tail = a;
     return (1);
 bad:
     return (0);
@@ -86,18 +86,18 @@ bad:
 // When a match is found, search() returns a Node* (typically called 'd' in execute())
 // with the following structure:
 //
-//   d->p1: Character node BEFORE the match start
+//   d->head: Character node BEFORE the match start
 //          - nullptr if match starts at beginning of string
 //
-//   d->p2: Character node AFTER the match end
+//   d->tail: Character node AFTER the match end
 //          - Points to the character node immediately after the match
-//          - If match ends at end of string: d->p2 = r->p2 (end marker)
-//          - Otherwise: d->p2 = next (character node after match)
+//          - If match ends at end of string: d->tail = r->tail (end marker)
+//          - Otherwise: d->tail = next (character node after match)
 //
 // EXAMPLE: For string "hello world" matching "world":
 //   - next = nullptr (match is at end)
-//   - d->p1 = ' ' (space before "world")
-//   - d->p2 = r->p2 (end marker, since match ends at end)
+//   - d->head = ' ' (space before "world")
+//   - d->tail = r->tail (end marker, since match ends at end)
 //
 Node *SnobolContext::search(const Node &arg, Node *r)
 {
@@ -109,17 +109,17 @@ Node *SnobolContext::search(const Node &arg, Node *r)
     Node *before_match_start = nullptr; // Track node before match_start
 
     // Initialize pattern matching state
-    a    = arg.p2;          // Start of pattern component list
+    a    = arg.tail;        // Start of pattern component list
     list = base = &alloc(); // Base of matching state list
     last        = nullptr;  // End of subject string (set later)
     next        = nullptr;  // Next position to match from
     goto badv1;
 badvanc:
     // Build pattern matching state from pattern components
-    a = a->p1;
+    a = a->head;
     if (a->typ == Token::TOKEN_END) {
         // End of pattern - initialize search
-        list->p1 = nullptr;
+        list->head = nullptr;
         if (rfail == 1) {
             a = nullptr;
             goto fail;
@@ -128,57 +128,57 @@ badvanc:
         if (r == nullptr)
             next = last = nullptr;
         else {
-            next             = r->p1; // Start of subject string
-            last             = r->p2; // End of subject string
+            next               = r->head; // Start of subject string
+            last               = r->tail; // End of subject string
             before_match_start = nullptr; // Match starts at beginning, nothing before it
         }
         goto adv1;
     }
-    b        = &alloc();
-    list->p1 = b;
-    list     = b;
+    b          = &alloc();
+    list->head = b;
+    list       = b;
 badv1:
     // Set up backtracking structure for this pattern component
-    list->p2 = back = &alloc();
-    back->p1        = last;
-    b               = a->p2;
-    c               = a->typ;
-    list->typ       = c;
+    list->tail = back = &alloc();
+    back->head        = last;
+    b                 = a->tail;
+    c                 = a->typ;
+    list->typ         = c;
     if (c == Token::TOKEN_ALTERNATION) {
         mes("alternations are not supported yet");
         return nullptr;
     }
     if (c < Token::TOKEN_ALTERNATION) {
         // Simple pattern component - evaluate and store
-        back->p2 = eval(*b, 1);
+        back->tail = eval(*b, 1);
         goto badvanc;
     }
     // Complex pattern component - set up match state
-    last     = list;
-    str      = &alloc(); // Match position tracker
-    etc      = &alloc(); // Pattern metadata
-    back->p2 = var = &alloc();
-    var->typ       = b->typ; // Pattern type (1=balanced, 2=unbalanced, 3=concatenated)
-    var->p1        = str;
-    var->p2        = etc;
-    e              = b->p1;
+    last       = list;
+    str        = &alloc(); // Match position tracker
+    etc        = &alloc(); // Pattern metadata
+    back->tail = var = &alloc();
+    var->typ         = b->typ; // Pattern type (1=balanced, 2=unbalanced, 3=concatenated)
+    var->head        = str;
+    var->tail        = etc;
+    e                = b->head;
     if (e == nullptr)
-        etc->p1 = nullptr; // No left side
+        etc->head = nullptr; // No left side
     else
-        etc->p1 = eval(*e, 0); // Evaluate left pattern
-    e = b->p2;
+        etc->head = eval(*e, 0); // Evaluate left pattern
+    e = b->tail;
     if (e == nullptr)
-        etc->p2 = nullptr; // No right side
+        etc->tail = nullptr; // No right side
     else {
-        e       = eval(*e, 1);             // Evaluate right pattern (length)
-        etc->p2 = (Node *)(long)strbin(e); // Store as integer
+        e         = eval(*e, 1);             // Evaluate right pattern (length)
+        etc->tail = (Node *)(long)strbin(e); // Store as integer
         delete_string(e);
     }
     goto badvanc;
 
 retard:
     // Backtrack to previous pattern component
-    a = back->p1;
+    a = back->head;
     if (a == nullptr) {
         // No previous pattern component - try next position in subject for unanchored search
         if (next == nullptr || next == last) {
@@ -188,16 +188,16 @@ retard:
 
         // Advance to next position and try again
         before_match_start = next; // Current next will be before the new match_start
-        next               = next->p1;
+        next               = next->head;
         list               = base;
         goto adv1;
     }
     list = a;
-    back = list->p2;
-    var  = back->p2;
-    str  = var->p1;
-    etc  = var->p2;
-    if (etc->p2) // Has length constraint - need to retry
+    back = list->tail;
+    var  = back->tail;
+    str  = var->head;
+    etc  = var->tail;
+    if (etc->tail) // Has length constraint - need to retry
         goto retard;
 
     // Try to extend current match
@@ -210,40 +210,40 @@ retard:
         goto retard;
 adv0:
     // Advance to next position
-    a = str->p2;
+    a = str->tail;
 adv01:
     if (a == last)
         next = nullptr;
     else
-        next = a->p1;
+        next = a->head;
 advanc:
     // Process next pattern component
-    a = list->p1;
+    a = list->head;
     if (a == nullptr) {
         // End of pattern - check if match succeeded
         a = &alloc();
         if (r == nullptr) {
-            a->p1 = a->p2 = nullptr;
+            a->head = a->tail = nullptr;
             goto fail;
         }
 
-        // Set a->p1 to character BEFORE match start (or nullptr if match at start)
-        a->p1 = before_match_start;
+        // Set a->head to character BEFORE match start (or nullptr if match at start)
+        a->head = before_match_start;
 
-        // Set a->p2 to character AFTER match end (or r->p2 if match at end)
+        // Set a->tail to character AFTER match end (or r->tail if match at end)
         if (next == nullptr) {
             // Match ends at end of string
-            a->p2 = r->p2;
+            a->tail = r->tail;
         } else {
             // next points to character after match end
-            a->p2 = next;
+            a->tail = next;
         }
         goto fail;
     }
     list = a;
 adv1:
-    back    = list->p2;
-    var     = back->p2;
+    back    = list->tail;
+    var     = back->tail;
     d_token = list->typ;
     if (d_token < Token::TOKEN_ALTERNATION) {
         // Simple pattern - match string directly
@@ -252,8 +252,8 @@ adv1:
         if (next == nullptr)
             goto retard;
         a = next;
-        b = var->p1;
-        e = var->p2;
+        b = var->head;
+        e = var->tail;
         while (1) {
             if (a->ch != b->ch)
                 goto retard;
@@ -261,16 +261,16 @@ adv1:
                 goto adv01;
             if (a == last) // Reached end of subject
                 goto retard;
-            a = a->p1;
-            b = b->p1;
+            a = a->head;
+            b = b->head;
         }
     }
     // Complex pattern - handle alternation or concatenation
-    str     = var->p1;
-    etc     = var->p2;
-    str->p1 = next;
-    str->p2 = nullptr;
-    len     = (long)etc->p2;                   // Length constraint
+    str       = var->head;
+    etc       = var->tail;
+    str->head = next;
+    str->tail = nullptr;
+    len       = (long)etc->tail;               // Length constraint
     if (var->typ == Token::TOKEN_UNANCHORED) { // Balanced pattern (value 1)
         d = str->bextend(last);
         if (d == 0)
@@ -291,7 +291,7 @@ adv1:
     }
     if (len == 0) {                      // No length constraint
         if (d == 3 && next != nullptr) { // Concatenated pattern
-            str->p2 = last;
+            str->tail = last;
             goto adv0;
         }
         goto advanc;
@@ -309,29 +309,29 @@ fail:
     goto f1;
 fadv:
     free_node(*back);
-    b = list->p1;
+    b = list->head;
     free_node(*list);
     if (b == nullptr)
         return (a);
     list = b;
 f1:
-    back = list->p2;
-    var  = back->p2;
+    back = list->tail;
+    var  = back->tail;
     if (list->typ < Token::TOKEN_ALTERNATION) {
         // Simple pattern - no assignment needed
         delete_string(var);
         goto fadv;
     }
     // Complex pattern - assign matched substring
-    str = var->p1;
-    etc = var->p2;
-    if (a != nullptr && etc->p1 != nullptr) {
+    str = var->head;
+    etc = var->tail;
+    if (a != nullptr && etc->head != nullptr) {
         // Assign matched substring to variable
-        if (str->p2 == nullptr) {
+        if (str->tail == nullptr) {
             free_node(*str);
             str = nullptr;
         }
-        assign(*etc->p1, *copy(str));
+        assign(*etc->head, *copy(str));
     }
     if (str)
         free_node(*str);

@@ -1,5 +1,6 @@
-#include "sno.h"
 #include <iostream>
+
+#include "sno.h"
 
 //
 // Evaluate an operand from the evaluation stack.
@@ -10,7 +11,7 @@ Node *SnobolContext::eval_operand(const Node &ptr)
 {
     Node *a;
     Node &p = const_cast<Node &>(ptr);
-    a       = p.p1;
+    a       = p.head;
     if (p.typ == Token::EXPR_VAR_REF) {
         // Variable reference - get its value
         switch (a->typ) {
@@ -23,14 +24,14 @@ Node *SnobolContext::eval_operand(const Node &ptr)
             flush();
             return (syspit());
         case Token::EXPR_FUNCTION: // Function - get function body
-            a = a->p2->p1;
+            a = a->tail->head;
             goto l1;
         default:
             writes("attempt to take an illegal value");
             goto l1;
         }
     l1:
-        a = copy(a->p2); // Copy variable's value
+        a = copy(a->tail); // Copy variable's value
     }
     return (a);
 }
@@ -54,7 +55,7 @@ Node *SnobolContext::eval(const Node &e, int t)
     list  = const_cast<Node *>(&e); // Current position in expression list
     goto l1;
 advanc:
-    list = list->p1;
+    list = list->head;
 l1:
     op = list->typ;
     switch (op) {
@@ -68,52 +69,54 @@ l1:
         // Assignment mode - get variable reference
         if (stack->typ == Token::EXPR_VALUE)
             writes("attempt to store in a value");
-        a1 = stack->p1;
+        a1 = stack->head;
     e1:
         stack = pop(stack);
         if (stack)
             writes("phase error");
         return (a1);
     case Token::TOKEN_DOLLAR: // Pattern immediate value ($)
-        a1        = eval_operand(*stack);
-        stack->p1 = &look(*a1); // Look up variable
+        a1          = eval_operand(*stack);
+        stack->head = &look(*a1); // Look up variable
         delete_string(a1);
         stack->typ = Token::EXPR_VAR_REF; // Mark as variable reference
         goto advanc;
     case Token::TOKEN_CALL: // Function call
         if (!stack || stack->typ != Token::EXPR_VAR_REF)
             writes("illegal function");
-        a1 = stack->p1;
-        // If a1 is a variable node (TOKEN_VARIABLE), follow p1 to get the symbol
+        a1 = stack->head;
+        // If a1 is a variable node (TOKEN_VARIABLE), follow head to get the symbol
         if (a1->typ == Token::TOKEN_VARIABLE) {
-            a1 = a1->p1;
+            a1 = a1->head;
         }
         if (!a1 || a1->typ != Token::EXPR_FUNCTION)
             writes("illegal function");
-        a1 = a1->p2; // Get a_ptr (variable node) from function symbol
+        a1 = a1->tail; // Get a_ptr (variable node) from function symbol
         {
-            Node *op_ptr = a1->p1->p1; // Function body (a_ptr->p1 is symbol, symbol->p1 is function body)
-            a3base = a3 = &alloc();
-            a3->p2      = op_ptr->p2; // Save return address
-            op_ptr->p2  = nullptr;
-            a1          = a1->p2;   // Parameter list
-            a2          = list->p2; // Argument list
+            Node *op_ptr =
+                a1->head
+                    ->head; // Function body (a_ptr->head is symbol, symbol->head is function body)
+            a3base = a3  = &alloc();
+            a3->tail     = op_ptr->tail; // Save return address
+            op_ptr->tail = nullptr;
+            a1           = a1->tail;   // Parameter list
+            a2           = list->tail; // Argument list
         f1:
             // Match parameters to arguments
             if (a1 != nullptr && a2 != nullptr)
                 goto f2;
             if (a1 != a2)
                 writes("parameters do not match");
-            op_ptr = op_ptr->p1;
+            op_ptr = op_ptr->head;
             goto f3;
         f2:
             // Bind parameter to argument value
-            a3->p1 = a4 = &alloc();
-            a3          = a4;
-            a3->p2      = eval_operand(*a1);    // Save old parameter value
-            assign(*a1->p1, *eval(*a2->p2, 1)); // recursive
-            a1 = a1->p2;
-            a2 = a2->p1;
+            a3->head = a4 = &alloc();
+            a3            = a4;
+            a3->tail      = eval_operand(*a1);      // Save old parameter value
+            assign(*a1->head, *eval(*a2->tail, 1)); // recursive
+            a1 = a1->tail;
+            a2 = a2->head;
             goto f1;
         f3:
             // Execute function body
@@ -121,29 +124,29 @@ l1:
             if (op_ptr)
                 goto f3;
             // Restore parameter values
-            // Get a_ptr: stack->p1 is function name, need to get back to a_ptr
-            // stack->p1 is TOKEN_VARIABLE node, stack->p1->p1 is symbol (EXPR_FUNCTION)
-            // symbol->p2 is a_ptr
-            a1 = stack->p1;
+            // Get a_ptr: stack->head is function name, need to get back to a_ptr
+            // stack->head is TOKEN_VARIABLE node, stack->head->head is symbol (EXPR_FUNCTION)
+            // symbol->tail is a_ptr
+            a1 = stack->head;
             if (a1->typ == Token::TOKEN_VARIABLE) {
-                a1 = a1->p1; // Get symbol
+                a1 = a1->head; // Get symbol
             }
-            a1 = a1->p2; // Get a_ptr
+            a1 = a1->tail; // Get a_ptr
             {
-                Node *op_ptr2 = a1->p1;
+                Node *op_ptr2 = a1->head;
                 a3            = a3base;
-                stack->p1     = op_ptr2->p2; // Get return value
+                stack->head   = op_ptr2->tail; // Get return value
                 stack->typ    = Token::EXPR_VALUE;
-                op_ptr2->p2   = a3->p2; // Restore return address
+                op_ptr2->tail = a3->tail; // Restore return address
             f4:
                 // Restore each parameter
-                a4 = a3->p1;
+                a4 = a3->head;
                 free_node(*a3);
                 a3 = a4;
-                a1 = a1->p2;
+                a1 = a1->tail;
                 if (a1 == nullptr)
                     goto advanc;
-                assign(*a1->p1, *a3->p2);
+                assign(*a1->head, *a3->tail);
                 goto f4;
             }
         }
@@ -159,23 +162,23 @@ l1:
         a3    = doop(op, *a2, *a1);
         delete_string(a1);
         delete_string(a2);
-        stack->p1  = a3;
-        stack->typ = Token::EXPR_VALUE;
+        stack->head = a3;
+        stack->typ  = Token::EXPR_VALUE;
         goto advanc;
     case Token::TOKEN_STRING: // String literal
-        a1 = copy(list->p2);
+        a1 = copy(list->tail);
         {
-            stack      = &push(stack);
-            stack->p1  = a1;
-            stack->typ = Token::EXPR_VALUE; // Mark as value
+            stack       = &push(stack);
+            stack->head = a1;
+            stack->typ  = Token::EXPR_VALUE; // Mark as value
             goto advanc;
         }
     case Token::TOKEN_VARIABLE: // Variable reference
-        a1 = list->p2;
+        a1 = list->tail;
         {
-            stack      = &push(stack);
-            stack->p1  = a1;
-            stack->typ = Token::EXPR_VAR_REF; // Mark as variable reference
+            stack       = &push(stack);
+            stack->head = a1;
+            stack->typ  = Token::EXPR_VAR_REF; // Mark as variable reference
             goto advanc;
         }
         goto advanc;
@@ -215,44 +218,44 @@ Node *SnobolContext::execute(const Node &e)
     Node *r, *b, *c;
     Node *m, *ca, *d, *a;
 
-    r  = e.p2; // Statement data
-    lc = e.ch; // Line number
+    r  = e.tail; // Statement data
+    lc = e.ch;   // Line number
     switch (e.typ) {
     case Token::STMT_SIMPLE: // r g - Simple statement: evaluate expression and goto
-        a = r->p1;
-        delete_string(eval(*r->p2, 1));
+        a = r->head;
+        delete_string(eval(*r->tail, 1));
         goto xsuc;
-    case Token::STMT_MATCH:  // r m g - Pattern matching: match pattern against subject
-        m = r->p1;           // Match pattern
-        a = m->p1;           // Goto structure
-        b = eval(*r->p2, 1); // Evaluate subject
-        c = search(*m, b);   // Search for pattern
+    case Token::STMT_MATCH:    // r m g - Pattern matching: match pattern against subject
+        m = r->head;           // Match pattern
+        a = m->head;           // Goto structure
+        b = eval(*r->tail, 1); // Evaluate subject
+        c = search(*m, b);     // Search for pattern
         delete_string(b);
         if (c == nullptr)
             goto xfail;
         free_node(*c);
         goto xsuc;
-    case Token::STMT_ASSIGN:           // r a g - Assignment: assign value to variable
-        ca = r->p1;                    // Assignment structure
-        a  = ca->p1;                   // Goto structure
-        b  = eval(*r->p2, 0);          // Get variable reference
-        assign(*b, *eval(*ca->p2, 1)); // Assign value
+    case Token::STMT_ASSIGN:             // r a g - Assignment: assign value to variable
+        ca = r->head;                    // Assignment structure
+        a  = ca->head;                   // Goto structure
+        b  = eval(*r->tail, 0);          // Get variable reference
+        assign(*b, *eval(*ca->tail, 1)); // Assign value
         goto xsuc;
     case Token::STMT_REPLACE: // r m a g - Pattern replacement
-        // search() returns: d->p1 = char before match (nullptr if at start), d->p2 = char after
-        // match (r->p2 if at end)
+        // search() returns: d->head = char before match (nullptr if at start), d->tail = char after
+        // match (r->tail if at end)
         {
             Node *before_node, *after_node, *result_node;
-            m  = r->p1;             // Match pattern
-            ca = m->p1;             // Assignment structure
-            a  = ca->p1;            // Goto structure
-            b  = eval(*r->p2, 0);   // Get variable reference
-            d  = search(*m, b->p2); // Search pattern in variable's value
+            m  = r->head;             // Match pattern
+            ca = m->head;             // Assignment structure
+            a  = ca->head;            // Goto structure
+            b  = eval(*r->tail, 0);   // Get variable reference
+            d  = search(*m, b->tail); // Search pattern in variable's value
             if (d == nullptr)
                 goto xfail;
-            c = eval(*ca->p2, 1); // Evaluate replacement value
+            c = eval(*ca->tail, 1); // Evaluate replacement value
             // Check if match spans entire string
-            if (d->p1 == nullptr && d->p2 == b->p2->p2) {
+            if (d->head == nullptr && d->tail == b->tail->tail) {
                 // Match entire string - replace
                 assign(*b, *c);
                 free_node(*d);
@@ -260,12 +263,12 @@ Node *SnobolContext::execute(const Node &e)
                 goto xsuc;
             }
             // Check if match at end
-            if (d->p2 == b->p2->p2) {
+            if (d->tail == b->tail->tail) {
                 // Match at end - replace: [before] + [replacement]
-                before_node     = &alloc();
-                before_node->p1 = b->p2->p1; // First character
-                before_node->p2 = d->p1;     // Last character before match
-                result_node     = cat(before_node, c);
+                before_node       = &alloc();
+                before_node->head = b->tail->head; // First character
+                before_node->tail = d->head;       // Last character before match
+                result_node       = cat(before_node, c);
                 free_node(*before_node);
                 assign(*b, *result_node);
                 free_node(*d);
@@ -273,12 +276,12 @@ Node *SnobolContext::execute(const Node &e)
                 goto xsuc;
             }
             // Check if match at start
-            if (d->p1 == nullptr) {
+            if (d->head == nullptr) {
                 // Match at start - replace: [replacement] + [after]
-                after_node     = &alloc();
-                after_node->p1 = d->p2;     // First character after match
-                after_node->p2 = b->p2->p2; // End marker
-                result_node    = cat(c, after_node);
+                after_node       = &alloc();
+                after_node->head = d->tail;       // First character after match
+                after_node->tail = b->tail->tail; // End marker
+                result_node      = cat(c, after_node);
                 free_node(*after_node);
                 assign(*b, *result_node);
                 free_node(*d);
@@ -286,13 +289,13 @@ Node *SnobolContext::execute(const Node &e)
                 goto xsuc;
             }
             // Match in middle - replace: [before] + [replacement] + [after]
-            before_node     = &alloc();
-            before_node->p1 = b->p2->p1; // First character
-            before_node->p2 = d->p1;     // Last character before match
-            after_node      = &alloc();
-            after_node->p1  = d->p2;     // First character after match
-            after_node->p2  = b->p2->p2; // End marker
-            result_node     = cat(before_node, c);
+            before_node       = &alloc();
+            before_node->head = b->tail->head; // First character
+            before_node->tail = d->head;       // Last character before match
+            after_node        = &alloc();
+            after_node->head  = d->tail;       // First character after match
+            after_node->tail  = b->tail->tail; // End marker
+            result_node       = cat(before_node, c);
             free_node(*before_node);
             result_node = cat(result_node, after_node);
             free_node(*after_node);
@@ -311,16 +314,16 @@ xsuc:
     // Success path - check for goto
     if (rfail)
         goto xfail;
-    b = a->p1; // Success goto
+    b = a->head; // Success goto
     goto xboth;
 xfail:
     // Failure path - check for goto
     rfail = 0;
-    b     = a->p2; // Failure goto
+    b     = a->tail; // Failure goto
 xboth:
     if (b == nullptr) {
         // No goto - continue to next statement
-        return (e.p1);
+        return (e.head);
     }
     // Evaluate goto target
     b = eval(*b, 0);
@@ -332,7 +335,7 @@ xboth:
     }
     if (b->typ != Token::EXPR_LABEL) // Should be a label
         writes("attempt to transfer to non-label");
-    return (b->p2); // Return label's statement
+    return (b->tail); // Return label's statement
 }
 
 //
@@ -356,16 +359,16 @@ void SnobolContext::assign(Node &addr, Node &value)
         addr.typ = Token::EXPR_VALUE;
         // fall through
     case Token::EXPR_VALUE: // String variable
-        delete_string(addr.p2);
-        addr.p2 = &value;
+        delete_string(addr.tail);
+        addr.tail = &value;
         return;
     case Token::EXPR_SYSPOT: // Output (syspot)
         sysput(&value);
         return;
     case Token::EXPR_FUNCTION: // Function parameter
-        a = addr.p2->p1;
-        delete_string(a->p2);
-        a->p2 = &value;
+        a = addr.tail->head;
+        delete_string(a->tail);
+        a->tail = &value;
         return;
     }
 }

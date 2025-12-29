@@ -1,10 +1,11 @@
 //
 // Snobol III
 //
-#include "sno.h"
+#include <cstdint>
 #include <iomanip>
 #include <ios>
-#include <cstdint>
+
+#include "sno.h"
 
 //
 // Constructor - initialize all fields including stream references
@@ -32,12 +33,12 @@ void SnobolContext::compile_program(std::istream &input)
     fin     = &input;
     program = compile();
     for (cur = program; lookend->typ != Token::EXPR_LABEL; cur = next) {
-        next    = compile();
-        cur->p1 = next;
+        next      = compile();
+        cur->head = next;
     }
-    cur->p1 = nullptr; // Terminate statement list
-    cfail   = 1;       // Enable compilation failure mode
-    fin     = &std::cin;
+    cur->head = nullptr; // Terminate statement list
+    cfail     = 1;       // Enable compilation failure mode
+    fin       = &std::cin;
 }
 
 void SnobolContext::execute_program(std::istream &input)
@@ -46,7 +47,7 @@ void SnobolContext::execute_program(std::istream &input)
 
     // Start execution from "start" label if defined, otherwise from first statement
     if (lookstart->typ == Token::EXPR_LABEL)
-        c = lookstart->p2;
+        c = lookstart->tail;
 
     if (!c) {
         // Nothing to run.
@@ -99,17 +100,17 @@ Node *SnobolContext::syspit()
     }
     b = c = &alloc();
     while (a != '\n') {
-        d     = &alloc();
-        c->p1 = d;
-        c     = d;
-        c->ch = a;
-        a     = fin->get();
+        d       = &alloc();
+        c->head = d;
+        c       = d;
+        c->ch   = a;
+        a       = fin->get();
         if (fin->eof() || a == std::char_traits<char>::eof()) {
             rfail = 1;
             break;
         }
     }
-    b->p2 = c;
+    b->tail = c;
     if (rfail) {
         delete_string(b);
         b = nullptr;
@@ -128,9 +129,9 @@ void SnobolContext::syspot(Node *string) const
     s = string;
     if (s != nullptr) {
         a = s;
-        b = s->p2;
+        b = s->tail;
         while (a != b) {
-            a = a->p1;
+            a = a->head;
             fout.put(a->ch);
         }
     }
@@ -150,12 +151,12 @@ Node &SnobolContext::cstr_to_node(const char *s)
     // Build linked list: d is head, f tracks tail, e is new node
     f = &d;
     while ((c = *s++) != '\0') {
-        e     = &alloc();
-        e->ch = c;
-        f->p1 = e;
-        f     = e;
+        e       = &alloc();
+        e->ch   = c;
+        f->head = e;
+        f       = e;
     }
-    d.p2 = e; // Store end marker in head node
+    d.tail = e; // Store end marker in head node
     return d;
 }
 
@@ -215,7 +216,7 @@ Node &SnobolContext::alloc()
 
     // Reuse node from free list
     f        = freelist;
-    freelist = freelist->p1;
+    freelist = freelist->head;
     return *f;
 }
 
@@ -224,8 +225,8 @@ Node &SnobolContext::alloc()
 //
 void SnobolContext::free_node(Node &pointer)
 {
-    pointer.p1 = freelist;
-    freelist   = &pointer;
+    pointer.head = freelist;
+    freelist     = &pointer;
 }
 
 //
@@ -240,23 +241,23 @@ Node &SnobolContext::look(const Node &string)
     i = namelist;
     // Search existing symbols
     while (i) {
-        j = i->p1;
-        if (j->p1->equal(&string) == 0)
+        j = i->head;
+        if (j->head->equal(&string) == 0)
             return *j;
-        i = (k = i)->p2;
+        i = (k = i)->tail;
     }
     // Symbol not found, create new entry
-    i     = &alloc();
-    i->p2 = nullptr;
+    i       = &alloc();
+    i->tail = nullptr;
     if (k)
-        k->p2 = i;
+        k->tail = i;
     else
         namelist = i;
-    j      = &alloc();
-    i->p1  = j;
-    j->p1  = copy(&string);
-    j->p2  = nullptr;
-    j->typ = Token::EXPR_VAR_REF;
+    j       = &alloc();
+    i->head = j;
+    j->head = copy(&string);
+    j->tail = nullptr;
+    j->typ  = Token::EXPR_VAR_REF;
     return *j;
 }
 
@@ -274,14 +275,14 @@ Node *SnobolContext::copy(const Node *string)
         return (nullptr);
     i = l = &alloc();
     j_src = string;
-    k     = const_cast<Node *>(string->p2);
+    k     = const_cast<Node *>(string->tail);
     while (j_src != k) {
-        m     = &alloc();
-        m->ch = (j_src = j_src->p1)->ch;
-        l->p1 = m;
-        l     = m;
+        m       = &alloc();
+        m->ch   = (j_src = j_src->head)->ch;
+        l->head = m;
+        l       = m;
     }
-    i->p2 = l;
+    i->tail = l;
     return (i);
 }
 
@@ -300,12 +301,12 @@ int Node::equal(const Node *string2) const
 
     // Compare character by character
     i = this;
-    j = this->p2; // End marker for string1
+    j = this->tail; // End marker for string1
     k = string2;
-    l = string2->p2; // End marker for string2
+    l = string2->tail; // End marker for string2
     for (;;) {
-        m = (i = i->p1)->ch; // Next char from string1
-        n = (k = k->p1)->ch; // Next char from string2
+        m = (i = i->head)->ch; // Next char from string1
+        n = (k = k->head)->ch; // Next char from string2
         if (m > n)
             return (1);
         if (m < n)
@@ -339,27 +340,46 @@ void Node::debug_print(std::ostream &os, int depth, int max_depth) const
     // Print token type name (use if-else since some tokens share enum values)
     int typ_val = static_cast<int>(typ);
     if (typ == Token::TOKEN_END || typ == Token::EXPR_VAR_REF || typ == Token::STMT_SIMPLE) {
-        if (typ == Token::TOKEN_END) os << "END";
-        else if (typ == Token::EXPR_VAR_REF) os << "VAR_REF";
-        else os << "STMT_SIMPLE";
-    } else if (typ == Token::EXPR_VALUE || typ == Token::TOKEN_UNANCHORED || typ == Token::STMT_MATCH) {
-        if (typ == Token::EXPR_VALUE) os << "VALUE";
-        else if (typ == Token::TOKEN_UNANCHORED) os << "UNANCHORED";
-        else os << "STMT_MATCH";
-    } else if (typ == Token::EXPR_LABEL || typ == Token::TOKEN_ALTERNATION || typ == Token::STMT_ASSIGN) {
-        if (typ == Token::EXPR_LABEL) os << "LABEL";
-        else if (typ == Token::TOKEN_ALTERNATION) os << "ALTERNATION";
-        else os << "STMT_ASSIGN";
-    } else if (typ == Token::EXPR_SYSPIT || typ == Token::TOKEN_EQUALS || typ == Token::STMT_REPLACE) {
-        if (typ == Token::EXPR_SYSPIT) os << "SYSPIT";
-        else if (typ == Token::TOKEN_EQUALS) os << "EQUALS";
-        else os << "STMT_REPLACE";
+        if (typ == Token::TOKEN_END)
+            os << "END";
+        else if (typ == Token::EXPR_VAR_REF)
+            os << "VAR_REF";
+        else
+            os << "STMT_SIMPLE";
+    } else if (typ == Token::EXPR_VALUE || typ == Token::TOKEN_UNANCHORED ||
+               typ == Token::STMT_MATCH) {
+        if (typ == Token::EXPR_VALUE)
+            os << "VALUE";
+        else if (typ == Token::TOKEN_UNANCHORED)
+            os << "UNANCHORED";
+        else
+            os << "STMT_MATCH";
+    } else if (typ == Token::EXPR_LABEL || typ == Token::TOKEN_ALTERNATION ||
+               typ == Token::STMT_ASSIGN) {
+        if (typ == Token::EXPR_LABEL)
+            os << "LABEL";
+        else if (typ == Token::TOKEN_ALTERNATION)
+            os << "ALTERNATION";
+        else
+            os << "STMT_ASSIGN";
+    } else if (typ == Token::EXPR_SYSPIT || typ == Token::TOKEN_EQUALS ||
+               typ == Token::STMT_REPLACE) {
+        if (typ == Token::EXPR_SYSPIT)
+            os << "SYSPIT";
+        else if (typ == Token::TOKEN_EQUALS)
+            os << "EQUALS";
+        else
+            os << "STMT_REPLACE";
     } else if (typ == Token::EXPR_SYSPOT || typ == Token::TOKEN_COMMA) {
-        if (typ == Token::EXPR_SYSPOT) os << "SYSPOT";
-        else os << "COMMA";
+        if (typ == Token::EXPR_SYSPOT)
+            os << "SYSPOT";
+        else
+            os << "COMMA";
     } else if (typ == Token::EXPR_FUNCTION || typ == Token::TOKEN_RPAREN) {
-        if (typ == Token::EXPR_FUNCTION) os << "FUNCTION";
-        else os << "RPAREN";
+        if (typ == Token::EXPR_FUNCTION)
+            os << "FUNCTION";
+        else
+            os << "RPAREN";
     } else if (typ == Token::TOKEN_MARKER) {
         os << "MARKER";
     } else if (typ == Token::TOKEN_WHITESPACE) {
@@ -393,32 +413,32 @@ void Node::debug_print(std::ostream &os, int depth, int max_depth) const
 
     os << "\n";
 
-    // Print p1 subtree
-    if (p1 != nullptr) {
+    // Print head subtree
+    if (head != nullptr) {
         for (int i = 0; i < depth; i++) {
             os << "  ";
         }
-        os << "  p1-> ";
-        p1->debug_print(os, depth + 1, max_depth);
+        os << "  head-> ";
+        head->debug_print(os, depth + 1, max_depth);
     } else {
         for (int i = 0; i < depth; i++) {
             os << "  ";
         }
-        os << "  p1-> NULL\n";
+        os << "  head-> NULL\n";
     }
 
-    // Print p2 subtree
-    if (p2 != nullptr) {
+    // Print tail subtree
+    if (tail != nullptr) {
         for (int i = 0; i < depth; i++) {
             os << "  ";
         }
-        os << "  p2-> ";
-        p2->debug_print(os, depth + 1, max_depth);
+        os << "  tail-> ";
+        tail->debug_print(os, depth + 1, max_depth);
     } else {
         for (int i = 0; i < depth; i++) {
             os << "  ";
         }
-        os << "  p2-> NULL\n";
+        os << "  tail-> NULL\n";
     }
 }
 
@@ -435,14 +455,14 @@ int SnobolContext::strbin(const Node *string)
     n = 0;
     if (s == nullptr)
         return (0);
-    p    = s->p1;
-    q    = s->p2;
+    p    = s->head;
+    q    = s->tail;
     sign = 1;
     if (char_class(p->ch) == CharClass::MINUS) { // minus
         sign = -1;
         if (p == q)
             return (0);
-        p = p->p1;
+        p = p->head;
     }
 loop:
     m = p->ch - '0';
@@ -451,7 +471,7 @@ loop:
     n = n * 10 + m;
     if (p == q)
         return (n * sign);
-    p = p->p1;
+    p = p->head;
     goto loop;
 }
 
@@ -472,23 +492,23 @@ Node &SnobolContext::binstr(int binary)
         sign = -1;
         n    = -binary;
     }
-    p.p2 = q;
+    p.tail = q;
 loop:
     q->ch = n % 10 + '0';
     n     = n / 10;
     if (n == 0) {
         if (sign < 0) {
-            m     = &alloc();
-            m->p1 = q;
-            q     = m;
-            q->ch = '-';
+            m       = &alloc();
+            m->head = q;
+            q       = m;
+            q->ch   = '-';
         }
-        p.p1 = q;
+        p.head = q;
         return p;
     }
-    m     = &alloc();
-    m->p1 = q;
-    q     = m;
+    m       = &alloc();
+    m->head = q;
+    q       = m;
     goto loop;
 }
 
@@ -536,10 +556,10 @@ Node *SnobolContext::cat(const Node *string1, const Node *string2)
         return (copy(string2));
     if (string2 == nullptr)
         return (copy(string1));
-    a         = copy(string1);
-    b         = copy(string2);
-    a->p2->p1 = b->p1;
-    a->p2     = b->p2;
+    a             = copy(string1);
+    b             = copy(string2);
+    a->tail->head = b->head;
+    a->tail       = b->tail;
     free_node(*b);
     return (a);
 }
@@ -569,9 +589,9 @@ void SnobolContext::delete_string(Node *string)
     if (string == nullptr)
         return;
     a = string;
-    b = string->p2;
+    b = string->tail;
     while (a != b) {
-        c = a->p1;
+        c = a->head;
         free_node(*a);
         a = c;
     }
@@ -605,18 +625,18 @@ void SnobolContext::dump1(Node *base)
     Node *d;
 
     while (base) {
-        b = base->p1;
+        b = base->head;
         c = &binstr(static_cast<int>(b->typ));
         d = &cstr_to_node("  ");
         e = dcat(*c, *d);
-        sysput(cat(e, b->p1));
+        sysput(cat(e, b->head));
         delete_string(e);
         if (b->typ == Token::EXPR_VALUE) {
             c = &cstr_to_node("   ");
-            sysput(cat(c, b->p2));
+            sysput(cat(c, b->tail));
             delete_string(c);
         }
-        base = base->p2;
+        base = base->tail;
     }
 }
 
@@ -668,12 +688,12 @@ Node *SnobolContext::getc_char()
         line_flag    = 0;
         return (nullptr);
     }
-    a = current_line->p1;
-    if (a == current_line->p2) {
+    a = current_line->head;
+    if (a == current_line->tail) {
         free_node(*current_line);
         line_flag++;
     } else
-        current_line->p1 = a->p1;
+        current_line->head = a->head;
     return (a);
 }
 

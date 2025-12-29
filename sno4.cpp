@@ -40,7 +40,7 @@ Node *SnobolContext::eval_operand(Node &ptr)
 // Processes operators and operands from the compiled expression.
 // Returns the result as a string node.
 //
-Node *SnobolContext::eval(const Node &e, int t)
+Node *SnobolContext::eval(Node &e, int t)
 {
     Node *list, *a3, *a4, *a3base;
     Node *a1, *stack;
@@ -50,8 +50,8 @@ Node *SnobolContext::eval(const Node &e, int t)
     // Postfix expression evaluation using a stack
     if (rfail == 1)
         return (nullptr);
-    stack = nullptr;                // Evaluation stack: holds operands and operators
-    list  = const_cast<Node *>(&e); // Current position in expression list
+    stack = nullptr; // Evaluation stack: holds operands and operators
+    list  = &e;      // Current position in expression list
     goto l1;
 advanc:
     list = list->head;

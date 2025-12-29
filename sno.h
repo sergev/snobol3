@@ -159,7 +159,7 @@ public:
 
     // Methods from sno4.c
     Node *eval_operand(Node &ptr);
-    Node *eval(const Node &e, int t);
+    Node *eval(Node &e, int t);
     Node *doop(Token op, const Node &arg1, const Node &arg2);
     Node *execute(const Node &e);
     void assign(Node &adr, Node &val); // val is deleted, so non-const

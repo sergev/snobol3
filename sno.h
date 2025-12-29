@@ -158,7 +158,7 @@ public:
     Node *search(const Node &arg, Node *r);
 
     // Methods from sno4.c
-    Node *eval_operand(const Node &ptr);
+    Node *eval_operand(Node &ptr);
     Node *eval(const Node &e, int t);
     Node *doop(Token op, const Node &arg1, const Node &arg2);
     Node *execute(const Node &e);

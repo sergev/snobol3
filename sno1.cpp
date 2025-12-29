@@ -267,18 +267,18 @@ Node &SnobolContext::look(const Node &string)
 //
 Node *SnobolContext::copy(const Node *string)
 {
-    Node *l, *m;
-    Node *i, *k;
-    const Node *j_src;
+    Node *l, *i;
+    const Node *j_src, *k;
 
     if (string == nullptr)
         return (nullptr);
     i = l = &alloc();
     j_src = string;
-    k     = const_cast<Node *>(string->tail);
+    k     = string->tail;
     while (j_src != k) {
-        m       = &alloc();
-        m->ch   = (j_src = j_src->head)->ch;
+        Node *m = &alloc();
+        j_src   = j_src->head;
+        m->ch   = j_src->ch;
         l->head = m;
         l       = m;
     }

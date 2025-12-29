@@ -7,12 +7,11 @@
 // Handles variable references, function calls, and special values.
 // Returns the value as a string node.
 //
-Node *SnobolContext::eval_operand(const Node &ptr)
+Node *SnobolContext::eval_operand(Node &ptr)
 {
-    Node *a;
-    Node &p = const_cast<Node &>(ptr);
-    a       = p.head;
-    if (p.typ == Token::EXPR_VAR_REF) {
+    Node *a = ptr.head;
+
+    if (ptr.typ == Token::EXPR_VAR_REF) {
         // Variable reference - get its value
         switch (a->typ) {
         case Token::EXPR_VAR_REF:       // Uninitialized variable
